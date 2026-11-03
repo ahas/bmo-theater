@@ -1,0 +1,12 @@
+{
+  "name": "theater",
+  "title": "theater.title",
+  "icon": "i-material-symbols-theaters-outline",
+  "screenPath": "/theater",
+  "serviceName": "theater",
+  "languagePack": "i18n",
+  "events": true,
+  "websocket": false,
+  "pushKinds": [],
+  "shareHead": "/shares/{token}/head"
+}

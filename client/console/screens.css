@@ -1,0 +1,10 @@
+/* The bundle's stylesheet: the utility classes its pages use, in the layer's cascade layers. The layer's
+   stylesheet is referenced and not emitted, so its tokens stand behind each utility as the value of the
+   console's own variable where the console sets one; the console's copy of the layer draws the rest. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@reference "bmo-ui/app/assets/css/main.css";
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "../app";
+@source not "../node_modules";
+@source not "../.nuxt";

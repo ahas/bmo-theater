@@ -4,9 +4,14 @@ testbed = 0
 name = "bmo-theater"
 
 [test]
-# The Cargo workspace's crates. The console bundle under client/ joins as a project of its own, with `bun` among the
-# languages and its folder under [projects], once its manifest stands there.
-languages = ["cargo"]
+# The Cargo workspace's crates, and the console bundle under client/, whose check script installs its locked
+# packages, typechecks it and runs its tests.
+languages = ["cargo", "bun"]
+
+# The console bundle under client/ is a project of its own: its manifest and lockfile stand in its own folder,
+# outside any package workspace.
+[projects]
+paths = ["client"]
 
 # The tests make a database of each test's own on the suite's server, migrated by the service as it starts, so no
 # template is declared (docs/api.md, 「Commands」).
