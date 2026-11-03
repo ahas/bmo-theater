@@ -129,11 +129,30 @@ file.
 
 ## The console
 
-A console bundle, built from `client/`, stands under the sidebar entry the words name: a library of
-posters, the realm's titles in one tab and the organization's in another; a title's seasons and episodes,
-each with the viewer's progress; the playlists, with a button to go on from where the viewer stopped; and the
-player, with subtitles, playback speed, ten-second skips, the next episode, fullscreen and resuming. The
-player sets the viewer's position every five seconds.
+A console bundle, built from `client/`, stands under the sidebar entry the words name:
+
+- **The library:** a grid of posters, the reader's own realm's titles in one tab and the organization's in
+  another, and a video filed from the browser as a clip, under a title of the realm or a new one, its bytes
+  sent with how far they have come.
+- **A title:** its seasons and episodes, each with the viewer's progress, the title's own progress and a button
+  to go on from where the viewer stopped; each episode added to a playlist, shared, given subtitles, and, for a
+  clip, deleted.
+- **The playlists:** made, renamed, reordered (dragged by a handle, moved by its arrow keys, or on a phone by
+  each item's up and down buttons), an item removed, each change sending the whole order, and a button to go
+  on from where the viewer stopped.
+- **The player:** the stream with its subtitles as text tracks (off unless one is in the screen's language),
+  playback speed, ten-second skips, the next episode, which a playlist goes on to by itself, the volume,
+  fullscreen, resuming, and the keys space, the arrows, f, m and c. It sets the viewer's position every five
+  seconds, as it pauses and as it is left.
+- **Subtitles:** a file added to an episode or a subtitle deleted, and a subtitle burned in, the burn's state
+  told by the event stream until its clip stands under the title.
+- **The libraries,** shown to the administrator alone: a folder registered, renamed, scanned again or removed.
+  No route says whether a reader administers the theater, so the bundle asks the one route only the
+  administrator may call with a body it refuses, which makes nothing either way.
+- **The share page,** the screen path's `/share/` and a token: the same player for whoever holds a link, with no
+  sign-in and no position set, a playlist's episodes following one another.
+
+Every screen keeps to the event stream, so what changes anywhere is shown where it stands.
 
 ## The tool
 

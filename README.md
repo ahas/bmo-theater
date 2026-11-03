@@ -17,7 +17,8 @@ episode (`progress.rs`), a library planned, scanned, streamed, rescanned and bur
 and a video filed by upload and by path (`scan.rs`, skipped where ffmpeg is not installed), the realms, the
 guard, playlists and positions (`realms.rs`), share links (`shares.rs`), the console bundle (`console.rs`), the
 OpenAPI document (`openapi.rs`) and the repository's own checks (`repository.rs`). The tool's crate carries its
-own harness, `tools/theater/tests/main.rs`, against a stand-in theater service.
+own harness, `tools/theater/tests/main.rs`, against a stand-in theater service. The console bundle's tests stand in
+`client/tests/`, run by `bun run check` against a Bun stand-in of the service.
 
 ## Layout
 
