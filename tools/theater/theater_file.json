@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "path"
+  ],
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "The absolute path of the local video file to file; it is copied into the theater."
+    },
+    "titleId": {
+      "type": "integer",
+      "description": "The title to file it under."
+    },
+    "title": {
+      "type": "string",
+      "description": "The name of the title to file it under, where no titleId is given: an existing title of the realm by that exact name, else a new clip title."
+    },
+    "realm": {
+      "type": "string",
+      "enum": [
+        "mine",
+        "organization"
+      ],
+      "description": "The realm a new title stands in; mine where none."
+    },
+    "name": {
+      "type": "string",
+      "description": "The episode's name; the file's name where none."
+    },
+    "label": {
+      "type": "string",
+      "description": "A short label for the episode."
+    },
+    "share": {
+      "type": "boolean",
+      "description": "Also open a share link to it and answer its address, for a room."
+    }
+  }
+}

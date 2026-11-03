@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "episodeId",
+    "subtitleId"
+  ],
+  "properties": {
+    "episodeId": {
+      "type": "integer",
+      "description": "The episode to burn the subtitle into."
+    },
+    "subtitleId": {
+      "type": "integer",
+      "description": "The episode's subtitle to burn in."
+    }
+  }
+}

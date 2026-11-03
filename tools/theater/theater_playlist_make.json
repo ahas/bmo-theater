@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The playlist's name."
+    },
+    "realm": {
+      "type": "string",
+      "enum": [
+        "mine",
+        "organization"
+      ],
+      "description": "The realm it stands in; mine where none."
+    },
+    "episodeIds": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "description": "The episodes in order."
+    }
+  }
+}

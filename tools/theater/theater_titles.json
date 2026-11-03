@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [],
+  "properties": {
+    "realm": {
+      "type": "string",
+      "enum": [
+        "mine",
+        "organization"
+      ],
+      "description": "The realm to search; both where none."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "show",
+        "film",
+        "clip"
+      ],
+      "description": "The kind of title: show, film or clip."
+    },
+    "query": {
+      "type": "string",
+      "description": "A part of the title's name, in any letter case."
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [],
+  "properties": {
+    "playlistId": {
+      "type": "integer",
+      "description": "The playlist to read the owner's progress through."
+    },
+    "titleId": {
+      "type": "integer",
+      "description": "The title to read the owner's progress through, where no playlistId is given."
+    }
+  }
+}

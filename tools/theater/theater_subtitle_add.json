@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "episodeId",
+    "path"
+  ],
+  "properties": {
+    "episodeId": {
+      "type": "integer",
+      "description": "The episode the subtitle belongs to."
+    },
+    "path": {
+      "type": "string",
+      "description": "The absolute path of the local subtitle file: srt, ass, smi or vtt."
+    },
+    "language": {
+      "type": "string",
+      "description": "The subtitle's language tag, such as ko or en."
+    },
+    "label": {
+      "type": "string",
+      "description": "A short label for the subtitle."
+    }
+  }
+}

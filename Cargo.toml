@@ -1,0 +1,99 @@
+# The workspace: the theater service's own package at the root, which also holds the checks that span the
+# repository in `tests/`, and the tool it places on the tool host under `tools/theater`. The console bundle
+# under `client/` is a project of its own.
+[workspace]
+members = ["tools/theater"]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[workspace.dependencies]
+axum = { version = "0.8.9", features = ["macros", "multipart", "ws"] }
+clap = { version = "4.6.7", features = ["derive", "env"] }
+config = { version = "0.15", default-features = false, features = ["toml"] }
+encoding_rs = "0.8.42"
+futures-util = "0.3.34"
+rand = "0.9.2"
+regex = "1.13.1"
+reqwest = { version = "0.13.5", features = ["json", "query", "stream"] }
+rust-ini = "0.21"
+schemars = "1.2.3"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sha2 = "0.10.9"
+sqlx = { version = "0.8.6", default-features = false, features = ["postgres", "runtime-tokio"] }
+tokio = { version = "1.53.3", features = ["fs", "io-std", "io-util", "macros", "net", "process", "rt", "rt-multi-thread", "signal", "sync", "test-util", "time"] }
+toml = { version = "0.8.23", default-features = false, features = ["parse"] }
+
+[package]
+name = "bmo-theater"
+description = "The theater service: titles of episodes, filed outputs and libraries indexed in place, streamed with subtitles, playlists, watch positions and share links."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+# One test target, the harness at tests/main.rs (bmo-chat's docs/conventions.md, 「Rust builds」).
+autotests = false
+
+[lib]
+test = false
+
+[[bin]]
+name = "bmo-theater"
+path = "src/main.rs"
+test = false
+
+[dependencies]
+# The routes the service answers on, an upload's parts among them.
+axum.workspace = true
+# The binary's command line.
+clap.workspace = true
+# The settings: the built-in defaults, the deployment's files and the environment, layered in that order.
+config.workspace = true
+# A subtitle file written in UTF-16 or in the Korean code page, read as text.
+encoding_rs.workspace = true
+# The event stream, a file's stretch streamed, and an upload's parts read as they come.
+futures-util.workspace = true
+# A share link's token.
+rand.workspace = true
+# The season and episode numbers read off a file's name, and the subtitle formats' lines.
+regex.workspace = true
+# The health command's call of the service.
+reqwest.workspace = true
+# The JSON Schemas of the wire types, for the OpenAPI document.
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+# The names the console bundle's module and stylesheet are answered under, which follow their bytes.
+sha2.workspace = true
+# The theater's tables in PostgreSQL.
+sqlx.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+# The service's unit file, read in its INI shape by the repository's checks.
+rust-ini.workspace = true
+# The testbed's declaration and the tool's manifest, read by the repository's checks.
+toml.workspace = true
+
+[[test]]
+name = "main"
+path = "tests/main.rs"
+
+# Build output kept small: line tables alone for a backtrace, split out, and no incremental cache.
+[profile.dev]
+debug = "line-tables-only"
+split-debuginfo = "unpacked"
+incremental = false
+
+[profile.test]
+debug = "line-tables-only"
+strip = "debuginfo"
+incremental = false
+
+[profile.release]
+debug = false
+strip = "debuginfo"

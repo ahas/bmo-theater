@@ -1,0 +1,41 @@
+# The theater service's settings (docs/api.md, 「Settings」). A deployment's settings.local.toml overrides any
+# key here, and BMO_THEATER_<TABLE>__<KEY> in the environment overrides both.
+
+[server]
+# Where the service answers, as host:port.
+listen = "127.0.0.1:13128"
+# The service token every caller but the console presents. A deployment names its own; empty lets no one in.
+token = ""
+# The data root under which `tool-env` writes env/theater.env; the deployment's conventional one under the home
+# where empty.
+data_root = ""
+
+# The console bundle the service serves (docs/api.md, 「Console」).
+[console]
+# The console's credential; empty, the console reaches nothing.
+token = ""
+# The bundle's built folder, which `bun run bundle` writes inside client/; a relative one is read from where the
+# process starts, a deployment's release.
+folder = "client/dist"
+
+[database]
+# The PostgreSQL database the theater's tables stand in; a deployment names it.
+url = ""
+
+[files]
+# The file root: filed and burned videos, posters, subtitles, and the work of burns and uploads. A deployment
+# names it; it is made where it does not stand.
+root = ""
+
+# The commands the theater runs (docs/api.md, 「Calls the theater makes」).
+[media]
+ffmpeg = "ffmpeg"
+ffprobe = "ffprobe"
+
+[share]
+# The address a share link's url stands under, the console's share screen; empty, a link has no url.
+address = ""
+
+[tool]
+# The account the tool acts for, written into env/theater.env; empty, the tool names none.
+account = ""

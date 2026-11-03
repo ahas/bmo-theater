@@ -1,0 +1,34 @@
+[package]
+name = "theater-tool"
+description = "The theater tool for the tool host: titles found and shown, videos and subtitles filed, playlists made, progress read and subtitles burned in a turn."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+# One test target, the harness at tests/main.rs (bmo-chat's docs/conventions.md, 「Rust builds」).
+autotests = false
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "theater-tool"
+path = "src/main.rs"
+test = false
+
+[dependencies]
+# The calls to the theater service.
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+# The stand-in theater service the entries are tested against.
+axum.workspace = true
+# The manifest, read by the test of the entries it declares.
+toml.workspace = true
+
+[[test]]
+name = "main"
+path = "tests/main.rs"

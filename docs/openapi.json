@@ -1,0 +1,6697 @@
+{
+  "components": {
+    "schemas": {
+      "Burn": {
+        "description": "A burn: a subtitle written into an episode's picture.",
+        "properties": {
+          "clipId": {
+            "description": "The clip it filed, once finished.",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "creator": {
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "episodeId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "startedAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "state": {
+            "$ref": "#/components/schemas/JobState"
+          },
+          "subtitleId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "episodeId",
+          "subtitleId",
+          "state",
+          "clipId",
+          "error",
+          "creator",
+          "startedAt",
+          "endedAt"
+        ],
+        "type": "object"
+      },
+      "BurnedFrom": {
+        "description": "What a burned clip was burned from.",
+        "properties": {
+          "episodeId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "subtitleId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "episodeId",
+          "subtitleId"
+        ],
+        "type": "object"
+      },
+      "ConsoleManifest": {
+        "description": "The console bundle's manifest (bmo-ui's `docs/console-bundles.md`, 「The manifest」).",
+        "properties": {
+          "apiPrefix": {
+            "type": "string"
+          },
+          "bundle": {
+            "type": "string"
+          },
+          "calls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "events": {
+            "type": "boolean"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ownerKey": {
+            "type": "boolean"
+          },
+          "pushKinds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "relays": {
+            "items": true,
+            "type": "array"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "screenPath": {
+            "type": "string"
+          },
+          "serviceName": {
+            "type": "string"
+          },
+          "shareHead": {
+            "type": "string"
+          },
+          "shareReads": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "stylesheet": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "websocket": {
+            "type": "boolean"
+          },
+          "words": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "icon",
+          "screenPath",
+          "serviceName",
+          "bundle",
+          "stylesheet",
+          "words",
+          "apiPrefix",
+          "role",
+          "ownerKey",
+          "events",
+          "websocket",
+          "pushKinds",
+          "calls",
+          "relays",
+          "shareReads",
+          "shareHead"
+        ],
+        "type": "object"
+      },
+      "Deleted": {
+        "description": "The key of a member deleted, as its event carries it.",
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "Episode": {
+        "description": "One video under a title.",
+        "properties": {
+          "audioCodec": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "available": {
+            "description": "Whether its file is on disk.",
+            "type": "boolean"
+          },
+          "burnedFrom": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BurnedFrom"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a burned clip, what it was burned from."
+          },
+          "byteCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "changedAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "createdAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "creator": {
+            "type": "string"
+          },
+          "durationMs": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "hasPoster": {
+            "type": "boolean"
+          },
+          "height": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EpisodeKind"
+          },
+          "label": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "number": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "position": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Position"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The caller's position in it."
+          },
+          "realm": {
+            "$ref": "#/components/schemas/Realm"
+          },
+          "season": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "subtitleCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "titleId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "videoCodec": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "width": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "titleId",
+          "realm",
+          "kind",
+          "season",
+          "number",
+          "name",
+          "label",
+          "fileName",
+          "mediaType",
+          "byteCount",
+          "durationMs",
+          "width",
+          "height",
+          "videoCodec",
+          "audioCodec",
+          "available",
+          "hasPoster",
+          "subtitleCount",
+          "burnedFrom",
+          "position",
+          "creator",
+          "createdAt",
+          "changedAt"
+        ],
+        "type": "object"
+      },
+      "EpisodeChange": {
+        "additionalProperties": false,
+        "description": "An episode's change: the fields named; `season` and `number` null to clear.",
+        "properties": {
+          "label": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "number": {
+            "default": null,
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "season": {
+            "default": null,
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "season",
+          "number"
+        ],
+        "type": "object"
+      },
+      "EpisodeKind": {
+        "description": "What an episode is.",
+        "oneOf": [
+          {
+            "const": "episode",
+            "description": "A library's video.",
+            "type": "string"
+          },
+          {
+            "const": "clip",
+            "description": "A filed output, or a burned one.",
+            "type": "string"
+          }
+        ]
+      },
+      "FiledByPath": {
+        "additionalProperties": false,
+        "description": "A video filed by a path on the service's own host.",
+        "properties": {
+          "label": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "number": {
+            "default": null,
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "description": "An absolute file the service reads, copied into its file root.",
+            "type": "string"
+          },
+          "season": {
+            "default": null,
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "path",
+          "name",
+          "label",
+          "season",
+          "number"
+        ],
+        "type": "object"
+      },
+      "Health": {
+        "description": "Whether the service answers.",
+        "properties": {
+          "ready": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ready",
+          "reason",
+          "version"
+        ],
+        "type": "object"
+      },
+      "JobState": {
+        "description": "Where a scan or a burn stands.",
+        "enum": [
+          "running",
+          "finished",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "Library": {
+        "description": "A registered folder.",
+        "properties": {
+          "createdAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "creator": {
+            "type": "string"
+          },
+          "episodeCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "description": "The folder, absolute.",
+            "type": "string"
+          },
+          "realm": {
+            "$ref": "#/components/schemas/Realm"
+          },
+          "scannedAt": {
+            "description": "The end of its last finished scan.",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "scanning": {
+            "description": "Whether a scan runs.",
+            "type": "boolean"
+          },
+          "titleCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "realm",
+          "name",
+          "path",
+          "creator",
+          "createdAt",
+          "scannedAt",
+          "scanning",
+          "titleCount",
+          "episodeCount"
+        ],
+        "type": "object"
+      },
+      "LibraryChange": {
+        "additionalProperties": false,
+        "description": "A library's change.",
+        "properties": {
+          "name": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "NewBurn": {
+        "additionalProperties": false,
+        "description": "A burn to start.",
+        "properties": {
+          "subtitleId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "subtitleId"
+        ],
+        "type": "object"
+      },
+      "NewLibrary": {
+        "additionalProperties": false,
+        "description": "A folder to register.",
+        "properties": {
+          "name": {
+            "default": null,
+            "description": "Its own title's name; the show name most of its folder's files share, else the folder's, where none.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "description": "An absolute folder the service reads, outside its file root.",
+            "type": "string"
+          },
+          "realm": {
+            "$ref": "#/components/schemas/Realm"
+          }
+        },
+        "required": [
+          "path",
+          "realm",
+          "name"
+        ],
+        "type": "object"
+      },
+      "NewPlaylist": {
+        "additionalProperties": false,
+        "description": "A playlist to make.",
+        "properties": {
+          "episodeIds": {
+            "default": null,
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "realm": {
+            "$ref": "#/components/schemas/Realm"
+          }
+        },
+        "required": [
+          "realm",
+          "name",
+          "episodeIds"
+        ],
+        "type": "object"
+      },
+      "NewShare": {
+        "additionalProperties": false,
+        "description": "A link to make: one of the two members.",
+        "properties": {
+          "episodeId": {
+            "default": null,
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "default": null,
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "playlistId": {
+            "default": null,
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "episodeId",
+          "playlistId",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "NewTitle": {
+        "additionalProperties": false,
+        "description": "A title to make.",
+        "properties": {
+          "description": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TitleKind"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "`clip` where none."
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "realm": {
+            "$ref": "#/components/schemas/Realm"
+          }
+        },
+        "required": [
+          "realm",
+          "name",
+          "kind",
+          "description",
+          "labels"
+        ],
+        "type": "object"
+      },
+      "Page": {
+        "description": "A page of a list.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Library"
+            },
+            "type": "array"
+          },
+          "more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "more"
+        ],
+        "type": "object"
+      },
+      "Page2": {
+        "description": "A page of a list.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Scan"
+            },
+            "type": "array"
+          },
+          "more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "more"
+        ],
+        "type": "object"
+      },
+      "Page3": {
+        "description": "A page of a list.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Title"
+            },
+            "type": "array"
+          },
+          "more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "more"
+        ],
+        "type": "object"
+      },
+      "Page4": {
+        "description": "A page of a list.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Episode"
+            },
+            "type": "array"
+          },
+          "more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "more"
+        ],
+        "type": "object"
+      },
+      "Page5": {
+        "description": "A page of a list.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Subtitle"
+            },
+            "type": "array"
+          },
+          "more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "more"
+        ],
+        "type": "object"
+      },
+      "Page6": {
+        "description": "A page of a list.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Burn"
+            },
+            "type": "array"
+          },
+          "more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "more"
+        ],
+        "type": "object"
+      },
+      "Page7": {
+        "description": "A page of a list.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Playlist"
+            },
+            "type": "array"
+          },
+          "more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "more"
+        ],
+        "type": "object"
+      },
+      "Page8": {
+        "description": "A page of a list.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Share"
+            },
+            "type": "array"
+          },
+          "more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "more"
+        ],
+        "type": "object"
+      },
+      "Page9": {
+        "description": "A page of a list.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StreamEvent"
+            },
+            "type": "array"
+          },
+          "more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "more"
+        ],
+        "type": "object"
+      },
+      "Playlist": {
+        "description": "A playlist.",
+        "properties": {
+          "changedAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "createdAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "creator": {
+            "type": "string"
+          },
+          "durationMs": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "episodeIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "realm": {
+            "$ref": "#/components/schemas/Realm"
+          }
+        },
+        "required": [
+          "id",
+          "realm",
+          "name",
+          "episodeIds",
+          "durationMs",
+          "creator",
+          "createdAt",
+          "changedAt"
+        ],
+        "type": "object"
+      },
+      "PlaylistChange": {
+        "additionalProperties": false,
+        "description": "A playlist's change: its name, or its whole order.",
+        "properties": {
+          "episodeIds": {
+            "default": null,
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "name": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "episodeIds"
+        ],
+        "type": "object"
+      },
+      "PlaylistItems": {
+        "additionalProperties": false,
+        "description": "Episodes added to a playlist.",
+        "properties": {
+          "at": {
+            "default": null,
+            "description": "The place the first goes, from 0; the end where none.",
+            "format": "uint",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "episodeIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "episodeIds",
+          "at"
+        ],
+        "type": "object"
+      },
+      "Position": {
+        "description": "A viewer's place in an episode.",
+        "properties": {
+          "done": {
+            "type": "boolean"
+          },
+          "episodeId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "seconds": {
+            "format": "double",
+            "type": "number"
+          },
+          "updatedAt": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "episodeId",
+          "seconds",
+          "done",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "PositionSet": {
+        "additionalProperties": false,
+        "description": "A position to set.",
+        "properties": {
+          "done": {
+            "default": null,
+            "description": "Whether it counts as watched; it becomes true by itself at nine tenths of the duration.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "seconds": {
+            "description": "The seconds watched to, 0 or more.",
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "required": [
+          "seconds",
+          "done"
+        ],
+        "type": "object"
+      },
+      "Progress": {
+        "description": "A viewer's progress through a playlist or a title.",
+        "properties": {
+          "doneCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProgressItem"
+            },
+            "type": "array"
+          },
+          "next": {
+            "description": "The episode to watch next, or null.",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "nextSeconds": {
+            "description": "The seconds to start it from.",
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "doneCount",
+          "next",
+          "nextSeconds"
+        ],
+        "type": "object"
+      },
+      "ProgressItem": {
+        "description": "One episode of a progress.",
+        "properties": {
+          "done": {
+            "type": "boolean"
+          },
+          "durationMs": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "episodeId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "seconds": {
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "required": [
+          "episodeId",
+          "durationMs",
+          "seconds",
+          "done"
+        ],
+        "type": "object"
+      },
+      "Realm": {
+        "description": "One of the two realms (`docs/design.md`, 「Two realms」).",
+        "oneOf": [
+          {
+            "const": "mine",
+            "description": "An account's own.",
+            "type": "string"
+          },
+          {
+            "const": "organization",
+            "description": "The organization's, read by every account.",
+            "type": "string"
+          }
+        ]
+      },
+      "Role": {
+        "description": "A role a reader holds.",
+        "enum": [
+          "administrator",
+          "member"
+        ],
+        "type": "string"
+      },
+      "Scan": {
+        "description": "One reading of a library's folder.",
+        "properties": {
+          "addedCount": {
+            "description": "Episodes added.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "changedCount": {
+            "description": "Episodes read again, or found back on disk.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "endedAt": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "foundCount": {
+            "description": "Video files found.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "libraryId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "missingCount": {
+            "description": "Episodes whose file is gone.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "startedAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "state": {
+            "$ref": "#/components/schemas/JobState"
+          }
+        },
+        "required": [
+          "id",
+          "libraryId",
+          "state",
+          "foundCount",
+          "addedCount",
+          "changedCount",
+          "missingCount",
+          "error",
+          "startedAt",
+          "endedAt"
+        ],
+        "type": "object"
+      },
+      "Share": {
+        "description": "A share link.",
+        "properties": {
+          "createdAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "creator": {
+            "type": "string"
+          },
+          "episodeId": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "playlistId": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "token": {
+            "type": "string"
+          },
+          "url": {
+            "description": "The share address; null where the settings name none.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "episodeId",
+          "playlistId",
+          "url",
+          "creator",
+          "createdAt",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "ShareDeleted": {
+        "description": "The token of a link ended, as its event carries it.",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "ShareHead": {
+        "description": "What a share address reads as before it is opened (bmo-ui's `docs/console-bundles.md`, 「Share pages」).",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locale": {
+            "type": "string"
+          },
+          "siteName": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "url",
+          "locale",
+          "siteName",
+          "type"
+        ],
+        "type": "object"
+      },
+      "StreamEvent": {
+        "description": "One published event.",
+        "properties": {
+          "at": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "data": true,
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "kind": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "at",
+          "data"
+        ],
+        "type": "object"
+      },
+      "Subtitle": {
+        "description": "A subtitle of an episode.",
+        "properties": {
+          "createdAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "creator": {
+            "type": "string"
+          },
+          "cueCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "episodeId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "format": {
+            "$ref": "#/components/schemas/SubtitleFormat"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "label": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "episodeId",
+          "language",
+          "label",
+          "format",
+          "fileName",
+          "cueCount",
+          "creator",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "SubtitleByPath": {
+        "additionalProperties": false,
+        "description": "A subtitle added by a path on the service's own host.",
+        "properties": {
+          "format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubtitleFormat"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The file's extension where none."
+          },
+          "label": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "language": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "language",
+          "label",
+          "format"
+        ],
+        "type": "object"
+      },
+      "SubtitleFormat": {
+        "description": "A subtitle's original format.",
+        "enum": [
+          "srt",
+          "ass",
+          "smi",
+          "vtt"
+        ],
+        "type": "string"
+      },
+      "Title": {
+        "description": "A title.",
+        "properties": {
+          "changedAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "createdAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "creator": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "episodeCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "hasPoster": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TitleKind"
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "libraryId": {
+            "description": "The library it was indexed from; null for a title made by hand.",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "realm": {
+            "$ref": "#/components/schemas/Realm"
+          }
+        },
+        "required": [
+          "id",
+          "realm",
+          "name",
+          "kind",
+          "description",
+          "labels",
+          "libraryId",
+          "episodeCount",
+          "hasPoster",
+          "creator",
+          "createdAt",
+          "changedAt"
+        ],
+        "type": "object"
+      },
+      "TitleChange": {
+        "additionalProperties": false,
+        "description": "A title's change: the fields named.",
+        "properties": {
+          "description": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TitleKind"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "name": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "description",
+          "labels"
+        ],
+        "type": "object"
+      },
+      "TitleKind": {
+        "description": "What a title is.",
+        "oneOf": [
+          {
+            "const": "show",
+            "description": "A series, its episodes numbered by season and episode.",
+            "type": "string"
+          },
+          {
+            "const": "film",
+            "description": "One video.",
+            "type": "string"
+          },
+          {
+            "const": "clip",
+            "description": "Filed outputs.",
+            "type": "string"
+          }
+        ]
+      },
+      "WireError": {
+        "description": "A failure, in the platform's shape.",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "error"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "description": "The service token (naming its account with Owner-Key), or the console's credential with Owner-Key and Owner-Role; the console's reaches each operation as its x-console says.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "The platform's store of videos: titles made of episodes, filed outputs kept in the service's file root and libraries of video files indexed in place, streamed as they are with HTTP ranges, with subtitles converted to WebVTT and burned in on request, playlists, each viewer's watch position, and share links. Titles, libraries and playlists stand in one of two realms, an account's own (mine) or the organization's. Bodies are JSON with camelCase keys, times are epoch milliseconds, lists are pages of items and more, and every failure is the error shape with its status. The tool's entries, placed on the tool host, are stated under x-tools.",
+    "title": "bmo-theater",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/burns/{burnId}": {
+      "get": {
+        "operationId": "readBurn",
+        "parameters": [
+          {
+            "description": "The burn's id.",
+            "in": "path",
+            "name": "burnId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Burn"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "One burn.",
+        "tags": [
+          "burns"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/console-manifest": {
+      "get": {
+        "operationId": "readConsoleManifest",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsoleManifest"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "The console bundle's manifest.",
+        "tags": [
+          "console"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "not-found"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/console/words": {
+      "get": {
+        "operationId": "readConsoleWords",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "The console bundle's words, each locale's tree under the locale's code.",
+        "tags": [
+          "console"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "not-found"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/console/{file}": {
+      "get": {
+        "operationId": "readConsoleFile",
+        "parameters": [
+          {
+            "description": "The file's name, as the manifest gives it.",
+            "in": "path",
+            "name": "file",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/css": {
+                "schema": {
+                  "contentMediaType": "text/css",
+                  "type": "string"
+                }
+              },
+              "text/javascript": {
+                "schema": {
+                  "contentMediaType": "text/javascript",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "The console bundle's module or stylesheet, at the name the manifest gives it.",
+        "tags": [
+          "console"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "not-found"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/episodes/{episodeId}": {
+      "delete": {
+        "operationId": "deleteEpisode",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no content."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`conflict`: the member does not take the change, or the key is taken"
+          }
+        },
+        "summary": "Delete a clip and its file; a library's episode is refused.",
+        "tags": [
+          "episodes"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found",
+          "conflict"
+        ],
+        "x-console": "screen"
+      },
+      "get": {
+        "operationId": "readEpisode",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Episode"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "One episode, with the caller's position.",
+        "tags": [
+          "episodes"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "patch": {
+        "operationId": "changeEpisode",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EpisodeChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Episode"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Change the fields named of an episode.",
+        "tags": [
+          "episodes"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/episodes/{episodeId}/burns": {
+      "get": {
+        "operationId": "listBurns",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": true,
+            "schema": {
+              "default": null,
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "default": null,
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page6"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "An episode's burns, newest first.",
+        "tags": [
+          "burns"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "post": {
+        "operationId": "startBurn",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewBurn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Burn"
+                }
+              }
+            },
+            "description": "Created."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unknown-subtitle`: a burn naming a subtitle that is not the episode's"
+          }
+        },
+        "summary": "Burn a subtitle into an episode, in the background.",
+        "tags": [
+          "burns"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found",
+          "unknown-subtitle"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/episodes/{episodeId}/position": {
+      "get": {
+        "operationId": "readPosition",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Position"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
+          }
+        },
+        "summary": "The caller's position in an episode.",
+        "tags": [
+          "positions"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found",
+          "no-account"
+        ],
+        "x-console": "screen"
+      },
+      "put": {
+        "operationId": "setPosition",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PositionSet"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Position"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
+          }
+        },
+        "summary": "Set the caller's position in an episode.",
+        "tags": [
+          "positions"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found",
+          "no-account"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/episodes/{episodeId}/poster": {
+      "get": {
+        "operationId": "readEpisodePoster",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "contentMediaType": "image/jpeg",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "The episode's poster frame.",
+        "tags": [
+          "episodes"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/episodes/{episodeId}/stream": {
+      "get": {
+        "operationId": "streamEpisode",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "One stretch of bytes: bytes=first-last, bytes=first- or bytes=-suffix.",
+            "in": "header",
+            "name": "Range",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The tag a Range holds to; another answers the whole file.",
+            "in": "header",
+            "name": "If-Range",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The tag the caller holds; the current one answers 304.",
+            "in": "header",
+            "name": "If-None-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "contentMediaType": "video/mp4",
+                  "type": "string"
+                }
+              },
+              "video/ogg": {
+                "schema": {
+                  "contentMediaType": "video/ogg",
+                  "type": "string"
+                }
+              },
+              "video/quicktime": {
+                "schema": {
+                  "contentMediaType": "video/quicktime",
+                  "type": "string"
+                }
+              },
+              "video/webm": {
+                "schema": {
+                  "contentMediaType": "video/webm",
+                  "type": "string"
+                }
+              },
+              "video/x-matroska": {
+                "schema": {
+                  "contentMediaType": "video/x-matroska",
+                  "type": "string"
+                }
+              },
+              "video/x-msvideo": {
+                "schema": {
+                  "contentMediaType": "video/x-msvideo",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "206": {
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "contentMediaType": "video/mp4",
+                  "type": "string"
+                }
+              },
+              "video/ogg": {
+                "schema": {
+                  "contentMediaType": "video/ogg",
+                  "type": "string"
+                }
+              },
+              "video/quicktime": {
+                "schema": {
+                  "contentMediaType": "video/quicktime",
+                  "type": "string"
+                }
+              },
+              "video/webm": {
+                "schema": {
+                  "contentMediaType": "video/webm",
+                  "type": "string"
+                }
+              },
+              "video/x-matroska": {
+                "schema": {
+                  "contentMediaType": "video/x-matroska",
+                  "type": "string"
+                }
+              },
+              "video/x-msvideo": {
+                "schema": {
+                  "contentMediaType": "video/x-msvideo",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "A stretch of the bytes."
+          },
+          "304": {
+            "description": "The caller holds the current bytes."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "416": {
+            "description": "The stretch starts past the end."
+          }
+        },
+        "summary": "The episode's file as it stands, with HTTP ranges.",
+        "tags": [
+          "episodes"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/episodes/{episodeId}/subtitles": {
+      "get": {
+        "operationId": "listSubtitles",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page5"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "An episode's subtitles.",
+        "tags": [
+          "subtitles"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "post": {
+        "operationId": "addSubtitle",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubtitleByPath"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "contentMediaType": "application/octet-stream",
+                    "type": "string"
+                  },
+                  "format": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "language": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subtitle"
+                }
+              }
+            },
+            "description": "Created."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-a-file`: a path that is not an absolute file the service reads\n`unknown-format`: a subtitle format outside srt, ass, smi and vtt\n`no-cues`: a subtitle that converts to no cue"
+          }
+        },
+        "summary": "Add a subtitle: an upload, or a path on the service's host.",
+        "tags": [
+          "subtitles"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found",
+          "not-a-file",
+          "unknown-format",
+          "no-cues"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/events": {
+      "get": {
+        "operationId": "readEvents",
+        "parameters": [
+          {
+            "description": "The event number the reading starts after.",
+            "in": "query",
+            "name": "after",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "The event number the reading starts after.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "The kinds wanted, comma-separated.",
+            "in": "query",
+            "name": "kinds",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "The kinds wanted, comma-separated.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "A page's size, 1 to 500; 50 where none.",
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "A page's size, 1 to 500; 50 where none.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "The last event number seen, as a reconnecting stream sends it.",
+            "in": "header",
+            "name": "Last-Event-ID",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page9"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "description": "Each event's data is a StreamEvent.",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`gone`: a share link whose time has passed, or a resume from before the events kept"
+          }
+        },
+        "summary": "The events the theater publishes, as a server-sent stream, or a page to Accept: application/json.",
+        "tags": [
+          "events"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "gone"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "readHealth",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          }
+        },
+        "summary": "Whether the service answers, and its version.",
+        "tags": [
+          "health"
+        ],
+        "x-codes": [
+          "unauthorized"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/libraries": {
+      "get": {
+        "operationId": "listLibraries",
+        "parameters": [
+          {
+            "description": "The id the page starts after.",
+            "in": "query",
+            "name": "after",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "The id the page starts after.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "At most this many, 1 to 1000; 200 where none.",
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "At most this many, 1 to 1000; 200 where none.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "The realm; both the caller reads where none.",
+            "in": "query",
+            "name": "realm",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Realm"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The realm; both the caller reads where none."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
+          }
+        },
+        "summary": "The libraries the caller reads.",
+        "tags": [
+          "libraries"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "no-account"
+        ],
+        "x-console": "screen"
+      },
+      "post": {
+        "operationId": "createLibrary",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewLibrary"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Library"
+                }
+              }
+            },
+            "description": "Created."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`conflict`: the member does not take the change, or the key is taken"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account\n`not-a-folder`: a library's path that is not an absolute folder the service reads outside its file root"
+          }
+        },
+        "summary": "Register a folder as a library; its first scan starts. The administrator alone.",
+        "tags": [
+          "libraries"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "conflict",
+          "no-account",
+          "not-a-folder"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/libraries/{libraryId}": {
+      "delete": {
+        "operationId": "deleteLibrary",
+        "parameters": [
+          {
+            "description": "The library's id.",
+            "in": "path",
+            "name": "libraryId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no content."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Remove a library and everything indexed from it; its files stay. The administrator alone.",
+        "tags": [
+          "libraries"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "get": {
+        "operationId": "readLibrary",
+        "parameters": [
+          {
+            "description": "The library's id.",
+            "in": "path",
+            "name": "libraryId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Library"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "One library.",
+        "tags": [
+          "libraries"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "patch": {
+        "operationId": "changeLibrary",
+        "parameters": [
+          {
+            "description": "The library's id.",
+            "in": "path",
+            "name": "libraryId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Library"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Rename a library. The administrator alone.",
+        "tags": [
+          "libraries"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/libraries/{libraryId}/scans": {
+      "get": {
+        "operationId": "listScans",
+        "parameters": [
+          {
+            "description": "The library's id.",
+            "in": "path",
+            "name": "libraryId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": true,
+            "schema": {
+              "default": null,
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "default": null,
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page2"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "A library's scans, newest first.",
+        "tags": [
+          "libraries"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "post": {
+        "operationId": "startScan",
+        "parameters": [
+          {
+            "description": "The library's id.",
+            "in": "path",
+            "name": "libraryId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scan"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scan"
+                }
+              }
+            },
+            "description": "Created."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Start a scan of a library, or answer the one running. The administrator alone.",
+        "tags": [
+          "libraries"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/playlists": {
+      "get": {
+        "operationId": "listPlaylists",
+        "parameters": [
+          {
+            "description": "The id the page starts after.",
+            "in": "query",
+            "name": "after",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "The id the page starts after.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "At most this many, 1 to 1000; 200 where none.",
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "At most this many, 1 to 1000; 200 where none.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "The realm; both the caller reads where none.",
+            "in": "query",
+            "name": "realm",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Realm"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The realm; both the caller reads where none."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page7"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
+          }
+        },
+        "summary": "The playlists the caller reads.",
+        "tags": [
+          "playlists"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "no-account"
+        ],
+        "x-console": "screen"
+      },
+      "post": {
+        "operationId": "createPlaylist",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewPlaylist"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Playlist"
+                }
+              }
+            },
+            "description": "Created."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account\n`unknown-episode`: a playlist naming an episode the caller does not read\n`not-in-realm`: a playlist naming an episode its readers would not all read"
+          }
+        },
+        "summary": "Make a playlist.",
+        "tags": [
+          "playlists"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "no-account",
+          "unknown-episode",
+          "not-in-realm"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/playlists/{playlistId}": {
+      "delete": {
+        "operationId": "deletePlaylist",
+        "parameters": [
+          {
+            "description": "The playlist's id.",
+            "in": "path",
+            "name": "playlistId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no content."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Delete a playlist.",
+        "tags": [
+          "playlists"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "get": {
+        "operationId": "readPlaylist",
+        "parameters": [
+          {
+            "description": "The playlist's id.",
+            "in": "path",
+            "name": "playlistId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Playlist"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "One playlist.",
+        "tags": [
+          "playlists"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "patch": {
+        "operationId": "changePlaylist",
+        "parameters": [
+          {
+            "description": "The playlist's id.",
+            "in": "path",
+            "name": "playlistId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaylistChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Playlist"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unknown-episode`: a playlist naming an episode the caller does not read\n`not-in-realm`: a playlist naming an episode its readers would not all read"
+          }
+        },
+        "summary": "Rename a playlist, or write its whole order.",
+        "tags": [
+          "playlists"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found",
+          "unknown-episode",
+          "not-in-realm"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/playlists/{playlistId}/items": {
+      "post": {
+        "operationId": "addPlaylistItems",
+        "parameters": [
+          {
+            "description": "The playlist's id.",
+            "in": "path",
+            "name": "playlistId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaylistItems"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Playlist"
+                }
+              }
+            },
+            "description": "Created."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unknown-episode`: a playlist naming an episode the caller does not read\n`not-in-realm`: a playlist naming an episode its readers would not all read"
+          }
+        },
+        "summary": "Add episodes to a playlist, at a place or at the end.",
+        "tags": [
+          "playlists"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found",
+          "unknown-episode",
+          "not-in-realm"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/playlists/{playlistId}/progress": {
+      "get": {
+        "operationId": "readPlaylistProgress",
+        "parameters": [
+          {
+            "description": "The playlist's id.",
+            "in": "path",
+            "name": "playlistId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Progress"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
+          }
+        },
+        "summary": "The caller's progress through a playlist, and the episode to watch next.",
+        "tags": [
+          "playlists"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found",
+          "no-account"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/shares": {
+      "get": {
+        "operationId": "listShares",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "default": null,
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "playlistId",
+            "required": true,
+            "schema": {
+              "default": null,
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page8"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          }
+        },
+        "summary": "The live links of the members the caller reads.",
+        "tags": [
+          "shares"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden"
+        ],
+        "x-console": "screen"
+      },
+      "post": {
+        "operationId": "createShare",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewShare"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Share"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Share"
+                }
+              }
+            },
+            "description": "Created."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Make a link to an episode or a playlist, or answer the live one.",
+        "tags": [
+          "shares"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/shares/{token}": {
+      "delete": {
+        "operationId": "deleteShare",
+        "parameters": [
+          {
+            "description": "The share link's token.",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no content."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "End a link.",
+        "tags": [
+          "shares"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "get": {
+        "operationId": "readShare",
+        "parameters": [
+          {
+            "description": "The share link's token.",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Share"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`gone`: a share link whose time has passed, or a resume from before the events kept"
+          }
+        },
+        "summary": "The link; a share read.",
+        "tags": [
+          "shares"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "not-found",
+          "gone"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/shares/{token}/episodes": {
+      "get": {
+        "operationId": "listSharedEpisodes",
+        "parameters": [
+          {
+            "description": "The share link's token.",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page4"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`gone`: a share link whose time has passed, or a resume from before the events kept"
+          }
+        },
+        "summary": "The episodes a link opens; a share read.",
+        "tags": [
+          "shares"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "not-found",
+          "gone"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/shares/{token}/episodes/{episodeId}/poster": {
+      "get": {
+        "operationId": "readSharedPoster",
+        "parameters": [
+          {
+            "description": "The share link's token.",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "contentMediaType": "image/jpeg",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`gone`: a share link whose time has passed, or a resume from before the events kept"
+          }
+        },
+        "summary": "An episode's poster; a share read.",
+        "tags": [
+          "shares"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "not-found",
+          "gone"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/shares/{token}/episodes/{episodeId}/stream": {
+      "get": {
+        "operationId": "streamSharedEpisode",
+        "parameters": [
+          {
+            "description": "The share link's token.",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "One stretch of bytes: bytes=first-last, bytes=first- or bytes=-suffix.",
+            "in": "header",
+            "name": "Range",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The tag a Range holds to; another answers the whole file.",
+            "in": "header",
+            "name": "If-Range",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The tag the caller holds; the current one answers 304.",
+            "in": "header",
+            "name": "If-None-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "contentMediaType": "video/mp4",
+                  "type": "string"
+                }
+              },
+              "video/ogg": {
+                "schema": {
+                  "contentMediaType": "video/ogg",
+                  "type": "string"
+                }
+              },
+              "video/quicktime": {
+                "schema": {
+                  "contentMediaType": "video/quicktime",
+                  "type": "string"
+                }
+              },
+              "video/webm": {
+                "schema": {
+                  "contentMediaType": "video/webm",
+                  "type": "string"
+                }
+              },
+              "video/x-matroska": {
+                "schema": {
+                  "contentMediaType": "video/x-matroska",
+                  "type": "string"
+                }
+              },
+              "video/x-msvideo": {
+                "schema": {
+                  "contentMediaType": "video/x-msvideo",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "206": {
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "contentMediaType": "video/mp4",
+                  "type": "string"
+                }
+              },
+              "video/ogg": {
+                "schema": {
+                  "contentMediaType": "video/ogg",
+                  "type": "string"
+                }
+              },
+              "video/quicktime": {
+                "schema": {
+                  "contentMediaType": "video/quicktime",
+                  "type": "string"
+                }
+              },
+              "video/webm": {
+                "schema": {
+                  "contentMediaType": "video/webm",
+                  "type": "string"
+                }
+              },
+              "video/x-matroska": {
+                "schema": {
+                  "contentMediaType": "video/x-matroska",
+                  "type": "string"
+                }
+              },
+              "video/x-msvideo": {
+                "schema": {
+                  "contentMediaType": "video/x-msvideo",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "A stretch of the bytes."
+          },
+          "304": {
+            "description": "The caller holds the current bytes."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`gone`: a share link whose time has passed, or a resume from before the events kept"
+          },
+          "416": {
+            "description": "The stretch starts past the end."
+          }
+        },
+        "summary": "An episode's stream; a share read.",
+        "tags": [
+          "shares"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "not-found",
+          "gone"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/shares/{token}/episodes/{episodeId}/subtitles": {
+      "get": {
+        "operationId": "listSharedSubtitles",
+        "parameters": [
+          {
+            "description": "The share link's token.",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page5"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`gone`: a share link whose time has passed, or a resume from before the events kept"
+          }
+        },
+        "summary": "An episode's subtitles; a share read.",
+        "tags": [
+          "shares"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "not-found",
+          "gone"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/shares/{token}/head": {
+      "get": {
+        "operationId": "readShareHead",
+        "parameters": [
+          {
+            "description": "The share link's token.",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The primary language subtag of the language the page is shown in.",
+            "in": "query",
+            "name": "language",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "The primary language subtag of the language the page is shown in.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareHead"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`gone`: a share link whose time has passed, or a resume from before the events kept"
+          }
+        },
+        "summary": "What the link reads as before it is opened.",
+        "tags": [
+          "shares"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "not-found",
+          "gone"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/shares/{token}/playlist": {
+      "get": {
+        "operationId": "readSharedPlaylist",
+        "parameters": [
+          {
+            "description": "The share link's token.",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Playlist"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`gone`: a share link whose time has passed, or a resume from before the events kept"
+          }
+        },
+        "summary": "A playlist link's playlist; a share read.",
+        "tags": [
+          "shares"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "not-found",
+          "gone"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/shares/{token}/subtitles/{subtitleId}.vtt": {
+      "get": {
+        "operationId": "readSharedVtt",
+        "parameters": [
+          {
+            "description": "The share link's token.",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The subtitle's id.",
+            "in": "path",
+            "name": "subtitleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/vtt": {
+                "schema": {
+                  "contentMediaType": "text/vtt",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`gone`: a share link whose time has passed, or a resume from before the events kept"
+          }
+        },
+        "summary": "A subtitle as WebVTT; a share read.",
+        "tags": [
+          "shares"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "not-found",
+          "gone"
+        ],
+        "x-console": "open"
+      }
+    },
+    "/subtitles/{subtitleId}": {
+      "delete": {
+        "operationId": "deleteSubtitle",
+        "parameters": [
+          {
+            "description": "The subtitle's id.",
+            "in": "path",
+            "name": "subtitleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no content."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Remove a subtitle and its files.",
+        "tags": [
+          "subtitles"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "get": {
+        "operationId": "readSubtitle",
+        "parameters": [
+          {
+            "description": "The subtitle's id.",
+            "in": "path",
+            "name": "subtitleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subtitle"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "One subtitle.",
+        "tags": [
+          "subtitles"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/subtitles/{subtitleId}.vtt": {
+      "get": {
+        "operationId": "readSubtitleVtt",
+        "parameters": [
+          {
+            "description": "The subtitle's id.",
+            "in": "path",
+            "name": "subtitleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/vtt": {
+                "schema": {
+                  "contentMediaType": "text/vtt",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "A subtitle as WebVTT.",
+        "tags": [
+          "subtitles"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/subtitles/{subtitleId}/original": {
+      "get": {
+        "operationId": "readSubtitleOriginal",
+        "parameters": [
+          {
+            "description": "The subtitle's id.",
+            "in": "path",
+            "name": "subtitleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "contentMediaType": "application/octet-stream",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "A subtitle's file as it was given.",
+        "tags": [
+          "subtitles"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/titles": {
+      "get": {
+        "operationId": "listTitles",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": true,
+            "schema": {
+              "default": null,
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TitleKind"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          {
+            "in": "query",
+            "name": "libraryId",
+            "required": true,
+            "schema": {
+              "default": null,
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "default": null,
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "A part of the name, in any letter case.",
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "A part of the name, in any letter case.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "realm",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Realm"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page3"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
+          }
+        },
+        "summary": "The titles the caller reads.",
+        "tags": [
+          "titles"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "no-account"
+        ],
+        "x-console": "screen"
+      },
+      "post": {
+        "operationId": "createTitle",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewTitle"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Title"
+                }
+              }
+            },
+            "description": "Created."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
+          }
+        },
+        "summary": "Make a title.",
+        "tags": [
+          "titles"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "no-account"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/titles/{titleId}": {
+      "delete": {
+        "operationId": "deleteTitle",
+        "parameters": [
+          {
+            "description": "The title's id.",
+            "in": "path",
+            "name": "titleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no content."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Delete a title; a library's is retired and its files left.",
+        "tags": [
+          "titles"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "get": {
+        "operationId": "readTitle",
+        "parameters": [
+          {
+            "description": "The title's id.",
+            "in": "path",
+            "name": "titleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Title"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "One title.",
+        "tags": [
+          "titles"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "patch": {
+        "operationId": "changeTitle",
+        "parameters": [
+          {
+            "description": "The title's id.",
+            "in": "path",
+            "name": "titleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TitleChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Title"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Change the fields named of a title.",
+        "tags": [
+          "titles"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/titles/{titleId}/episodes": {
+      "get": {
+        "operationId": "listTitleEpisodes",
+        "parameters": [
+          {
+            "description": "The title's id.",
+            "in": "path",
+            "name": "titleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page4"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "A title's episodes in order, each with the caller's position.",
+        "tags": [
+          "titles"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "post": {
+        "operationId": "fileEpisode",
+        "parameters": [
+          {
+            "description": "The title's id.",
+            "in": "path",
+            "name": "titleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FiledByPath"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "contentMediaType": "application/octet-stream",
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "number": {
+                    "type": "string"
+                  },
+                  "season": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Episode"
+                }
+              }
+            },
+            "description": "Created."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-a-video`: a filed file whose extension is no video's or in which no video stream is found\n`not-a-file`: a path that is not an absolute file the service reads"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`failed`: the service failed: its database, its file root or a command it runs"
+          }
+        },
+        "summary": "File a video under a title as a clip: an upload, or a path on the service's host.",
+        "tags": [
+          "titles"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found",
+          "not-a-video",
+          "not-a-file",
+          "failed"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/titles/{titleId}/poster": {
+      "get": {
+        "operationId": "readTitlePoster",
+        "parameters": [
+          {
+            "description": "The title's id.",
+            "in": "path",
+            "name": "titleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "contentMediaType": "image/jpeg",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "The poster of a title's first episode that has one.",
+        "tags": [
+          "titles"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/titles/{titleId}/progress": {
+      "get": {
+        "operationId": "readTitleProgress",
+        "parameters": [
+          {
+            "description": "The title's id.",
+            "in": "path",
+            "name": "titleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Progress"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
+          }
+        },
+        "summary": "The caller's progress through a title's episodes.",
+        "tags": [
+          "titles"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found",
+          "no-account"
+        ],
+        "x-console": "screen"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearer": []
+    }
+  ],
+  "servers": [
+    {
+      "description": "the theater service",
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "health"
+    },
+    {
+      "name": "libraries"
+    },
+    {
+      "name": "titles"
+    },
+    {
+      "name": "episodes"
+    },
+    {
+      "name": "positions"
+    },
+    {
+      "name": "subtitles"
+    },
+    {
+      "name": "burns"
+    },
+    {
+      "name": "playlists"
+    },
+    {
+      "name": "shares"
+    },
+    {
+      "name": "events"
+    },
+    {
+      "name": "console"
+    }
+  ],
+  "x-calls": [],
+  "x-event-data": {
+    "burn.failed": {
+      "$ref": "#/components/schemas/Burn"
+    },
+    "burn.finished": {
+      "$ref": "#/components/schemas/Burn"
+    },
+    "burn.running": {
+      "$ref": "#/components/schemas/Burn"
+    },
+    "episode.changed": {
+      "$ref": "#/components/schemas/Episode"
+    },
+    "episode.created": {
+      "$ref": "#/components/schemas/Episode"
+    },
+    "episode.deleted": {
+      "$ref": "#/components/schemas/Deleted"
+    },
+    "library.changed": {
+      "$ref": "#/components/schemas/Library"
+    },
+    "library.created": {
+      "$ref": "#/components/schemas/Library"
+    },
+    "library.deleted": {
+      "$ref": "#/components/schemas/Deleted"
+    },
+    "playlist.changed": {
+      "$ref": "#/components/schemas/Playlist"
+    },
+    "playlist.created": {
+      "$ref": "#/components/schemas/Playlist"
+    },
+    "playlist.deleted": {
+      "$ref": "#/components/schemas/Deleted"
+    },
+    "position.changed": {
+      "$ref": "#/components/schemas/Position"
+    },
+    "scan.failed": {
+      "$ref": "#/components/schemas/Scan"
+    },
+    "scan.finished": {
+      "$ref": "#/components/schemas/Scan"
+    },
+    "scan.running": {
+      "$ref": "#/components/schemas/Scan"
+    },
+    "share.created": {
+      "$ref": "#/components/schemas/Share"
+    },
+    "share.deleted": {
+      "$ref": "#/components/schemas/ShareDeleted"
+    },
+    "subtitle.created": {
+      "$ref": "#/components/schemas/Subtitle"
+    },
+    "subtitle.deleted": {
+      "$ref": "#/components/schemas/Deleted"
+    },
+    "title.changed": {
+      "$ref": "#/components/schemas/Title"
+    },
+    "title.created": {
+      "$ref": "#/components/schemas/Title"
+    },
+    "title.deleted": {
+      "$ref": "#/components/schemas/Deleted"
+    }
+  },
+  "x-events": [
+    "library.created",
+    "library.changed",
+    "library.deleted",
+    "scan.running",
+    "scan.finished",
+    "scan.failed",
+    "title.created",
+    "title.changed",
+    "title.deleted",
+    "episode.created",
+    "episode.changed",
+    "episode.deleted",
+    "subtitle.created",
+    "subtitle.deleted",
+    "playlist.created",
+    "playlist.changed",
+    "playlist.deleted",
+    "position.changed",
+    "burn.running",
+    "burn.finished",
+    "burn.failed",
+    "share.created",
+    "share.deleted"
+  ],
+  "x-layer": "downstream",
+  "x-tools": [
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "Finds titles by realm, kind and a part of the name.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "description": "The kind of title: show, film or clip.",
+            "enum": [
+              "show",
+              "film",
+              "clip"
+            ],
+            "type": "string"
+          },
+          "query": {
+            "description": "A part of the title's name, in any letter case.",
+            "type": "string"
+          },
+          "realm": {
+            "description": "The realm to search; both where none.",
+            "enum": [
+              "mine",
+              "organization"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "theater_titles",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Page3"
+      },
+      "route": "GET /titles"
+    },
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "A title with its episodes, or an episode with its subtitles.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "episodeId": {
+            "description": "The episode to show with its subtitles.",
+            "type": "integer"
+          },
+          "titleId": {
+            "description": "The title to show with its episodes.",
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "theater_show",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Title"
+      },
+      "route": "GET /titles/{titleId}"
+    },
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "Files a local video under a title, made as a clip title where the name is new; with share, answers a link.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "description": "A short label for the episode.",
+            "type": "string"
+          },
+          "name": {
+            "description": "The episode's name; the file's name where none.",
+            "type": "string"
+          },
+          "path": {
+            "description": "The absolute path of the local video file to file; it is copied into the theater.",
+            "type": "string"
+          },
+          "realm": {
+            "description": "The realm a new title stands in; mine where none.",
+            "enum": [
+              "mine",
+              "organization"
+            ],
+            "type": "string"
+          },
+          "share": {
+            "description": "Also open a share link to it and answer its address, for a room.",
+            "type": "boolean"
+          },
+          "title": {
+            "description": "The name of the title to file it under, where no titleId is given: an existing title of the realm by that exact name, else a new clip title.",
+            "type": "string"
+          },
+          "titleId": {
+            "description": "The title to file it under.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "theater_file",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Episode"
+      },
+      "route": "POST /titles/{titleId}/episodes"
+    },
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "Adds a local subtitle file to an episode.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "episodeId": {
+            "description": "The episode the subtitle belongs to.",
+            "type": "integer"
+          },
+          "label": {
+            "description": "A short label for the subtitle.",
+            "type": "string"
+          },
+          "language": {
+            "description": "The subtitle's language tag, such as ko or en.",
+            "type": "string"
+          },
+          "path": {
+            "description": "The absolute path of the local subtitle file: srt, ass, smi or vtt.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "episodeId",
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "theater_subtitle_add",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Subtitle"
+      },
+      "route": "POST /episodes/{episodeId}/subtitles"
+    },
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "Makes a playlist.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "episodeIds": {
+            "description": "The episodes in order.",
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "The playlist's name.",
+            "type": "string"
+          },
+          "realm": {
+            "description": "The realm it stands in; mine where none.",
+            "enum": [
+              "mine",
+              "organization"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "theater_playlist_make",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Playlist"
+      },
+      "route": "POST /playlists"
+    },
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "Adds episodes to a playlist.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "description": "The place the first goes, from 0; the end where none.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "episodeIds": {
+            "description": "The episodes to add, in order.",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "playlistId": {
+            "description": "The playlist to add to.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "playlistId",
+          "episodeIds"
+        ],
+        "type": "object"
+      },
+      "name": "theater_playlist_add",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Playlist"
+      },
+      "route": "POST /playlists/{playlistId}/items"
+    },
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "How far the owner has come through a playlist or a title, and what is next.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "playlistId": {
+            "description": "The playlist to read the owner's progress through.",
+            "type": "integer"
+          },
+          "titleId": {
+            "description": "The title to read the owner's progress through, where no playlistId is given.",
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "theater_progress",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Progress"
+      },
+      "route": "GET /playlists/{playlistId}/progress"
+    },
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "Burns a subtitle into an episode; the clip is filed when the burn ends.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "episodeId": {
+            "description": "The episode to burn the subtitle into.",
+            "type": "integer"
+          },
+          "subtitleId": {
+            "description": "The episode's subtitle to burn in.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "episodeId",
+          "subtitleId"
+        ],
+        "type": "object"
+      },
+      "name": "theater_burn",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Burn"
+      },
+      "route": "POST /episodes/{episodeId}/burns"
+    }
+  ]
+}

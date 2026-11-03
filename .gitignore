@@ -1,6 +1,6 @@
 /target
 /settings.local.toml
-/tools/calendar/.placed
+/tools/theater/.placed
 /client/node_modules
 /client/.nuxt
 /client/.output

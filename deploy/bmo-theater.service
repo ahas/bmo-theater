@@ -1,0 +1,23 @@
+# The theater service's user unit. A deployment runs it from its deploy tree, whose settings.local.toml links to
+# the data root's env/theater.toml (docs/api.md, 「Settings」).
+[Unit]
+Description=bmo-theater: titles of episodes, libraries indexed in place, streamed with subtitles and shared by link
+After=network-online.target
+# Without its settings the service has no token, database or file root, so the unit does not start where the
+# deployment wrote none.
+ConditionPathExists=%h/.local/share/bmo/data/env/theater.toml
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/share/bmo-theater/deploy
+ExecStart=%h/.local/share/bmo-theater/deploy/bin/bmo-theater serve
+Restart=always
+RestartSec=2
+# A stop ends the event streams and waits for the service to end on its SIGTERM, however long its requests still in
+# hand take; it is never escalated to a kill.
+TimeoutStopSec=infinity
+
+[Install]
+WantedBy=default.target
+# The repository's one service: stopped, restarted and watched by every deployment, which waits on its health.
+X-BMO-Deploy=bot

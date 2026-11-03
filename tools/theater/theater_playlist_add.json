@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "playlistId",
+    "episodeIds"
+  ],
+  "properties": {
+    "playlistId": {
+      "type": "integer",
+      "description": "The playlist to add to."
+    },
+    "episodeIds": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "minItems": 1,
+      "description": "The episodes to add, in order."
+    },
+    "at": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The place the first goes, from 0; the end where none."
+    }
+  }
+}

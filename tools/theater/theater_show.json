@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [],
+  "properties": {
+    "titleId": {
+      "type": "integer",
+      "description": "The title to show with its episodes."
+    },
+    "episodeId": {
+      "type": "integer",
+      "description": "The episode to show with its subtitles."
+    }
+  }
+}

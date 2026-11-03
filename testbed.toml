@@ -1,0 +1,111 @@
+# How the testbed tests, checks, builds and deploys this repository, in the testbed's declaration format.
+
+testbed = 0
+name = "bmo-theater"
+
+[test]
+# The Cargo workspace's crates. The console bundle under client/ joins as a project of its own, with `bun` among the
+# languages and its folder under [projects], once its manifest stands there.
+languages = ["cargo"]
+
+# The tests make a database of each test's own on the suite's server, migrated by the service as it starts, so no
+# template is declared (docs/api.md, 「Commands」).
+[test.database]
+
+# The theater's tool, checked by the command its tool.toml names.
+[tools]
+dir = "tools"
+
+[check]
+# The sweeps that read the tree before anything runs: the README's folder table, the dependencies the manifests
+# name, the build profiles and the shared versions.
+quick = ["layout", "dependencies", "cargo-profile", "shared-versions"]
+base_libraries = ["bmo-chat", "bmo-chat-client", "bmo-ui"]
+
+# The repository whose root holds the shared versions the manifests and the lock hold to.
+[check.shared_versions]
+repository = "bmo-chat"
+
+[[check.step]]
+id = "check"
+command = "cargo check --workspace --all-targets"
+lane = "wide"
+
+[[check.step]]
+id = "clippy"
+command = "cargo clippy --workspace --all-targets -- -D warnings"
+lane = "wide"
+
+[[check.step]]
+id = "fmt"
+command = "cargo fmt --all --check"
+
+[build]
+# The service's binary and the tool host's tool.
+binaries = ["bmo-theater", "theater-tool"]
+
+# The service's own deploy tree, and the data root its settings stand under: the data root's env/theater.toml,
+# which each release links to as settings.local.toml, the file the service reads beside settings.toml
+# (docs/api.md, 「Settings」).
+[deploy]
+root = "~/.local/share/bmo-theater"
+link = "deploy"
+data_root = "~/.local/share/bmo/data"
+env_links = [{ link = "settings.local.toml", target = "env/theater.toml" }]
+# The service's user unit, marked bot: the repository's one service, whose health the deployment waits on.
+units = ["deploy/*.service"]
+# Answers 0 once the service the deployed settings name answers ready (docs/api.md, 「Health」).
+health = "~/.local/share/bmo-theater/deploy/bin/bmo-theater health"
+
+# The console bundle the service serves from the release (docs/api.md, 「Console」): its locked packages installed
+# and its folder built inside client/, where the settings' console.folder reads it. A release whose client/ holds no
+# package manifest yet builds nothing, and the service then serves no bundle.
+[[deploy.step]]
+id = "console-bundle"
+phase = "before-flip"
+command = '''
+set -eu
+if [ ! -f client/package.json ]; then
+  echo "client/package.json does not stand; no console bundle is built"
+  exit 0
+fi
+cd client
+bun install --frozen-lockfile
+bun run bundle
+'''
+
+# The database brought to the schema the release carries before it is flipped; the service also does so as it
+# starts.
+[[deploy.step]]
+id = "migrate"
+phase = "before-flip"
+command = "bin/bmo-theater migrate"
+
+# Where the theater's tool finds the service and the account it acts for: the data root's env/theater.env, written
+# from the settings.
+[[deploy.step]]
+id = "tool-env"
+phase = "before-flip"
+command = "bin/bmo-theater tool-env"
+
+# The tool placed in its folder's .placed/, the folder the tool host reads: the executable the release's bin/
+# holds, its manifest, its manual and the schemas beside it.
+[[deploy.step]]
+id = "place-theater-tool"
+phase = "before-flip"
+command = '''
+set -eu
+rm -rf tools/theater/.placed
+mkdir -p tools/theater/.placed
+cp bin/theater-tool tools/theater/tool.toml tools/theater/manual.md tools/theater/*.json tools/theater/.placed/
+'''
+
+# The placed tool registered with the tool host under this service's name, carrying the room.tools capability its
+# entries ask for; the host's command stands in its own deploy tree.
+[[deploy.step]]
+id = "register-theater-tool"
+phase = "after-health"
+command = '''
+set -eu
+"$HOME/.local/share/bmo-pocket/deploy/bin/bmo-pocket" put --service theater --placed --allow room.tools tools/theater/.placed
+'''

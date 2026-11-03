@@ -1,0 +1,93 @@
+# The theater tool: titles found and shown, videos and subtitles filed, playlists made, progress read and
+# subtitles burned in a turn (docs/api.md, 「The tool」), each entry one or a few calls of theater routes. The tool
+# finds the service and the account it acts for through the data root's env/theater.env. The crate's own test
+# holds every entry here to the executable answering it. Every call waits for the service's answer however long
+# it takes.
+
+[tool]
+name = "theater"
+protocol = 1
+language = "rust"
+build = 'cargo build --release -p theater-tool && cp "$BMO_CARGO_TARGET/release/theater-tool" "$BMO_TOOL_OUT/"'
+check = 'cargo test -p theater-tool'
+run = ["theater-tool"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_titles"
+title = "Find titles"
+description = "Find the theater's titles by realm, kind and a part of the name."
+manual = "manual.md"
+input = "theater_titles.json"
+hints = { read_only = true }
+capabilities = ["room.tools"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_show"
+title = "Show a title or an episode"
+description = "A title with its episodes, or an episode with its subtitles."
+manual = "manual.md"
+input = "theater_show.json"
+hints = { read_only = true }
+capabilities = ["room.tools"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_file"
+title = "File a video"
+description = "File a local video file in the theater under a title, made where its name is new; optionally answer a share link for a room."
+manual = "manual.md"
+input = "theater_file.json"
+hints = { idempotent = false }
+capabilities = ["room.tools"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_subtitle_add"
+title = "Add a subtitle"
+description = "Add a local subtitle file (srt, ass, smi or vtt) to an episode."
+manual = "manual.md"
+input = "theater_subtitle_add.json"
+hints = { idempotent = false }
+capabilities = ["room.tools"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_playlist_make"
+title = "Make a playlist"
+description = "Make a playlist of episodes in order."
+manual = "manual.md"
+input = "theater_playlist_make.json"
+hints = { idempotent = false }
+capabilities = ["room.tools"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_playlist_add"
+title = "Add to a playlist"
+description = "Add episodes to a playlist, at a place or at the end."
+manual = "manual.md"
+input = "theater_playlist_add.json"
+hints = { idempotent = false }
+capabilities = ["room.tools"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_progress"
+title = "Read progress"
+description = "How far the owner has come through a playlist or a title, and the episode to watch next."
+manual = "manual.md"
+input = "theater_progress.json"
+hints = { read_only = true }
+capabilities = ["room.tools"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_burn"
+title = "Burn a subtitle in"
+description = "Burn a subtitle into an episode's picture; the burned video is filed as a clip under the same title when it ends."
+manual = "manual.md"
+input = "theater_burn.json"
+hints = { idempotent = false }
+capabilities = ["room.tools"]
