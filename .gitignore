@@ -1,0 +1,9 @@
+/target
+/settings.local.toml
+/tools/calendar/.placed
+/client/node_modules
+/client/.nuxt
+/client/.output
+/client/dist
+.graph/*
+!.graph/settings.toml
