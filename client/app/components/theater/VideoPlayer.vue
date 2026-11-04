@@ -508,11 +508,19 @@ function onKey(event: KeyboardEvent): void {
   }
 }
 
+function freeOrientation(): void {
+  try {
+    (screen.orientation as (ScreenOrientation & { unlock?: () => void }) | undefined)?.unlock?.();
+  } catch {
+    // A browser that locked nothing has nothing to give back.
+  }
+}
+
 function onFullscreen(): void {
   fullscreen.value = document.fullscreenElement === rootRef.value;
 
   // Leaving full screen gives the orientation back.
-  if (!document.fullscreenElement) (screen.orientation as (ScreenOrientation & { unlock?: () => void }) | undefined)?.unlock?.();
+  if (!document.fullscreenElement) freeOrientation();
 }
 
 function onLeave(): void {
@@ -540,6 +548,9 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", onKey);
   window.removeEventListener("pagehide", onLeave);
   document.removeEventListener("fullscreenchange", onFullscreen);
+  // Going back from a turned player leaves no lock and no full screen behind on the screen it goes to.
+  freeOrientation();
+  if (document.fullscreenElement === rootRef.value) void document.exitFullscreen().catch(() => undefined);
   release?.();
   boxWatch?.disconnect();
 
