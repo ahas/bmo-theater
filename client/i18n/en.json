@@ -150,6 +150,7 @@
       "delete_subtitle": "Delete this subtitle?"
     },
     "status": {
+      "brightness": "Brightness {n}%",
       "burned": "Burned clip",
       "burn_failed": "Burn failed",
       "burning": "Burning",

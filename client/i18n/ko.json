@@ -150,6 +150,7 @@
       "delete_subtitle": "자막을 삭제할까요?"
     },
     "status": {
+      "brightness": "밝기 {n}%",
       "burned": "구운 클립",
       "burn_failed": "굽기 실패",
       "burning": "굽는 중",
