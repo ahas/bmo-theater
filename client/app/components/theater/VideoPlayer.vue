@@ -1,9 +1,9 @@
 <template>
   <!-- The player (`docs/design.md`, 「Playing」 and 「The console」): the browser's video over the episode's
        stream, its subtitles laid over it as text tracks, and its own controls under it — play, ten-second skips,
-       the next episode, the volume, the subtitle and the speed, and full screen. It stands on a black ground of
+       the next episode, the volume, the subtitle and the speed, turning the picture, and full screen. It stands on a black ground of
        its own, whatever the theme, so its words and marks are fixed light ones. The keys answer while the
-       player stands: space, the arrows, f, m and c. -->
+       player stands: space, the arrows, f, m, c and r. -->
   <div
     ref="root"
     role="region"
@@ -22,6 +22,7 @@
       playsinline
       preload="metadata"
       class="size-full object-contain"
+      :style="turnedStyle"
       @click="onVideoPress"
       @dblclick="toggleFullscreen"
       @loadedmetadata="onMetadata"
@@ -116,6 +117,9 @@
             <UButton icon="i-material-symbols-speed-outline" v-bind="BUTTON" :aria-label="$t('theater.aria.speed_named', { speed: speedText(speed) })" />
           </UTooltip>
         </UDropdownMenu>
+        <UTooltip :portal="portal" :text="$t('theater.action.turn')" :kbds="['r']">
+          <UButton icon="i-material-symbols-screen-rotation-outline" v-bind="BUTTON" :aria-label="$t('theater.action.turn')" @click="turn" />
+        </UTooltip>
         <UTooltip :portal="portal" :text="$t(fullscreen ? 'theater.action.exit_fullscreen' : 'theater.action.fullscreen')" :kbds="['f']">
           <UButton :icon="fullscreen ? 'i-material-symbols-fullscreen-exit' : 'i-material-symbols-fullscreen'" v-bind="BUTTON" :aria-label="$t(fullscreen ? 'theater.action.exit_fullscreen' : 'theater.action.fullscreen')" @click="toggleFullscreen" />
         </UTooltip>
@@ -135,7 +139,7 @@ import { knownLength, playClock } from "bmo-ui/app/domain/player";
 import { useNarrow } from "bmo-ui/app/domain/screen";
 import { useVolume } from "bmo-ui/app/domain/volume";
 
-import { CONTROLS_IDLE_MS, CUE_LINE_OVER_CONTROLS, SAVE_EVERY_MS, SKIP_SECONDS, SPEEDS, VOLUME_STEP, keyAction, skipTo, speedText, steppedVolume, toggledTrack } from "../../domain/player";
+import { CONTROLS_IDLE_MS, CUE_LINE_OVER_CONTROLS, SAVE_EVERY_MS, SKIP_SECONDS, SPEEDS, VOLUME_STEP, keyAction, nextTurn, otherOrientation, skipTo, turnedBox, speedText, steppedVolume, toggledTrack } from "../../domain/player";
 
 import type { DropdownMenuItem } from "@nuxt/ui";
 
@@ -345,6 +349,41 @@ function seek(value: number | undefined): void {
   current.value = value;
 }
 
+// The picture's own quarter turns, and the player's size it is fitted to, where the screen's orientation cannot turn it.
+const turned = ref(0);
+const box = ref({ width: 0, height: 0 });
+const turnedStyle = computed(() => turnedBox(turned.value, box.value.width, box.value.height));
+let boxWatch: ResizeObserver | null = null;
+
+function turnPicture(): void {
+  const root = rootRef.value;
+
+  if (root) box.value = { width: root.clientWidth, height: root.clientHeight };
+
+  turned.value = nextTurn(turned.value);
+  say(t("theater.status.turned", { degrees: turned.value }));
+}
+
+// On a phone the screen turns: full screen first, since a browser locks the orientation only there. A browser that
+// offers no lock, or refuses it, turns the picture itself.
+async function turn(): Promise<void> {
+  const orientation = screen.orientation as (ScreenOrientation & { lock?: (to: string) => Promise<void> }) | undefined;
+
+  if (narrow.value && orientation?.lock) {
+    try {
+      if (!document.fullscreenElement) await rootRef.value?.requestFullscreen?.();
+      await orientation.lock(otherOrientation(orientation.type));
+      turned.value = 0;
+
+      return;
+    } catch {
+      // Falls to turning the picture.
+    }
+  }
+
+  turnPicture();
+}
+
 async function toggleFullscreen(): Promise<void> {
   const root = rootRef.value;
   const element = videoRef.value as (HTMLVideoElement & { webkitEnterFullscreen?: () => void }) | null;
@@ -458,6 +497,9 @@ function onKey(event: KeyboardEvent): void {
     case "fullscreen":
       void toggleFullscreen();
       break;
+    case "turn":
+      void turn();
+      break;
     case "captions":
       if (!props.tracks.length) break;
 
@@ -468,6 +510,9 @@ function onKey(event: KeyboardEvent): void {
 
 function onFullscreen(): void {
   fullscreen.value = document.fullscreenElement === rootRef.value;
+
+  // Leaving full screen gives the orientation back.
+  if (!document.fullscreenElement) (screen.orientation as (ScreenOrientation & { unlock?: () => void }) | undefined)?.unlock?.();
 }
 
 function onLeave(): void {
@@ -481,6 +526,12 @@ onMounted(() => {
   window.addEventListener("pagehide", onLeave);
   document.addEventListener("fullscreenchange", onFullscreen);
   release = holdThroughFullscreen(document);
+  boxWatch = new ResizeObserver(() => {
+    const root = rootRef.value;
+
+    if (root) box.value = { width: root.clientWidth, height: root.clientHeight };
+  });
+  if (rootRef.value) boxWatch.observe(rootRef.value);
 });
 
 onBeforeUnmount(() => {
@@ -490,6 +541,7 @@ onBeforeUnmount(() => {
   window.removeEventListener("pagehide", onLeave);
   document.removeEventListener("fullscreenchange", onFullscreen);
   release?.();
+  boxWatch?.disconnect();
 
   if (idle !== null) clearTimeout(idle);
 });

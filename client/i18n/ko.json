@@ -29,7 +29,8 @@
       "rescan": "재색인",
       "share": "공유",
       "subtitles": "자막",
-      "upload": "업로드"
+      "upload": "업로드",
+      "turn": "화면 회전"
     },
     "aria": {
       "player": "{name} 플레이어",
@@ -167,7 +168,8 @@
       "unmuted": "음소거 해제",
       "volume": "볼륨 {n}%",
       "went_back": "{n}초 뒤로",
-      "went_forward": "{n}초 앞으로"
+      "went_forward": "{n}초 앞으로",
+      "turned": "{degrees}도 돌렸습니다"
     }
   }
 }

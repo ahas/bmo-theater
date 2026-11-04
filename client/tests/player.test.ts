@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { DONE_SHARE, firstTrack, keyAction, positionMoved, primaryLanguage, skipTo, startAt, steppedVolume, toggledTrack, trackName } from "../app/domain/player";
+import { DONE_SHARE, firstTrack, keyAction, positionMoved, primaryLanguage, skipTo, startAt, steppedVolume, toggledTrack, trackName , nextTurn, otherOrientation, turnedBox } from "../app/domain/player";
 
 import type { Subtitle } from "../shared/types";
 
@@ -14,6 +14,10 @@ function subtitle(id: number, language: string, label = ""): Pick<Subtitle, "id"
 describe("the keys", () => {
   test("space plays and pauses, the arrows skip and move the volume, f, m and c do their own", () => {
     expect([" ", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "f", "m", "c"].map(keyAction)).toEqual(["toggle", "back", "forward", "louder", "quieter", "fullscreen", "mute", "captions"]);
+  });
+
+  test("r turns the picture", () => {
+    expect(keyAction("r")).toBe("turn");
   });
 
   test("answer no other key", () => {
@@ -79,5 +83,23 @@ describe("the subtitle shown first", () => {
     expect(trackName(subtitle(1, "en", "Director"), "en")).toBe("Director");
     expect(trackName(subtitle(1, "ko"), "en")).toBe("Korean");
     expect(trackName(subtitle(1, "und"), "en")).toBe("lines-1.srt");
+  });
+});
+
+describe("turning the picture", () => {
+  test("goes a quarter at a time and comes round", () => {
+    expect([0, 90, 180, 270].map(nextTurn)).toEqual([90, 180, 270, 0]);
+  });
+
+  test("asks for the other orientation than the screen stands in", () => {
+    expect(otherOrientation("portrait-primary")).toBe("landscape");
+    expect(otherOrientation("landscape-primary")).toBe("portrait");
+    expect(otherOrientation(undefined)).toBe("landscape");
+  });
+
+  test("fits a picture on its side to the player, with its width the player's height", () => {
+    expect(turnedBox(0, 400, 800)).toEqual({});
+    expect(turnedBox(90, 400, 800)).toMatchObject({ width: "800px", height: "400px", transform: "translate(-50%, -50%) rotate(90deg)" });
+    expect(turnedBox(180, 400, 800)).toMatchObject({ width: "400px", height: "800px" });
   });
 });

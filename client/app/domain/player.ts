@@ -24,9 +24,9 @@ export const CUE_LINE_OVER_CONTROLS = -4;
 /** How long the controls stand after the pointer last moved over a playing video. */
 export const CONTROLS_IDLE_MS = 2_500;
 
-export type PlayerAction = "toggle" | "back" | "forward" | "louder" | "quieter" | "fullscreen" | "mute" | "captions";
+export type PlayerAction = "toggle" | "back" | "forward" | "louder" | "quieter" | "fullscreen" | "turn" | "mute" | "captions";
 
-/** The action a key stands for, or none: space, the arrows, f, m and c. */
+/** The action a key stands for, or none: space, the arrows, f, m, c and r. */
 export function keyAction(key: string): PlayerAction | null {
   switch (key) {
     case " ":
@@ -45,6 +45,9 @@ export function keyAction(key: string): PlayerAction | null {
     case "f":
     case "F":
       return "fullscreen";
+    case "r":
+    case "R":
+      return "turn";
     case "m":
     case "M":
       return "mute";
@@ -121,4 +124,34 @@ export function trackName(subtitle: Pick<Subtitle, "label" | "language" | "fileN
   }
 
   return subtitle.fileName;
+}
+
+/** The next quarter turn of a picture the browser cannot turn by the screen's orientation. */
+export function nextTurn(degrees: number): number {
+  return (degrees + 90) % 360;
+}
+
+/** The orientation to lock the screen to: the other one than it stands in. */
+export function otherOrientation(current: string | undefined): "landscape" | "portrait" {
+  return current?.startsWith("landscape") ? "portrait" : "landscape";
+}
+
+/**
+ * The picture's box in a player of a given size, turned by some degrees: on its side its width takes the player's
+ * height and its height the player's width, so the turned picture fits the player and is not cut.
+ */
+export function turnedBox(degrees: number, width: number, height: number): Record<string, string> {
+  if (degrees === 0) return {};
+
+  const sideways = degrees % 180 !== 0;
+
+  return {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width: `${sideways ? height : width}px`,
+    height: `${sideways ? width : height}px`,
+    maxWidth: "none",
+    transform: `translate(-50%, -50%) rotate(${degrees}deg)`
+  };
 }

@@ -29,7 +29,8 @@
       "rescan": "Rescan",
       "share": "Share",
       "subtitles": "Subtitles",
-      "upload": "Upload"
+      "upload": "Upload",
+      "turn": "Turn the picture"
     },
     "aria": {
       "player": "{name} player",
@@ -167,7 +168,8 @@
       "unmuted": "Unmuted",
       "volume": "Volume {n}%",
       "went_back": "Back {n} seconds",
-      "went_forward": "Forward {n} seconds"
+      "went_forward": "Forward {n} seconds",
+      "turned": "Turned to {degrees} degrees"
     }
   }
 }
