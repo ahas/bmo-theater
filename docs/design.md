@@ -142,7 +142,7 @@ A console bundle, built from `client/`, stands under the sidebar entry the words
   on from where the viewer stopped.
 - **The player:** the stream with its subtitles as text tracks (off unless one is in the screen's language),
   playback speed, ten-second skips, the next episode, which a playlist goes on to by itself, the volume,
-  fullscreen, turning the picture, resuming, and the keys space, the arrows, f, m, c and r. Turning goes to full screen and locks the screen to the other orientation where the browser can; where it cannot, as on a desktop or an iPhone, it turns the picture itself a quarter at a time inside the player, fitted to the player's box. Leaving full screen or the player gives the screen's orientation back. It sets the viewer's position every five
+  fullscreen, turning the picture, resuming, and the keys space, the arrows, f, m, c and r. Turning goes to full screen and locks the screen to the other orientation where the browser can; where it cannot, as on a desktop or an iPhone, it turns the picture itself a quarter at a time inside the player, fitted to the player's box. Leaving full screen or the player gives the screen's orientation back and sets the picture straight, and on a phone a second press does the same. A press on the picture plays or pauses with a mouse; a finger only shows or hides the controls. It sets the viewer's position every five
   seconds, as it pauses and as it is left.
 - **Subtitles:** a file added to an episode or a subtitle deleted, and a subtitle burned in, the burn's state
   told by the event stream until its clip stands under the title.

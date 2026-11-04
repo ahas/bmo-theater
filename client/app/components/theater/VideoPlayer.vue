@@ -323,9 +323,14 @@ function onPress(): void {
   wake();
 }
 
-// A press on the picture plays or pauses, but where the controls were hidden under a finger it only brings them.
+// A press on the picture plays or pauses with a mouse. A finger only shows the controls, or hides them where they stand,
+// since a finger lands on the picture for no other reason than to reach them; the play button is what pauses.
 function onVideoPress(event: MouseEvent): void {
-  if ((event as PointerEvent).pointerType === "touch" && hiddenAtPress) return;
+  if ((event as PointerEvent).pointerType === "touch") {
+    if (!hiddenAtPress) awake.value = false;
+
+    return;
+  }
 
   toggle();
 }
@@ -367,6 +372,14 @@ function turnPicture(): void {
 // On a phone the screen turns: full screen first, since a browser locks the orientation only there. A browser that
 // offers no lock, or refuses it, turns the picture itself.
 async function turn(): Promise<void> {
+  // A picture turned by its own quarter comes back at the next press on a phone, where it only ever goes on its side.
+  if (narrow.value && turned.value !== 0) {
+    turned.value = 0;
+    if (document.fullscreenElement) await document.exitFullscreen().catch(() => undefined);
+
+    return;
+  }
+
   const orientation = screen.orientation as (ScreenOrientation & { lock?: (to: string) => Promise<void> }) | undefined;
 
   if (narrow.value && orientation?.lock) {
@@ -520,7 +533,10 @@ function onFullscreen(): void {
   fullscreen.value = document.fullscreenElement === rootRef.value;
 
   // Leaving full screen gives the orientation back.
-  if (!document.fullscreenElement) freeOrientation();
+  if (!document.fullscreenElement) {
+    freeOrientation();
+    turned.value = 0;
+  }
 }
 
 function onLeave(): void {
