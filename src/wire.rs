@@ -386,7 +386,7 @@ pub struct FiledByPath {
   pub number: Option<i32>,
 }
 
-/// An episode's change: the fields named; `season` and `number` null to clear.
+/// An episode's change: the fields named; `season` and `number` null to clear, `titleId` against another title.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct EpisodeChange {
@@ -398,6 +398,9 @@ pub struct EpisodeChange {
   pub season: Option<Option<i32>>,
   #[serde(default, deserialize_with = "present")]
   pub number: Option<Option<i32>>,
+  /// The title the episode moves under; a library's episode is refused.
+  #[serde(default)]
+  pub title_id: Option<i64>,
 }
 
 // ---------------------------------------------------------------------------------------------------------

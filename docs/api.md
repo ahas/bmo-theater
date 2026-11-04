@@ -115,7 +115,7 @@ not a video's (docs/design.md, 「Libraries and scans」), or that ffprobe finds
 | Method | Path | Does |
 |---|---|---|
 | GET | `/episodes/{episodeId}` | One episode |
-| PATCH | `/episodes/{episodeId}` | `name`, `label`, `season`, `number` — 200 |
+| PATCH | `/episodes/{episodeId}` | `name`, `label`, `season`, `number`, `titleId` — 200 |
 | DELETE | `/episodes/{episodeId}` | Removes a `clip` episode and its file — 204; a library's episode is 409 `conflict` |
 | GET | `/episodes/{episodeId}/stream` | The file (「Streams」) |
 | GET | `/episodes/{episodeId}/poster` | Its poster frame, `image/jpeg`; 404 `not-found` where it has none |
@@ -127,6 +127,13 @@ disk), `hasPoster`, `subtitleCount`, `burnedFrom` (for a burned clip, `{episodeI
 otherwise), `position` (the caller's position in it, as 「Positions and progress」 answers one, or null where
 the caller has none or names no account), `creator`, `createdAt`, `changedAt`. An episode's changes are made
 by whoever changes its title.
+
+`titleId` moves a `clip` episode under another title of its realm and answers it under the new title. The
+caller changes both the episode's title and the title it joins, so a caller without the right is 403
+`forbidden`; a title it does not read is 422 `unknown-title`, and a title of the other realm is 422
+`not-in-realm`. A library's episode is 409 `conflict`, since the title follows its file. A move keeps the
+episode, its file, its subtitles, its burns, its positions and every playlist it stands in, and deletes
+nothing.
 
 ## Streams
 
@@ -279,6 +286,9 @@ for a `deleted` one (`{token}` for a link):
 | `burn.running`, `burn.finished`, `burn.failed` | a burn started and ended |
 | `share.created`, `share.deleted` | a link made, ended |
 
+A move publishes `episode.changed` with the work under its new title, and `title.changed` for the title it
+left and the one it joined.
+
 A console reader is given the `organization` realm's events and those of its own account's `mine` realm and
 positions; the service token reads every one. The service keeps the events since it started, at most the
 last 1000, numbered upward from its start's moment in milliseconds times 1000; a resume from before them is
@@ -319,11 +329,19 @@ tools/theater/.placed`), namespace `bmo`, capability `room.tools`, each entry's 
 | `theater_titles` | `GET /titles` | Finds titles by realm, kind and a part of the name |
 | `theater_show` | `GET /titles/{titleId}` and its episodes, or `GET /episodes/{episodeId}` and its subtitles | A title with its episodes, or an episode with its subtitles |
 | `theater_file` | `POST /titles` where the title is new, `POST /titles/{titleId}/episodes` by path, `POST /shares` where asked | Files a local video under a title, made as a `clip` title where the name is new; with `share`, answers a link |
+| `theater_work_rename` | `PATCH /episodes/{episodeId}` | Renames a work, without uploading it again |
+| `theater_work_move` | `PATCH /episodes/{episodeId}` with `titleId`, or `POST /playlists/{playlistId}/items` | Moves a work to another title or into a playlist; nothing is deleted |
+| `theater_work_delete` | `DELETE /episodes/{episodeId}` | Deletes a filed or burned work and its file; a library's work is 409 `conflict` |
+| `theater_playlist_remove` | `GET /playlists/{playlistId}` and `PATCH /playlists/{playlistId}` | Takes a work out of a playlist, leaving the work and the playlist standing |
 | `theater_subtitle_add` | `POST /episodes/{episodeId}/subtitles` by path | Adds a local subtitle file to an episode |
 | `theater_playlist_make` | `POST /playlists` | Makes a playlist |
 | `theater_playlist_add` | `POST /playlists/{playlistId}/items` | Adds episodes to a playlist |
 | `theater_progress` | `GET /playlists/{playlistId}/progress` or `GET /titles/{titleId}/progress` | How far the owner has come, and what is next |
 | `theater_burn` | `POST /episodes/{episodeId}/burns` | Burns a subtitle into an episode, answered at once; the clip is filed when the burn ends |
+
+A work is one episode, the video the theater keeps; its title is the shelf it stands on. A move changes
+where it stands or which playlists hold it, never whether it stands: deleting a work is its own entry, and
+the service's realm rule decides who may change or delete it.
 
 Every holder of the tool acts for the owner: the tool names the account `THEATER_ACCOUNT` holds as its
 `Owner-Key`. It reaches the service with the service token from `env/theater.env` under the data root
@@ -359,7 +377,8 @@ Beside the common codes of bmo-chat's `docs/conventions.md` (`bad-request`, `una
 | `no-cues` | a subtitle that converts to no cue |
 | `unknown-subtitle` | a burn naming a subtitle that is not the episode's |
 | `unknown-episode` | a playlist naming an episode the caller does not read |
-| `not-in-realm` | a playlist naming an episode its readers would not all read |
+| `unknown-title` | a move naming a title the caller does not read |
+| `not-in-realm` | a playlist naming an episode its readers would not all read, or a move naming a title of the other realm |
 
 ## Commands
 

@@ -13,10 +13,14 @@ use serde_json::{Value, json};
 pub const PROTOCOL: u32 = 1;
 
 /// The entries this executable answers, as its manifest declares them.
-pub const ENTRIES: [&str; 8] = [
+pub const ENTRIES: [&str; 12] = [
   "theater_titles",
   "theater_show",
   "theater_file",
+  "theater_work_rename",
+  "theater_work_move",
+  "theater_work_delete",
+  "theater_playlist_remove",
   "theater_subtitle_add",
   "theater_playlist_make",
   "theater_playlist_add",
@@ -368,6 +372,82 @@ async fn answered(handed: &Handed, service: &Service) -> Result<Answer, String> 
         structured["share"] = share;
       }
       Ok(Answer::reading(lines, structured))
+    }
+    "theater_work_rename" => {
+      let id = needed(arguments, "episodeId")?;
+      let name = text(arguments, "name").ok_or("name is the work's new name")?;
+      let mut body = json!({ "name": name });
+      if let Some(label) = text(arguments, "label") {
+        body["label"] = json!(label);
+      }
+      let episode = call(service, Method::PATCH, &format!("/episodes/{id}"), &[], Some(&body)).await?;
+      Ok(Answer::reading(vec![format!("Renamed work {id}."), episode_line(&episode)], episode))
+    }
+    "theater_work_move" => {
+      let id = needed(arguments, "episodeId")?;
+      match (number(arguments, "titleId"), number(arguments, "playlistId")) {
+        (Some(title_id), None) => {
+          let body = json!({ "titleId": title_id });
+          let episode = call(service, Method::PATCH, &format!("/episodes/{id}"), &[], Some(&body)).await?;
+          Ok(Answer::reading(
+            vec![format!("Moved work {id} under title {title_id}."), episode_line(&episode)],
+            episode,
+          ))
+        }
+        (None, Some(playlist_id)) => {
+          let body = json!({ "episodeIds": [id] });
+          let playlist =
+            call(service, Method::POST, &format!("/playlists/{playlist_id}/items"), &[], Some(&body))
+              .await?;
+          Ok(Answer::reading(
+            vec![format!("Added work {id} to playlist {playlist_id}."), playlist_line(&playlist)],
+            playlist,
+          ))
+        }
+        _ => Err("episodeId and exactly one of titleId or playlistId names where the work moves".into()),
+      }
+    }
+    "theater_work_delete" => {
+      let id = needed(arguments, "episodeId")?;
+      call(service, Method::DELETE, &format!("/episodes/{id}"), &[], None).await?;
+      Ok(Answer::reading(vec![format!("Deleted work {id}.")], json!({ "id": id })))
+    }
+    "theater_playlist_remove" => {
+      let playlist_id = needed(arguments, "playlistId")?;
+      let episode_id = needed(arguments, "episodeId")?;
+      let playlist = call(service, Method::GET, &format!("/playlists/{playlist_id}"), &[], None).await?;
+      let order = playlist["episodeIds"].as_array().cloned().unwrap_or_default();
+      let at = match number(arguments, "at") {
+        Some(at) if at >= 0 => {
+          let at = at as usize;
+          if order.get(at).and_then(Value::as_i64) != Some(episode_id) {
+            return Err(format!("No work {episode_id} stands at place {at} in playlist {playlist_id}."));
+          }
+          at
+        }
+        Some(_) => return Err("at is a place from 0".to_owned()),
+        None => order
+          .iter()
+          .position(|one| one.as_i64() == Some(episode_id))
+          .ok_or_else(|| format!("Playlist {playlist_id} does not hold work {episode_id}."))?,
+      };
+      let mut remaining = order;
+      remaining.remove(at);
+      let changed = call(
+        service,
+        Method::PATCH,
+        &format!("/playlists/{playlist_id}"),
+        &[],
+        Some(&json!({ "episodeIds": remaining })),
+      )
+      .await?;
+      Ok(Answer::reading(
+        vec![
+          format!("Removed work {episode_id} from playlist {playlist_id}."),
+          playlist_line(&changed),
+        ],
+        changed,
+      ))
     }
     "theater_subtitle_add" => {
       let id = needed(arguments, "episodeId")?;

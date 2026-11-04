@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "episodeId"
+  ],
+  "properties": {
+    "episodeId": {
+      "type": "integer",
+      "description": "The filed or burned work to delete; a library's work is refused."
+    }
+  }
+}

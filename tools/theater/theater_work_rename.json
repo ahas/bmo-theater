@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "episodeId",
+    "name"
+  ],
+  "properties": {
+    "episodeId": {
+      "type": "integer",
+      "description": "The work to rename."
+    },
+    "name": {
+      "type": "string",
+      "description": "The work's new name."
+    },
+    "label": {
+      "type": "string",
+      "description": "A short label for the work, such as a revision."
+    }
+  }
+}

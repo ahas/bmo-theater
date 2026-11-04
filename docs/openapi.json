@@ -337,7 +337,7 @@
       },
       "EpisodeChange": {
         "additionalProperties": false,
-        "description": "An episode's change: the fields named; `season` and `number` null to clear.",
+        "description": "An episode's change: the fields named; `season` and `number` null to clear, `titleId` against another title.",
         "properties": {
           "label": {
             "default": null,
@@ -368,13 +368,23 @@
               "integer",
               "null"
             ]
+          },
+          "titleId": {
+            "default": null,
+            "description": "The title the episode moves under; a library's episode is refused.",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
           }
         },
         "required": [
           "name",
           "label",
           "season",
-          "number"
+          "number",
+          "titleId"
         ],
         "type": "object"
       },
@@ -3805,7 +3815,7 @@
                 }
               }
             },
-            "description": "`no-account`: a mine list or write, or a position, on a call that names no account\n`unknown-episode`: a playlist naming an episode the caller does not read\n`not-in-realm`: a playlist naming an episode its readers would not all read"
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account\n`unknown-episode`: a playlist naming an episode the caller does not read\n`not-in-realm`: a playlist naming an episode its readers would not all read, or a move naming a title of the other realm"
           }
         },
         "summary": "Make a playlist.",
@@ -4034,7 +4044,7 @@
                 }
               }
             },
-            "description": "`unknown-episode`: a playlist naming an episode the caller does not read\n`not-in-realm`: a playlist naming an episode its readers would not all read"
+            "description": "`unknown-episode`: a playlist naming an episode the caller does not read\n`not-in-realm`: a playlist naming an episode its readers would not all read, or a move naming a title of the other realm"
           }
         },
         "summary": "Rename a playlist, or write its whole order.",
@@ -4136,7 +4146,7 @@
                 }
               }
             },
-            "description": "`unknown-episode`: a playlist naming an episode the caller does not read\n`not-in-realm`: a playlist naming an episode its readers would not all read"
+            "description": "`unknown-episode`: a playlist naming an episode the caller does not read\n`not-in-realm`: a playlist naming an episode its readers would not all read, or a move naming a title of the other realm"
           }
         },
         "summary": "Add episodes to a playlist, at a place or at the end.",
@@ -6518,6 +6528,133 @@
         "$ref": "#/components/schemas/Episode"
       },
       "route": "POST /titles/{titleId}/episodes"
+    },
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "Renames a work without filing it again.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "episodeId": {
+            "description": "The work to rename.",
+            "type": "integer"
+          },
+          "label": {
+            "description": "A short label for the work, such as a revision.",
+            "type": "string"
+          },
+          "name": {
+            "description": "The work's new name.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "episodeId",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "theater_work_rename",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Episode"
+      },
+      "route": "PATCH /episodes/{episodeId}"
+    },
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "Moves a work under another title or into a playlist; nothing is deleted.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "episodeId": {
+            "description": "The work to move.",
+            "type": "integer"
+          },
+          "playlistId": {
+            "description": "The playlist to add the work to, where no titleId is given.",
+            "type": "integer"
+          },
+          "titleId": {
+            "description": "The title, or shelf, to move the work under, where no playlistId is given.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "episodeId"
+        ],
+        "type": "object"
+      },
+      "name": "theater_work_move",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Episode"
+      },
+      "route": "PATCH /episodes/{episodeId}"
+    },
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "Deletes a filed or burned work and its file; a library's work is refused.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "episodeId": {
+            "description": "The filed or burned work to delete; a library's work is refused.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "episodeId"
+        ],
+        "type": "object"
+      },
+      "name": "theater_work_delete",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Deleted"
+      },
+      "route": "DELETE /episodes/{episodeId}"
+    },
+    {
+      "capabilities": [
+        "room.tools"
+      ],
+      "description": "Takes a work out of a playlist, leaving the work and the playlist standing.",
+      "input": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "description": "The place it stands at, from 0, where the playlist holds it more than once; the first place where none.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "episodeId": {
+            "description": "The work to take out.",
+            "type": "integer"
+          },
+          "playlistId": {
+            "description": "The playlist to take the work out of.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "playlistId",
+          "episodeId"
+        ],
+        "type": "object"
+      },
+      "name": "theater_playlist_remove",
+      "namespace": "bmo",
+      "output": {
+        "$ref": "#/components/schemas/Playlist"
+      },
+      "route": "PATCH /playlists/{playlistId}"
     },
     {
       "capabilities": [

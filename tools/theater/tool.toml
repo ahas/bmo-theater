@@ -1,8 +1,8 @@
-# The theater tool: titles found and shown, videos and subtitles filed, playlists made, progress read and
-# subtitles burned in a turn (docs/api.md, 「The tool」), each entry one or a few calls of theater routes. The tool
-# finds the service and the account it acts for through the data root's env/theater.env. The crate's own test
-# holds every entry here to the executable answering it. Every call waits for the service's answer however long
-# it takes.
+# The theater tool: titles found and shown, videos filed, works renamed, moved and deleted, subtitles filed,
+# playlists made and taken from, progress read and subtitles burned in a turn (docs/api.md, 「The tool」), each
+# entry one or a few calls of theater routes. The tool finds the service and the account it acts for through the
+# data root's env/theater.env. The crate's own test holds every entry here to the executable answering it. Every
+# call waits for the service's answer however long it takes.
 
 [tool]
 name = "theater"
@@ -39,6 +39,46 @@ title = "File a video"
 description = "File a local video file in the theater under a title, made where its name is new; optionally answer a share link for a room."
 manual = "manual.md"
 input = "theater_file.json"
+hints = { idempotent = false }
+capabilities = ["room.tools"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_work_rename"
+title = "Rename a work"
+description = "Rename a work without filing it again."
+manual = "manual.md"
+input = "theater_work_rename.json"
+hints = { idempotent = true }
+capabilities = ["room.tools"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_work_move"
+title = "Move a work"
+description = "Move a work under another title or into a playlist, deleting nothing."
+manual = "manual.md"
+input = "theater_work_move.json"
+hints = { idempotent = false }
+capabilities = ["room.tools"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_work_delete"
+title = "Delete a work"
+description = "Delete a filed or burned work and its file; a library's work is refused."
+manual = "manual.md"
+input = "theater_work_delete.json"
+hints = { idempotent = false }
+capabilities = ["room.tools"]
+
+[[entry]]
+namespace = "bmo"
+name = "theater_playlist_remove"
+title = "Remove from a playlist"
+description = "Take a work out of a playlist, leaving the work and the playlist standing."
+manual = "manual.md"
+input = "theater_playlist_remove.json"
 hints = { idempotent = false }
 capabilities = ["room.tools"]
 

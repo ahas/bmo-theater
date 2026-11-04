@@ -13,3 +13,4 @@ mod repository;
 mod scan;
 mod shares;
 mod subtitles;
+mod work;

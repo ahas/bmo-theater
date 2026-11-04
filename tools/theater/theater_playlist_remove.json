@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "playlistId",
+    "episodeId"
+  ],
+  "properties": {
+    "playlistId": {
+      "type": "integer",
+      "description": "The playlist to take the work out of."
+    },
+    "episodeId": {
+      "type": "integer",
+      "description": "The work to take out."
+    },
+    "at": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The place it stands at, from 0, where the playlist holds it more than once; the first place where none."
+    }
+  }
+}

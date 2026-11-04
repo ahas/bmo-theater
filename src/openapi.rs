@@ -28,7 +28,7 @@ const DESCRIPTION: &str = "The platform's store of videos: titles made of episod
   is the error shape with its status. The tool's entries, placed on the tool host, are stated under x-tools.";
 
 /// The tool's entries: name, description, the routes it calls, and the answer it carries.
-pub const TOOLS: [(&str, &str, &str, &str); 8] = [
+pub const TOOLS: [(&str, &str, &str, &str); 12] = [
   (
     "theater_titles",
     "Finds titles by realm, kind and a part of the name.",
@@ -46,6 +46,30 @@ pub const TOOLS: [(&str, &str, &str, &str); 8] = [
     "Files a local video under a title, made as a clip title where the name is new; with share, answers a link.",
     "POST /titles/{titleId}/episodes",
     "episode",
+  ),
+  (
+    "theater_work_rename",
+    "Renames a work without filing it again.",
+    "PATCH /episodes/{episodeId}",
+    "episode",
+  ),
+  (
+    "theater_work_move",
+    "Moves a work under another title or into a playlist; nothing is deleted.",
+    "PATCH /episodes/{episodeId}",
+    "episode",
+  ),
+  (
+    "theater_work_delete",
+    "Deletes a filed or burned work and its file; a library's work is refused.",
+    "DELETE /episodes/{episodeId}",
+    "deleted",
+  ),
+  (
+    "theater_playlist_remove",
+    "Takes a work out of a playlist, leaving the work and the playlist standing.",
+    "PATCH /playlists/{playlistId}",
+    "playlist",
   ),
   (
     "theater_subtitle_add",
@@ -80,6 +104,10 @@ pub fn tool_input(name: &str) -> Value {
     "theater_titles" => include_str!("../tools/theater/theater_titles.json"),
     "theater_show" => include_str!("../tools/theater/theater_show.json"),
     "theater_file" => include_str!("../tools/theater/theater_file.json"),
+    "theater_work_rename" => include_str!("../tools/theater/theater_work_rename.json"),
+    "theater_work_move" => include_str!("../tools/theater/theater_work_move.json"),
+    "theater_work_delete" => include_str!("../tools/theater/theater_work_delete.json"),
+    "theater_playlist_remove" => include_str!("../tools/theater/theater_playlist_remove.json"),
     "theater_subtitle_add" => include_str!("../tools/theater/theater_subtitle_add.json"),
     "theater_playlist_make" => include_str!("../tools/theater/theater_playlist_make.json"),
     "theater_playlist_add" => include_str!("../tools/theater/theater_playlist_add.json"),
@@ -981,6 +1009,7 @@ pub fn openapi() -> Value {
   outputs.insert("playlist", g.subschema_for::<Playlist>().to_value());
   outputs.insert("progress", g.subschema_for::<Progress>().to_value());
   outputs.insert("burn", g.subschema_for::<Burn>().to_value());
+  outputs.insert("deleted", g.subschema_for::<Deleted>().to_value());
   let tools: Vec<Value> = TOOLS
     .iter()
     .map(|(name, description, route, answer)| {

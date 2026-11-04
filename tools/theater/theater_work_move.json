@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "episodeId"
+  ],
+  "properties": {
+    "episodeId": {
+      "type": "integer",
+      "description": "The work to move."
+    },
+    "titleId": {
+      "type": "integer",
+      "description": "The title, or shelf, to move the work under, where no playlistId is given."
+    },
+    "playlistId": {
+      "type": "integer",
+      "description": "The playlist to add the work to, where no titleId is given."
+    }
+  }
+}

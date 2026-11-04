@@ -6,7 +6,7 @@ use axum::response::{IntoResponse, Response};
 use crate::wire::WireError;
 
 /// Every code the service answers, each with its status and what it means.
-pub const CODES: [(&str, u16, &str); 18] = [
+pub const CODES: [(&str, u16, &str); 19] = [
   ("bad-request", 400, "the body or the query is not the shape the route takes"),
   ("unauthorized", 401, "the token is missing or wrong"),
   ("forbidden", 403, "the token is right but the caller may not do this"),
@@ -38,7 +38,12 @@ pub const CODES: [(&str, u16, &str); 18] = [
   ("no-cues", 422, "a subtitle that converts to no cue"),
   ("unknown-subtitle", 422, "a burn naming a subtitle that is not the episode's"),
   ("unknown-episode", 422, "a playlist naming an episode the caller does not read"),
-  ("not-in-realm", 422, "a playlist naming an episode its readers would not all read"),
+  ("unknown-title", 422, "a move naming a title the caller does not read"),
+  (
+    "not-in-realm",
+    422,
+    "a playlist naming an episode its readers would not all read, or a move naming a title of the other realm",
+  ),
   ("failed", 500, "the service failed: its database, its file root or a command it runs"),
   ("not-ready", 503, "the service cannot answer yet"),
 ];

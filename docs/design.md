@@ -28,7 +28,8 @@ share links that open a video to whoever holds the link.
   label, the file it is (path, name, media type, size), what the file holds as read when it was indexed
   (duration, width, height, video and audio codecs), whether the file is still on disk, a poster frame, and
   its subtitles. Its kind is `episode`, a library's video, or `clip`, a filed output or a burned one; a
-  burned clip names the episode and the subtitle it was burned from.
+  burned clip names the episode and the subtitle it was burned from. A `clip` episode may be moved to
+  another title of its realm; a library's episode stays with the title its file was indexed under.
 - **A subtitle** belongs to one episode: its language, a label, its original format (`srt`, `ass`, `smi` or
   `vtt`), the original file as it was given and the WebVTT the theater converted it to.
 - **A playlist** is a name, a realm and an ordered list of episodes, which may stand under different titles
@@ -157,9 +158,13 @@ Every screen keeps to the event stream, so what changes anywhere is shown where 
 ## The tool
 
 The supervisor reaches the theater through the tool host: find titles, show a title or an episode, file a
-local video as an output, add a subtitle, make a playlist and add to it, read a viewer's progress, and burn a
-subtitle in. A finished video is filed with the tool, and the room is sent a share link rather than the file.
-Every holder of the tool acts for the owner.
+local video as an output, rename, move and delete a work, add a subtitle, make a playlist, add to it and take
+a work out of it, read a viewer's progress, and burn a subtitle in. A finished video is filed with the tool,
+and the room is sent a share link rather than the file. A work is one video the theater keeps, an episode: it
+stands on a title, the shelf that holds it, and may also stand in playlists. A move puts it under another
+title or into a playlist and never deletes anything; a delete is its own call, and a library's episode is
+neither moved nor deleted on its own. Every holder of the tool acts for the owner, and the console's realm
+rule decides who may change or delete what.
 
 ## Out of scope
 

@@ -164,27 +164,73 @@ pub async fn change(
   caller.may_change(&stored.standing, "episode")?;
   let change: EpisodeChange = body(&bytes)?;
   let episode = stored.episode;
+  // A move stands the episode under another title of its own realm, which the caller changes too; a library's
+  // episode follows the title its file was indexed under (docs/api.md, 「Episodes」).
+  let destination = match change.title_id {
+    Some(title_id) if title_id != episode.title_id => {
+      if episode.kind == EpisodeKind::Episode || stored.library_id.is_some() {
+        return Err(ApiError::conflict(
+          "A library's episode stays with the title its file was indexed under.",
+        ));
+      }
+      let Some((title, standing)) = store::title(&app.pool, title_id).await? else {
+        return Err(ApiError::of("unknown-title", format!("No title {title_id} stands.")));
+      };
+      if !caller.reads(&standing) {
+        return Err(ApiError::of("unknown-title", format!("No title {title_id} stands.")));
+      }
+      if title.realm != episode.realm {
+        return Err(ApiError::of(
+          "not-in-realm",
+          format!("Episode {} is not moved to a title of another realm.", episode.id),
+        ));
+      }
+      caller.may_change(&standing, "title")?;
+      Some(title.id)
+    }
+    _ => None,
+  };
   let name = match &change.name {
     Some(name) => one_line(name, "name")?,
     None => episode.name,
   };
+  let title_id = destination.unwrap_or(episode.title_id);
+  let now = now_ms();
   sqlx::query(
-    "UPDATE episodes SET name = $2, label = $3, season = $4, number = $5, changed_at = $6 WHERE id = $1",
+    "UPDATE episodes SET title_id = $2, name = $3, label = $4, season = $5, number = $6, changed_at = $7 \
+     WHERE id = $1",
   )
   .bind(episode.id)
+  .bind(title_id)
   .bind(name)
   .bind(change.label.map(|label| label.trim().to_owned()).unwrap_or(episode.label))
   .bind(change.season.unwrap_or(episode.season))
   .bind(change.number.unwrap_or(episode.number))
-  .bind(now_ms())
+  .bind(now)
   .execute(&app.pool)
   .await?;
+  if let Some(destination) = destination {
+    for title in [episode.title_id, destination] {
+      sqlx::query("UPDATE titles SET changed_at = $2 WHERE id = $1")
+        .bind(title)
+        .bind(now)
+        .execute(&app.pool)
+        .await?;
+    }
+  }
   let stored = store::episode(&app.pool, episode.id, caller.account.as_deref())
     .await?
     .ok_or_else(|| ApiError::not_found("No episode stands there."))?;
   let mut told = stored.episode.clone();
   told.position = None;
   app.publish("episode.changed", &told, &stored.standing);
+  if let Some(destination) = destination {
+    for title in [episode.title_id, destination] {
+      if let Some((title, standing)) = store::title(&app.pool, title).await? {
+        app.publish("title.changed", &title, &standing);
+      }
+    }
+  }
   Ok(Json(stored.episode))
 }
 

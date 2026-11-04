@@ -69,6 +69,40 @@ async fn answer_for(
     )
       .into_response(),
     ("GET", ["episodes", id]) => Json(episode(id.parse().unwrap())).into_response(),
+    ("PATCH", ["episodes", "2"]) | ("DELETE", ["episodes", "2"]) => (
+      StatusCode::FORBIDDEN,
+      Json(json!({
+        "code": "forbidden",
+        "error": "Only the administrator and its creator change this episode.",
+      })),
+    )
+      .into_response(),
+    ("PATCH", ["episodes", id]) => {
+      let mut episode = episode(id.parse().unwrap());
+      for key in ["name", "label", "titleId"] {
+        if let Some(value) = body.get(key) {
+          episode[key] = value.clone();
+        }
+      }
+      Json(episode).into_response()
+    }
+    ("DELETE", ["episodes", _]) => StatusCode::NO_CONTENT.into_response(),
+    ("GET", ["playlists", id]) => Json(json!({
+      "id": id.parse::<i64>().unwrap(),
+      "name": "Run",
+      "realm": "mine",
+      "episodeIds": [3],
+      "durationMs": 61_000,
+    }))
+    .into_response(),
+    ("PATCH", ["playlists", id]) => Json(json!({
+      "id": id.parse::<i64>().unwrap(),
+      "name": "Run",
+      "realm": "mine",
+      "episodeIds": body["episodeIds"].clone(),
+      "durationMs": 61_000,
+    }))
+    .into_response(),
     ("GET", ["episodes", _, "subtitles"]) => Json(
       json!({ "items": [{ "id": 4, "language": "en", "format": "srt", "cueCount": 2 }], "more": false }),
     )
@@ -208,6 +242,80 @@ async fn every_other_entry_calls_its_route() {
   assert!(refused.is_error);
   let unknown = answer(&handed("theater_nothing", json!({})), &service).await;
   assert!(unknown.is_error);
+}
+
+#[tokio::test]
+async fn a_work_is_renamed_moved_and_deleted() {
+  let (stand, service) = stand().await;
+  let renamed = answer(
+    &handed(
+      "theater_work_rename",
+      json!({ "episodeId": 3, "name": "Introduction", "label": "rev.4" }),
+    ),
+    &service,
+  )
+  .await;
+  assert!(!renamed.is_error, "{}", renamed.text());
+  assert!(renamed.text().contains("Introduction"), "{}", renamed.text());
+  let moved = answer(&handed("theater_work_move", json!({ "episodeId": 3, "titleId": 7 })), &service).await;
+  assert!(!moved.is_error, "{}", moved.text());
+  assert_eq!(moved.structured.as_ref().unwrap()["titleId"], 7);
+  let added =
+    answer(&handed("theater_work_move", json!({ "episodeId": 3, "playlistId": 6 })), &service).await;
+  assert!(!added.is_error, "{}", added.text());
+  let removed =
+    answer(&handed("theater_playlist_remove", json!({ "playlistId": 6, "episodeId": 3 })), &service).await;
+  assert!(!removed.is_error, "{}", removed.text());
+  let deleted = answer(&handed("theater_work_delete", json!({ "episodeId": 3 })), &service).await;
+  assert!(!deleted.is_error, "{}", deleted.text());
+  assert_eq!(deleted.structured.as_ref().unwrap(), &json!({ "id": 3 }));
+
+  let asked = stand.asked.lock().unwrap().clone();
+  let routes: Vec<String> = asked.iter().map(|(method, path, ..)| format!("{method} {path}")).collect();
+  assert_eq!(
+    routes,
+    [
+      "PATCH /episodes/3",
+      "PATCH /episodes/3",
+      "POST /playlists/6/items",
+      "GET /playlists/6",
+      "PATCH /playlists/6",
+      "DELETE /episodes/3"
+    ]
+  );
+  assert_eq!(asked[0].4, json!({ "name": "Introduction", "label": "rev.4" }));
+  assert_eq!(asked[1].4, json!({ "titleId": 7 }));
+  assert_eq!(asked[2].4, json!({ "episodeIds": [3] }));
+  assert_eq!(asked[4].4, json!({ "episodeIds": [] }));
+
+  let nowhere = answer(&handed("theater_work_move", json!({ "episodeId": 3 })), &service).await;
+  assert!(nowhere.is_error);
+  let missing =
+    answer(&handed("theater_playlist_remove", json!({ "playlistId": 6, "episodeId": 9 })), &service).await;
+  assert!(missing.is_error);
+  let wrong_place = answer(
+    &handed("theater_playlist_remove", json!({ "playlistId": 6, "episodeId": 9, "at": 0 })),
+    &service,
+  )
+  .await;
+  assert!(wrong_place.is_error);
+}
+
+#[tokio::test]
+async fn a_refused_caller_hears_the_service_sentence() {
+  let (_, service) = stand().await;
+  for (entry, arguments) in [
+    ("theater_work_rename", json!({ "episodeId": 2, "name": "Taken" })),
+    ("theater_work_delete", json!({ "episodeId": 2 })),
+  ] {
+    let refused = answer(&handed(entry, arguments), &service).await;
+    assert!(refused.is_error, "{entry}");
+    assert!(
+      refused.text().contains("Only the administrator and its creator change this episode."),
+      "{entry}: {}",
+      refused.text()
+    );
+  }
 }
 
 #[test]
