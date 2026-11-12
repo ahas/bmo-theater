@@ -155,6 +155,14 @@ A console bundle, built from `client/`, stands under the sidebar entry the words
 
 Every screen keeps to the event stream, so what changes anywhere is shown where it stands.
 
+The bar over a screen, the console's where it offers one and the screen's own otherwise, holds the theater's
+name and mark alone. What acts on the screen as a whole stands at the right end of the screen's own row
+directly under that bar, and the way back to where the reader came from at its left end: the row of the
+theater's screens on the library, the playlists and the libraries, the screen's toolbar on a title, a
+playlist and the player. Every button in that row is the component library's small button at its own size,
+its hover confined to its own shape; on a narrow screen the row of screens names each screen by its mark
+alone, so the actions keep standing beside it.
+
 ## The tool
 
 The supervisor reaches the theater through the tool host: find titles, show a title or an episode, file a

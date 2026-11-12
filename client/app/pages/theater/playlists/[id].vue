@@ -4,23 +4,14 @@
        handle at an item's left — dragged with a pointer, or moved with the arrow keys — and on a phone by each
        item's up and down buttons; every change sends the whole order. -->
   <TheaterFrame id="theater-playlist">
-    <ToolBar class="pointer-coarse:h-11!" :label="$t('theater.aria.playlist_bar')">
+    <ToolBar :label="$t('theater.aria.playlist_bar')">
       <div>
         <UTooltip :text="$t('theater.label.playlists')">
-          <UButton color="neutral" variant="ghost" icon="i-material-symbols-arrow-back" class="h-full min-w-9 justify-center p-0 pointer-coarse:size-11!" :aria-label="$t('theater.label.playlists')" :to="backPath" />
+          <UButton color="neutral" variant="ghost" size="sm" square icon="i-material-symbols-arrow-back" :aria-label="$t('theater.label.playlists')" :to="backPath" />
         </UTooltip>
       </div>
-      <div class="ms-auto">
-        <UTooltip :text="$t('theater.action.rename')">
-          <UButton color="neutral" variant="ghost" class="pointer-coarse:size-11!" icon="i-material-symbols-edit-outline" :aria-label="$t('theater.action.rename')" :disabled="!playlist" @click="renaming = true" />
-        </UTooltip>
-        <UTooltip :text="$t('theater.action.share')">
-          <UButton color="neutral" variant="ghost" class="pointer-coarse:size-11!" icon="i-material-symbols-share-outline" :aria-label="$t('theater.action.share')" :disabled="!playlist" @click="sharing = true" />
-        </UTooltip>
-        <UTooltip :text="$t('theater.action.delete')">
-          <UButton color="neutral" variant="ghost" class="pointer-coarse:size-11!" icon="i-material-symbols-delete-outline" :aria-label="$t('theater.action.delete')" :disabled="!playlist" @click="remove" />
-        </UTooltip>
-      </div>
+
+      <ActionGroup :actions="actions" :narrow-fold="false" class="ms-auto" />
     </ToolBar>
 
     <div class="min-h-0 flex-1 overflow-y-auto">
@@ -113,6 +104,7 @@
 import { computed, nextTick, ref, watch } from "vue";
 import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
+import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
 import MovingList from "bmo-ui/app/components/MovingList.vue";
 import ShareLinkDialog from "bmo-ui/app/components/ShareLinkDialog.vue";
@@ -136,6 +128,7 @@ import { useDialogFocus } from "../../../composables/useDialogFocus";
 import { theaterAddress, useTheater } from "../../../composables/useTheater";
 import { useTheaterEvents } from "../../../composables/useTheaterEvents";
 
+import type { BarAction } from "bmo-ui/app/domain/tabs";
 import type { Episode } from "../../../../shared/types";
 
 const route = useRoute();
@@ -155,6 +148,11 @@ const sharing = ref(false);
 
 const playlistId = computed(() => Number(route.params.id));
 const playlist = computed(() => store.playlistOf(playlistId.value) ?? null);
+const actions = computed<BarAction[]>(() => [
+  { id: "rename", label: t("theater.action.rename"), icon: "i-material-symbols-edit-outline", disabled: !playlist.value, onSelect: () => (renaming.value = true) },
+  { id: "share", label: t("theater.action.share"), icon: "i-material-symbols-share-outline", disabled: !playlist.value, onSelect: () => (sharing.value = true) },
+  { id: "delete", label: t("theater.action.delete"), icon: "i-material-symbols-delete-outline", disabled: !playlist.value, onSelect: () => void remove() }
+]);
 const progress = computed(() => store.progressOf("playlist", playlistId.value));
 const backPath = computed(() => ({ path: "/theater/playlists", query: playlist.value?.realm === "organization" ? { realm: "organization" } : {} }));
 

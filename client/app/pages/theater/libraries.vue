@@ -2,16 +2,7 @@
   <!-- The libraries, the administrator's alone (`docs/api.md`, 「Libraries」): each registered folder with what its
        last scan found, a scan asked for again, a rename and its removal; a folder registered from here. Anyone
        else is shown nothing of them. -->
-  <TheaterFrame id="theater-libraries" nav>
-    <template v-if="administrator" #actions>
-      <UTooltip :text="$t('theater.action.register')">
-        <UButton color="neutral" variant="ghost" class="pointer-coarse:size-11 pointer-coarse:justify-center" icon="i-material-symbols-create-new-folder-outline" :aria-label="$t('theater.action.register')" @click="registering = true" />
-      </UTooltip>
-      <UTooltip :text="$t('theater.action.refresh')">
-        <UButton color="neutral" variant="ghost" class="pointer-coarse:size-11 pointer-coarse:justify-center" icon="i-material-symbols-refresh" :aria-label="$t('theater.action.refresh')" :loading="refreshing" @click="refresh" />
-      </UTooltip>
-    </template>
-
+  <TheaterFrame id="theater-libraries" nav :actions="actions">
     <div v-if="administrator" class="min-h-0 flex-1 overflow-y-auto">
       <p v-if="librariesFailed && !libraries.length" role="alert" class="badge-ink p-4 text-sm text-error">{{ $t("theater.error.libraries_failed") }}</p>
 
@@ -55,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { navigateTo } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
@@ -71,6 +62,7 @@ import TheaterFrame from "../../components/theater/TheaterFrame.vue";
 import { useTheater } from "../../composables/useTheater";
 import { useTheaterEvents } from "../../composables/useTheaterEvents";
 
+import type { BarAction } from "bmo-ui/app/domain/tabs";
 import type { Library } from "../../../shared/types";
 
 const { t } = useI18n();
@@ -81,6 +73,16 @@ const chosen = ref<Library | null>(null);
 const registering = ref(false);
 const renaming = ref(false);
 const refreshing = ref(false);
+
+// Registering and scanning are the administrator's alone, so nobody else is offered them.
+const actions = computed<BarAction[]>(() =>
+  administrator.value
+    ? [
+        { id: "register", label: t("theater.action.register"), icon: "i-material-symbols-create-new-folder-outline", onSelect: () => (registering.value = true) },
+        { id: "refresh", label: t("theater.action.refresh"), icon: "i-material-symbols-refresh", loading: refreshing.value, onSelect: () => void refresh() }
+      ]
+    : []
+);
 
 // A reader who does not administer the theater is taken back to the library: this screen is not theirs.
 watch(

@@ -2,25 +2,18 @@
   <!-- One title (`docs/design.md`, 「The console」): its name, how far the viewer has come through it and the
        episode to go on from, then its episodes by season, each with its own progress. -->
   <TheaterFrame id="theater-title">
-    <template #actions>
-      <UTooltip :text="$t('theater.action.upload')">
-        <UButton color="neutral" variant="ghost" class="pointer-coarse:size-11 pointer-coarse:justify-center" icon="i-material-symbols-upload" :aria-label="$t('theater.action.upload')" :disabled="title === null" @click="uploading = true" />
-      </UTooltip>
-      <UTooltip :text="$t('theater.action.refresh')">
-        <UButton color="neutral" variant="ghost" class="pointer-coarse:size-11 pointer-coarse:justify-center" icon="i-material-symbols-refresh" :aria-label="$t('theater.action.refresh')" :loading="refreshing" @click="refresh" />
-      </UTooltip>
-    </template>
-
-    <ToolBar class="pointer-coarse:h-11!" :label="$t('theater.aria.title_bar')">
+    <ToolBar :label="$t('theater.aria.title_bar')">
       <div>
         <UTooltip :text="$t('theater.label.library')">
-          <UButton color="neutral" variant="ghost" icon="i-material-symbols-arrow-back" class="h-full min-w-9 justify-center p-0 pointer-coarse:size-11!" :aria-label="$t('theater.label.library')" :to="backPath" />
+          <UButton color="neutral" variant="ghost" size="sm" square icon="i-material-symbols-arrow-back" :aria-label="$t('theater.label.library')" :to="backPath" />
         </UTooltip>
       </div>
 
       <div v-if="seasons.length > 1" data-slot="season">
-        <USelect v-model="seasonKey" :items="seasonItems" value-key="value" variant="ghost" class="h-full min-w-32" :aria-label="$t('theater.label.season')" />
+        <USelect v-model="seasonKey" :items="seasonItems" value-key="value" variant="ghost" size="sm" class="min-w-32" :aria-label="$t('theater.label.season')" />
       </div>
+
+      <ActionGroup :actions="actions" :narrow-fold="false" class="ms-auto" />
     </ToolBar>
 
     <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto">
@@ -78,6 +71,7 @@
 import { computed, ref, useTemplateRef, watch } from "vue";
 import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
+import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
 import ShareLinkDialog from "bmo-ui/app/components/ShareLinkDialog.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
@@ -102,6 +96,7 @@ import { useKeptScroll } from "../../../composables/useKeptScroll";
 import { useTheaterEvents } from "../../../composables/useTheaterEvents";
 
 import type { DropdownMenuItem, SelectItem } from "@nuxt/ui";
+import type { BarAction } from "bmo-ui/app/domain/tabs";
 import type { Episode } from "../../../../shared/types";
 
 const scrollerRef = useTemplateRef<HTMLElement>("scroller");
@@ -120,6 +115,10 @@ const sharingOpen = ref(false);
 
 const titleId = computed(() => Number(route.params.id));
 const title = computed(() => store.titleOf(titleId.value) ?? null);
+const actions = computed<BarAction[]>(() => [
+  { id: "upload", label: t("theater.action.upload"), icon: "i-material-symbols-upload", disabled: title.value === null, onSelect: () => (uploading.value = true) },
+  { id: "refresh", label: t("theater.action.refresh"), icon: "i-material-symbols-refresh", loading: refreshing.value, onSelect: () => void refresh() }
+]);
 const episodeList = computed<Episode[] | null>(() => store.episodes.value[titleId.value] ?? null);
 const progress = computed(() => store.progressOf("title", titleId.value));
 const watched = computed(() => watchedById(progress.value));

@@ -3,26 +3,16 @@
        viewer stopped, its position set every few seconds; under it what it is, what is done with it, and what
        comes next — the playlist's episodes where it was opened from one, which then follow on their own. -->
   <TheaterFrame id="theater-watch">
-    <ToolBar class="pointer-coarse:h-11!" :label="$t('theater.aria.watch_bar')">
+    <ToolBar :label="$t('theater.aria.watch_bar')">
       <div>
         <UTooltip :text="backWords">
-          <UButton color="neutral" variant="ghost" icon="i-material-symbols-arrow-back" class="h-full min-w-9 justify-center p-0 pointer-coarse:size-11!" :aria-label="backWords" :to="backPath" />
+          <UButton color="neutral" variant="ghost" size="sm" square icon="i-material-symbols-arrow-back" :aria-label="backWords" :to="backPath" />
         </UTooltip>
       </div>
       <div class="min-w-0 flex-1 shrink!">
         <span class="truncate text-muted">{{ playlist?.name ?? title?.name ?? "" }}</span>
       </div>
-      <div class="ms-auto">
-        <UTooltip :text="$t('theater.action.subtitles')">
-          <UButton color="neutral" variant="ghost" class="pointer-coarse:size-11!" icon="i-material-symbols-subtitles-outline" :aria-label="$t('theater.action.subtitles')" :disabled="!episode" @click="subtitlesOpen = true" />
-        </UTooltip>
-        <UTooltip :text="$t('theater.action.add_to_playlist')">
-          <UButton color="neutral" variant="ghost" class="pointer-coarse:size-11!" icon="i-material-symbols-playlist-add" :aria-label="$t('theater.action.add_to_playlist')" :disabled="!episode" @click="addingOpen = true" />
-        </UTooltip>
-        <UTooltip :text="$t('theater.action.share')">
-          <UButton color="neutral" variant="ghost" class="pointer-coarse:size-11!" icon="i-material-symbols-share-outline" :aria-label="$t('theater.action.share')" :disabled="!episode" @click="sharingOpen = true" />
-        </UTooltip>
-      </div>
+      <ActionGroup :actions="actions" :narrow-fold="false" class="ms-auto" />
     </ToolBar>
 
     <div class="theater-stage shrink-0 bg-black">
@@ -104,6 +94,7 @@ import { computed, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
+import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
 import ShareLinkDialog from "bmo-ui/app/components/ShareLinkDialog.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
@@ -126,6 +117,7 @@ import { useDialogFocus } from "../../../composables/useDialogFocus";
 import { theaterAddress, useTheater } from "../../../composables/useTheater";
 import { useTheaterEvents } from "../../../composables/useTheaterEvents";
 
+import type { BarAction } from "bmo-ui/app/domain/tabs";
 import type { PlayerTrack } from "../../../components/theater/VideoPlayer.vue";
 import type { Episode, Playlist } from "../../../../shared/types";
 
@@ -146,6 +138,11 @@ let lastKept: { episode: number; seconds: number } | null = null;
 
 const episodeId = computed(() => Number(route.params.id));
 const episode = computed<Episode | null>(() => store.episodeOf(episodeId.value) ?? null);
+const actions = computed<BarAction[]>(() => [
+  { id: "subtitles", label: t("theater.action.subtitles"), icon: "i-material-symbols-subtitles-outline", disabled: !episode.value, onSelect: () => (subtitlesOpen.value = true) },
+  { id: "add-to-playlist", label: t("theater.action.add_to_playlist"), icon: "i-material-symbols-playlist-add", disabled: !episode.value, onSelect: () => (addingOpen.value = true) },
+  { id: "share", label: t("theater.action.share"), icon: "i-material-symbols-share-outline", disabled: !episode.value, onSelect: () => (sharingOpen.value = true) }
+]);
 const title = computed(() => (episode.value ? (store.titleOf(episode.value.titleId) ?? null) : null));
 const askedPlace = computed(() => (route.query.at === undefined ? null : Number(route.query.at)));
 const at = computed(() => (playlist.value ? placeOf(playlist.value.episodeIds, episodeId.value, askedPlace.value) : null));
