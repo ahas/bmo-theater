@@ -23,9 +23,15 @@
           </template>
         </UTabs>
 
-        <TabSwitch v-if="props.realms" v-model="realm" :items="realmItems" :label="$t('theater.aria.realm')" :compact="narrow" />
+        <!-- The realm switch and the screen's actions each stand as a group of small buttons centred in the
+             row, parted from the tabs by a line, as bmo-ui's own tab row stands its switch and actions. -->
+        <div v-if="props.realms" class="flex shrink-0 items-center border-l border-default px-1">
+          <TabSwitch v-model="realm" :items="realmItems" :label="$t('theater.aria.realm')" :compact="narrow" />
+        </div>
 
-        <ActionGroup v-if="props.actions.length" :actions="props.actions" :narrow-fold="false" class="px-2" />
+        <div v-if="props.actions.length" class="flex shrink-0 items-center border-l border-default px-1">
+          <ActionGroup :actions="props.actions" :narrow-fold="false" />
+        </div>
       </nav>
 
       <slot />
