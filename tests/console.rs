@@ -1,10 +1,10 @@
 //! The console bundle: none answered where none is built, and a built one answered by its manifest, its module,
-//! its stylesheet and its words to the console's credential alone.
+//! its stylesheet and its words to the console's credential alone, the service token refused.
 
 use reqwest::Method;
 use serde_json::{Value, json};
 
-use crate::support::{CONSOLE, Service};
+use crate::support::{CONSOLE, Service, TOKEN};
 
 #[tokio::test]
 async fn no_bundle_is_answered_where_none_is_built() {
@@ -56,8 +56,12 @@ async fn a_built_bundle_is_answered_by_its_manifest() {
   let (_, served): (u16, Value) =
     service.ask(Method::GET, "/console/words", Some(CONSOLE), &[], None).await;
   assert_eq!(served, words);
-  let (status, _) = service.ask(Method::GET, "/console-manifest", None, &[], None).await;
-  assert_eq!(status, 401);
+  for bearer in [None, Some(TOKEN)] {
+    for path in ["/console-manifest", "/console/words", module] {
+      let (status, _) = service.ask(Method::GET, path, bearer, &[], None).await;
+      assert_eq!(status, 401, "{path} by {bearer:?}");
+    }
+  }
   service.stop().await;
 }
 

@@ -101,6 +101,7 @@ import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
 import SkeletonStatus from "bmo-ui/app/components/SkeletonStatus.vue";
 import ToolBar from "bmo-ui/app/components/ToolBar.vue";
 import { countText } from "bmo-ui/app/domain/numbers";
+import { relayCall } from "bmo-ui/app/domain/relay";
 
 import AddToPlaylistDialog from "../../../components/theater/AddToPlaylistDialog.vue";
 import EpisodeRow from "../../../components/theater/EpisodeRow.vue";
@@ -114,7 +115,7 @@ import { firstTrack, positionMoved, startAt, trackName } from "../../../domain/p
 import { FIRST_SPAN, SHARE_SPANS, shareRoad } from "../../../domain/share";
 import { refusalWord } from "../../../domain/store";
 import { useDialogFocus } from "../../../composables/useDialogFocus";
-import { theaterAddress, useTheater } from "../../../composables/useTheater";
+import { SERVICE, theaterAddress, useTheater } from "../../../composables/useTheater";
 import { useTheaterEvents } from "../../../composables/useTheaterEvents";
 
 import type { BarAction } from "bmo-ui/app/domain/tabs";
@@ -221,7 +222,7 @@ function keep(episodeOf: number, seconds: number): void {
 
 // A position set as the page goes away, by the one call that outlives the page.
 function keepLeaving(episodeOf: number, seconds: number): void {
-  void fetch(theaterAddress(paths.position(episodeOf)), { method: "PUT", keepalive: true, headers: { "content-type": "application/json" }, body: JSON.stringify({ seconds }) }).catch(() => undefined);
+  void relayCall(SERVICE, paths.position(episodeOf), { method: "PUT", keepalive: true, body: { seconds } }).catch(() => undefined);
 }
 
 // The end counts the episode watched; a playlist goes on to its next by itself.

@@ -291,6 +291,10 @@ pub async fn head(
 ) -> Answer<Json<ShareHead>> {
   let given = query(given)?;
   let share = share_read(&app, &headers, &token).await?;
+  let url = share
+    .url
+    .clone()
+    .ok_or_else(|| ApiError::not_found("No share address is set, so the link has no head."))?;
   let (episodes, playlist) = opened(&app, &share).await?;
   let first = episodes.first();
   let title = match first {
@@ -322,7 +326,7 @@ pub async fn head(
     title: name,
     description,
     image,
-    url: share.url.clone().unwrap_or_default(),
+    url,
     locale: word("theater.share.locale", "en_US"),
     site_name: word("theater.share.siteName", "Theater"),
     kind: kind.to_owned(),

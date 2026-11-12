@@ -118,6 +118,11 @@ pub struct Service {
 impl Service {
   /// The service started, once it answers ready; `bundle` writes a console bundle into its folder first.
   pub async fn start_with(bundle: Option<Value>) -> Self {
+    Self::start_tuned(bundle, |_| ()).await
+  }
+
+  /// The service started as `start_with` starts it, its settings changed by `tune` before it starts.
+  pub async fn start_tuned(bundle: Option<Value>, tune: impl FnOnce(&mut Settings)) -> Self {
     let folder = scratch();
     let database = format!("bmo_rs_copy_{}_{}", std::process::id(), COUNT.fetch_add(1, Ordering::Relaxed));
     let mut admin = admin().await;
@@ -144,6 +149,7 @@ impl Service {
     settings.database.url = address_of(&database);
     settings.files.root = folder.join("root");
     settings.share.address = "https://console.test/theater/share".into();
+    tune(&mut settings);
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     listener.set_nonblocking(true).unwrap();
     let address = format!("http://{}", listener.local_addr().unwrap());

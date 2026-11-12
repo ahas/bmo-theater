@@ -1,6 +1,5 @@
-// The theater console bundle as a layer: the theater screens, their components and the modules they stand on,
-// on top of bmo-ui. A console extends it as it extends bmo-ui and attaches it by its declaration,
-// `console-bundle.json` (bmo-ui's `docs/console-bundles.md`).
+// The theater screens as a Nuxt app over bmo-ui, for the typecheck alone: what a console runs is the bundle
+// `console/vite.config.ts` builds, which the service answers under its manifest (docs/api.md, 「Console」).
 export default defineNuxtConfig({
   extends: ["bmo-ui"],
   compatibilityDate: "2025-09-01",

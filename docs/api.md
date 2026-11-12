@@ -10,7 +10,8 @@ where the committed document differs.
 ## Callers
 
 The service listens on the loopback at the address its settings name (`[server] listen`, by convention
-`127.0.0.1:13128`). Every route takes `Authorization: Bearer <token>`, one of two:
+`127.0.0.1:13128`). Every route but the console bundle's own (「Console」) takes `Authorization: Bearer <token>`,
+one of two:
 
 - **The service token** (`[server] token`), the tool's and any program's. It acts as the administrator and
   reaches every member by its id. It names the account it acts for with the `Owner-Key` header, as the
@@ -20,8 +21,7 @@ The service listens on the loopback at the address its settings name (`[server] 
 - **The console credential** (`[console] token`), with the headers the console sets on every call it relays:
   `Owner-Key`, the signed-in account's key, and `Owner-Role`, `administrator` or `member`. A console call with
   no `Owner-Key` (or one longer than 200 characters), or with an `Owner-Role` that is neither, is 403
-  `forbidden`, but for the manifest, the words, the module, the stylesheet and the share reads, which take
-  the credential alone (「Console」, 「Share links」).
+  `forbidden`, but for the share reads, which take the credential alone (「Share links」).
 
 A missing or wrong token is 401 `unauthorized`; an empty token in the settings lets no caller in by it.
 **A share token is never a bearer.** It is carried in the path of the share reads, which the console relays
@@ -265,7 +265,8 @@ The share head is `title` (the episode's name led by its title's, or the playlis
 playlist), `image` (the poster's share read, where the episode or the playlist's first episode has a poster),
 `description` (the title's description where it has one), `locale` and `siteName`, the bundle's words
 `theater.share.locale` and `theater.share.siteName` in the asked language (English where it holds none of
-it; `en_US` and `Theater` where no bundle is built).
+it; `en_US` and `Theater` where no bundle is built). A link has no public address where the settings name no
+share address, so its head is then 404 `not-found` and a console writes no head for it.
 
 ## Events the theater publishes
 
@@ -296,9 +297,13 @@ last 1000, numbered upward from its start's moment in milliseconds times 1000; a
 
 ## Console
 
+The theater brings a console screen by bmo-ui's console plugin contract (bmo-ui `docs/console-bundles.md`),
+which states the manifest, how the module, the stylesheet and the words are addressed, and how each of the
+bundle's routes is guarded; this section names only what the theater chooses within it.
+
 | Method | Path | Does |
 |---|---|---|
-| GET | `/console-manifest` | The bundle manifest (bmo-ui `docs/console-bundles.md`) |
+| GET | `/console-manifest` | The bundle manifest |
 | GET | `/console/words` | The bundle's words, every locale |
 | GET | `/console/{file}` | The bundle's module and stylesheet |
 
@@ -308,12 +313,11 @@ true, `websocket` false, `pushKinds`, `calls` and `relays` empty, `shareReads` e
 links」 written as its pattern (the WebVTT read as `/shares/{token}/subtitles/{subtitleFile}`), and
 `shareHead` `/shares/{token}/head`.
 
-The three take the console credential (or the service token) with no owner key and no role. They are read
-from the bundle's built folder (`[console] folder`) once at start: the module `bundle.js`, the stylesheet
-`bundle.css` and the words `words.json`, the module and the stylesheet answered at
-`/console/bundle-<digest>.js` and `.css`, the digest the first sixteen hex digits of their bytes' SHA-256,
-with `cache-control: private, max-age=31536000, immutable`. A folder that does not hold all three leaves the
-three answered 404 `not-found`, and the console leaves the theater out.
+The three take the console credential alone, the service token among the credentials they refuse, and since
+the manifest names share reads, none of them asks for an owner key or a role. They are read from the bundle's
+built folder (`[console] folder`) once at start: the module `bundle.js`, the stylesheet `bundle.css` and the
+words `words.json`. A folder that does not hold all three leaves the three answered 404 `not-found`, and the
+console leaves the theater out.
 
 The words carry, beside the screens' own, `theater.title` (the sidebar's name) and `theater.share.locale`
 and `theater.share.siteName` for the share head.
@@ -407,5 +411,5 @@ the environment.
 | `database` | `url` | the PostgreSQL database the theater's tables stand in |
 | `files` | `root` | the file root (docs/design.md, 「The file root」); made where it does not stand |
 | `media` | `ffmpeg`, `ffprobe` | the commands run (「Calls the theater makes」) |
-| `share` | `address` | the address a link's `url` stands under, the console's share screen; empty, a link has no `url` |
+| `share` | `address` | the address a link's `url` stands under, the console's share screen; empty, a link has no `url` and no share head |
 | `tool` | `account` | the account the tool acts for, written into `env/theater.env` as `THEATER_ACCOUNT` |

@@ -1,5 +1,6 @@
 //! Share links: made by a reader of the member, one live link to each, read with the console's credential alone,
-//! opening its episode or its playlist's and nothing else, streamed with ranges, ended by time and by deletion.
+//! opening its episode or its playlist's and nothing else, streamed with ranges, ended by time and by deletion, and
+//! given a head only where a share address is set.
 
 use reqwest::Method;
 use serde_json::{Value, json};
@@ -81,6 +82,21 @@ async fn a_link_opens_what_it_names_and_nothing_else() {
   let (status, _) = service.member(MEMBER_B, Method::DELETE, &format!("/shares/{token}"), None).await;
   assert_eq!(status, 204);
   assert_eq!(service.shared(&format!("/shares/{token}"), &[]).await.status().as_u16(), 404);
+  service.stop().await;
+}
+
+#[tokio::test]
+async fn a_link_with_no_share_address_has_no_head() {
+  let service = Service::start_tuned(None, |settings| settings.share.address = String::new()).await;
+  let team = service.seed_title("organization", "", "Team").await;
+  let episode = service.seed_episode(team, 1, 60_000, 1000).await;
+  let (status, link) = service
+    .member(MEMBER_A, Method::POST, "/shares", Some(json!({ "episodeId": episode })))
+    .await;
+  assert_eq!((status, &link["url"]), (201, &Value::Null), "{link}");
+  let token = link["token"].as_str().unwrap();
+  let head = service.shared(&format!("/shares/{token}/head"), &[]).await;
+  assert_eq!(head.status().as_u16(), 404);
   service.stop().await;
 }
 

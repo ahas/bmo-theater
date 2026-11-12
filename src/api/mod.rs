@@ -25,7 +25,7 @@ use futures_util::{StreamExt, stream};
 use serde::de::DeserializeOwned;
 
 use crate::app::App;
-use crate::caller::{caller, credential, header_text};
+use crate::caller::{caller, console_credential, credential, header_text};
 use crate::console::{Bundle, KEPT_FOR_GOOD};
 use crate::error::ApiError;
 use crate::events::Record;
@@ -245,7 +245,7 @@ async fn events(
 // The console bundle
 
 fn bundle<'a>(app: &'a App, headers: &HeaderMap) -> Answer<&'a Bundle> {
-  credential(&app.settings, headers)?;
+  console_credential(&app.settings, headers)?;
   app
     .bundle
     .as_ref()

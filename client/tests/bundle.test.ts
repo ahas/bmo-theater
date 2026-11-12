@@ -2,12 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-import { consoleManifest } from "bmo-ui/shared/console-manifest";
 import { parse } from "vue/compiler-sfc";
 
 import { PACKS, keysOf, word } from "./words";
 
-// The bundle as a console finds it: its declaration, the words every key the screens ask for in both locales
+// The bundle as a console finds it: the words every key the screens ask for in both locales
 // under the bundle's namespace, the words the service's share head and sidebar read, and no Korean anywhere in
 // the code.
 
@@ -64,22 +63,6 @@ function within(elements: Element[]): Element[] {
 
 const templates = sources.filter((path) => path.endsWith(".vue")).map((path) => ({ path, elements: within(templateOf(path)) }));
 
-describe("the declaration", () => {
-  const declared = JSON.parse(readFileSync(join(root, "console-bundle.json"), "utf8")) as Record<string, unknown>;
-
-  test("names the bundle, its screen, its stream and its share head", () => {
-    expect(declared).toMatchObject({ name: "theater", title: "theater.title", screenPath: "/theater", serviceName: "theater", events: true, shareHead: "/shares/{token}/head" });
-  });
-
-  test("reads as a manifest by the contract, its title a word of the bundle", () => {
-    const { languagePack: _pack, ...declaration } = declared;
-    const manifest = consoleManifest({ ...declaration, bundle: "/console/bundle.js", words: "/console/words", role: "member", ownerKey: true });
-
-    expect(manifest.name).toBe("theater");
-    expect(word(PACKS.ko, manifest.title)).toBeString();
-  });
-});
-
 describe("the words", () => {
   test("both locales hold the same keys, all under the bundle's namespace", () => {
     expect(keysOf(PACKS.en).sort()).toEqual(keysOf(PACKS.ko).sort());
@@ -112,7 +95,7 @@ describe("the code", () => {
   test("holds no Korean: the words stand in the pack", () => {
     const korean = new RegExp(`[${String.fromCharCode(0x1100)}-${String.fromCharCode(0x11ff)}${String.fromCharCode(0x3131)}-${String.fromCharCode(0x318e)}${String.fromCharCode(0xac00)}-${String.fromCharCode(0xd7a3)}]`);
 
-    for (const path of [...sources, ...files(join(root, "tests")), join(root, "nuxt.config.ts"), join(root, "console-bundle.json")]) expect([path, korean.test(readFileSync(path, "utf8"))]).toEqual([path, false]);
+    for (const path of [...sources, ...files(join(root, "tests")), join(root, "nuxt.config.ts")]) expect([path, korean.test(readFileSync(path, "utf8"))]).toEqual([path, false]);
   });
 
   test("writes no motion length of its own: every movement takes the layer's shared ones", () => {
