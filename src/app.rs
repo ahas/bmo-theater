@@ -1,14 +1,14 @@
 //! The service as it runs: its settings, its database, its file root, the events it publishes and the console
-//! bundle it serves.
+//! face it serves.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use bmo_console_face::ConsoleFace;
 use serde::Serialize;
 use sqlx::PgPool;
 
 use crate::caller::Standing;
-use crate::console::Bundle;
 use crate::events::Events;
 use crate::settings::Settings;
 use crate::wire::Realm;
@@ -18,16 +18,17 @@ pub struct App {
   pub settings: Settings,
   pub pool: PgPool,
   pub events: Events,
-  pub bundle: Option<Bundle>,
+  /// The console face, where one is served (`docs/api.md`, 「Console」).
+  pub face: Option<ConsoleFace>,
 }
 
 impl App {
-  pub fn new(settings: Settings, pool: PgPool, bundle: Option<Bundle>) -> Arc<Self> {
+  pub fn new(settings: Settings, pool: PgPool, face: Option<ConsoleFace>) -> Arc<Self> {
     Arc::new(Self {
       settings,
       pool,
       events: Events::new(),
-      bundle,
+      face,
     })
   }
 

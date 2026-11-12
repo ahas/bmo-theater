@@ -21,5 +21,6 @@ share links. `docs/design.md` states what it is; `docs/api.md` is the boundary c
 - **No personal data, no names of agents, owners or hosts** in code, documents or commits; a path that
   differs by installation is a setting.
 - **Versions:** `0.1.0-rev.N` until a release the owner declares; no sibling version pins.
-- Depend only on the base libraries (bmo-chat, bmo-chat-client, bmo-ui) and this unit's own crates; other
-  units through their documented APIs. ffmpeg and ffprobe are reached as commands the settings name.
+- Depend only on the base libraries (bmo-chat, bmo-chat-client, bmo-console-face, bmo-ui) and this unit's own
+  crates; other units through their documented APIs. ffmpeg and ffprobe are reached as commands the settings
+  name.

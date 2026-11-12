@@ -1,5 +1,5 @@
-//! The routes (`docs/api.md`): the helpers every route shares, the health, the event stream and the console
-//! bundle, and each resource's routes in a module of its own.
+//! The routes (`docs/api.md`): the helpers every route shares, the health and the event stream, each resource's
+//! routes in a module of its own, and the console face's routes beside them where a face stands.
 
 mod episodes;
 mod libraries;
@@ -16,8 +16,8 @@ use std::time::Duration;
 use axum::Router;
 use axum::body::Bytes;
 use axum::extract::rejection::QueryRejection;
-use axum::extract::{DefaultBodyLimit, Path, Query, State};
-use axum::http::{HeaderMap, StatusCode, header};
+use axum::extract::{DefaultBodyLimit, Query, State};
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::sse::{Event as Sent, KeepAlive, Sse};
 use axum::response::{IntoResponse, Json, Response};
 use axum::routing::{get, post};
@@ -25,8 +25,7 @@ use futures_util::{StreamExt, stream};
 use serde::de::DeserializeOwned;
 
 use crate::app::App;
-use crate::caller::{caller, console_credential, credential, header_text};
-use crate::console::{Bundle, KEPT_FOR_GOOD};
+use crate::caller::{caller, credential, header_text};
 use crate::error::ApiError;
 use crate::events::Record;
 use crate::wire::{EventsQuery, Health, Page, StreamEvent};
@@ -41,14 +40,28 @@ const PAGE: i64 = 200;
 type Answer<T> = Result<T, ApiError>;
 type Shared = State<Arc<App>>;
 
-/// Every route, the unknown ones answered `no-route`.
+/// Every route, the unknown ones answered `no-route`: the health, the routes the screens call under the console
+/// face's guard, and the face's own routes, where a face stands (`docs/api.md`, 「Console」).
 pub fn router(app: Arc<App>) -> Router {
+  let face = app.face.clone();
+  let screens = match &face {
+    Some(face) => face.guard_screens(screens()),
+    None => screens(),
+  };
+  let mut routes = Router::new().route("/health", get(health)).merge(screens);
+  if let Some(face) = &face {
+    routes = routes.merge(face.router());
+  }
+  routes
+    .fallback(|| async { ApiError::no_route() })
+    .method_not_allowed_fallback(|| async { ApiError::no_route() })
+    .with_state(app)
+}
+
+/// The routes the screens call, which the service's other callers reach as well.
+fn screens() -> Router<Arc<App>> {
   Router::new()
-    .route("/health", get(health))
     .route("/events", get(events))
-    .route("/console-manifest", get(manifest))
-    .route("/console/words", get(words))
-    .route("/console/{file}", get(console_file))
     .route("/libraries", get(libraries::list).post(libraries::create))
     .route(
       "/libraries/{libraryId}",
@@ -94,9 +107,6 @@ pub fn router(app: Arc<App>) -> Router {
     .route("/shares/{token}/episodes/{episodeId}/poster", get(shares::poster))
     .route("/shares/{token}/episodes/{episodeId}/subtitles", get(shares::subtitles))
     .route("/shares/{token}/subtitles/{subtitleFile}", get(shares::vtt))
-    .fallback(|| async { ApiError::no_route() })
-    .method_not_allowed_fallback(|| async { ApiError::no_route() })
-    .with_state(app)
 }
 
 fn query<T: DeserializeOwned>(given: Result<Query<T>, QueryRejection>) -> Answer<T> {
@@ -239,40 +249,4 @@ async fn events(
     .map(|record| Ok::<_, Infallible>(sent(&record.event)))
     .take_until(app.events.stopped());
   Ok(Sse::new(stream).keep_alive(KeepAlive::new().interval(KEEP_OPEN)).into_response())
-}
-
-// ---------------------------------------------------------------------------------------------------------
-// The console bundle
-
-fn bundle<'a>(app: &'a App, headers: &HeaderMap) -> Answer<&'a Bundle> {
-  console_credential(&app.settings, headers)?;
-  app
-    .bundle
-    .as_ref()
-    .ok_or_else(|| ApiError::not_found("The console bundle is not built here."))
-}
-
-async fn manifest(State(app): Shared, headers: HeaderMap) -> Answer<Response> {
-  Ok(Json(bundle(&app, &headers)?.manifest()).into_response())
-}
-
-async fn words(State(app): Shared, headers: HeaderMap) -> Answer<Response> {
-  Ok(Json(bundle(&app, &headers)?.words.clone()).into_response())
-}
-
-async fn console_file(
-  State(app): Shared,
-  headers: HeaderMap,
-  Path(file): Path<String>,
-) -> Answer<Response> {
-  let served = bundle(&app, &headers)?
-    .file(&file)
-    .ok_or_else(|| ApiError::not_found(format!("The bundle has no file {file}.")))?;
-  Ok(
-    (
-      [(header::CONTENT_TYPE, served.content_type), (header::CACHE_CONTROL, KEPT_FOR_GOOD)],
-      served.bytes.clone(),
-    )
-      .into_response(),
-  )
 }

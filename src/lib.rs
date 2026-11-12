@@ -1,5 +1,5 @@
 //! The theater service: titles of episodes, filed outputs and libraries indexed in place, streamed with
-//! subtitles, playlists, watch positions and share links, and the console bundle that shows them
+//! subtitles, playlists, watch positions and share links, and the console face that shows them
 //! (`docs/design.md`, `docs/api.md`).
 
 pub mod api;
@@ -25,7 +25,6 @@ pub mod wire;
 use tokio::net::TcpListener;
 
 use crate::app::App;
-use crate::console::Bundle;
 use crate::settings::Settings;
 use crate::wire::now_ms;
 
@@ -60,14 +59,20 @@ pub async fn serve_on(
     .await
     .map_err(|why| format!("the {table} cut short could not be failed: {why}"))?;
   }
-  let bundle = match Bundle::read(&settings.console.folder) {
-    Ok(bundle) => Some(bundle),
-    Err(why) => {
-      eprintln!("bmo-theater: the console bundle is not served: {why}");
-      None
+  // An empty console credential reaches nothing, so no face stands to be reached.
+  let face = if settings.console.token.is_empty() {
+    eprintln!("bmo-theater: the console face is not served: no console credential is set");
+    None
+  } else {
+    match console::face(&settings.console.folder, &settings.console.token) {
+      Ok(face) => Some(face),
+      Err(why) => {
+        eprintln!("bmo-theater: the console face is not served: {why}");
+        None
+      }
     }
   };
-  let app = App::new(settings, pool, bundle);
+  let app = App::new(settings, pool, face);
   if let Some(why) = app.unready() {
     eprintln!("bmo-theater: {why}");
   }

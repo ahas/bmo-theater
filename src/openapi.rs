@@ -11,8 +11,8 @@ use serde_json::{Map, Value, json};
 use crate::error::CODES;
 use crate::events::KINDS;
 use crate::wire::{
-  Burn, ConsoleManifest, Deleted, Episode, EpisodeChange, EventsQuery, FiledByPath, HeadQuery, Health,
-  Library, LibraryChange, NewBurn, NewLibrary, NewPlaylist, NewShare, NewTitle, Page, PageQuery, Playlist,
+  Burn, Deleted, Episode, EpisodeChange, EventsQuery, FiledByPath, HeadQuery, Health, Library,
+  LibraryChange, NewBurn, NewLibrary, NewPlaylist, NewShare, NewTitle, Page, PageQuery, Playlist,
   PlaylistChange, PlaylistItems, Position, PositionSet, Progress, RealmQuery, Scan, Share, ShareDeleted,
   ShareHead, SharesQuery, StreamEvent, Subtitle, SubtitleByPath, Title, TitleChange, TitlesQuery,
   WireError,
@@ -927,39 +927,6 @@ fn routes(g: &mut SchemaGenerator) -> Vec<Route> {
       )],
       vec!["bad-request", "gone"],
     ),
-    open(route(
-      "get",
-      "/console-manifest",
-      "readConsoleManifest",
-      "console",
-      "The console bundle's manifest.",
-      vec![],
-      None,
-      vec![(200, content::<ConsoleManifest>(g))],
-      vec!["not-found"],
-    )),
-    open(route(
-      "get",
-      "/console/words",
-      "readConsoleWords",
-      "console",
-      "The console bundle's words, each locale's tree under the locale's code.",
-      vec![],
-      None,
-      vec![(200, Some(json!({ "application/json": { "schema": { "type": "object" } } })))],
-      vec!["not-found"],
-    )),
-    open(route(
-      "get",
-      "/console/{file}",
-      "readConsoleFile",
-      "console",
-      "The console bundle's module or stylesheet, at the name the manifest gives it.",
-      vec![path_text("file", "The file's name, as the manifest gives it.")],
-      None,
-      vec![(200, bytes(&["text/javascript", "text/css"]))],
-      vec!["not-found"],
-    )),
   ]
 }
 

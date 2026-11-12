@@ -1,6 +1,6 @@
 # The boundary API
 
-Every route bmo-theater answers, the events it publishes, the console bundle it serves, the tool entries it
+Every route bmo-theater answers, the events it publishes, the console face it serves, the tool entries it
 places, the commands it runs and its settings. The wire format is the platform's (bmo-chat
 `docs/conventions.md`): camelCase keys, times in epoch milliseconds, ids as signed 64-bit integers, a
 failure a non-2xx status with `code` (kebab-case) and `error` (an English sentence), a list `{items, more}`.
@@ -10,7 +10,7 @@ where the committed document differs.
 ## Callers
 
 The service listens on the loopback at the address its settings name (`[server] listen`, by convention
-`127.0.0.1:13128`). Every route but the console bundle's own (「Console」) takes `Authorization: Bearer <token>`,
+`127.0.0.1:13128`). Every route but the console face's own (「Console」) takes `Authorization: Bearer <token>`,
 one of two:
 
 - **The service token** (`[server] token`), the tool's and any program's. It acts as the administrator and
@@ -265,7 +265,7 @@ The share head is `title` (the episode's name led by its title's, or the playlis
 playlist), `image` (the poster's share read, where the episode or the playlist's first episode has a poster),
 `description` (the title's description where it has one), `locale` and `siteName`, the bundle's words
 `theater.share.locale` and `theater.share.siteName` in the asked language (English where it holds none of
-it; `en_US` and `Theater` where no bundle is built). A link has no public address where the settings name no
+it; `en_US` and `Theater` where no face is served). A link has no public address where the settings name no
 share address, so its head is then 404 `not-found` and a console writes no head for it.
 
 ## Events the theater publishes
@@ -298,26 +298,25 @@ last 1000, numbered upward from its start's moment in milliseconds times 1000; a
 ## Console
 
 The theater brings a console screen by bmo-ui's console plugin contract (bmo-ui `docs/console-bundles.md`),
-which states the manifest, how the module, the stylesheet and the words are addressed, and how each of the
-bundle's routes is guarded; this section names only what the theater chooses within it.
+which states the manifest, how the module, the stylesheet and the words are addressed and guarded, and the
+share pages. It serves that face through bmo-chat's `bmo-console-face` (bmo-chat `docs/console-face.md`),
+which answers the manifest, the bundle's files and their guard, and lays the screens' guard over the theater's
+own routes; this section names only what the theater hands it.
 
-| Method | Path | Does |
-|---|---|---|
-| GET | `/console-manifest` | The bundle manifest |
-| GET | `/console/words` | The bundle's words, every locale |
-| GET | `/console/{file}` | The bundle's module and stylesheet |
+- **The declaration**, the manifest fields the theater decides: `name` `theater`, `title` `theater.title`,
+  `icon` `i-material-symbols-theaters-outline`, `screenPath` `/theater`, `serviceName` `theater`, `apiPrefix`
+  `/`, `role` `member`, `ownerKey` true, `events` true, `websocket` false, `shareReads` every share read of
+  「Share links」 written as its pattern (the WebVTT read as `/shares/{token}/subtitles/{subtitleFile}`), and
+  `shareHead` `/shares/{token}/head`.
+- **The bundle's built folder** (`[console] folder`), as `bun run bundle` writes it with bmo-ui's bundle
+  build: the module `bundle.js`, the stylesheet `bundle.css`, the words `words.json` and the layer the bundle
+  was built on.
+- **The console credential** (`[console] token`).
+- **The screens' routes:** every route but the health, under the screens' guard.
 
-The manifest is `name` `theater`, `title` `theater.title`, `icon` `i-material-symbols-theaters-outline`,
-`screenPath` `/theater`, `serviceName` `theater`, `apiPrefix` `/`, `role` `member`, `ownerKey` true, `events`
-true, `websocket` false, `pushKinds`, `calls` and `relays` empty, `shareReads` every share read of 「Share
-links」 written as its pattern (the WebVTT read as `/shares/{token}/subtitles/{subtitleFile}`), and
-`shareHead` `/shares/{token}/head`.
-
-The three take the console credential alone, the service token among the credentials they refuse, and since
-the manifest names share reads, none of them asks for an owner key or a role. They are read from the bundle's
-built folder (`[console] folder`) once at start: the module `bundle.js`, the stylesheet `bundle.css` and the
-words `words.json`. A folder that does not hold all three leaves the three answered 404 `not-found`, and the
-console leaves the theater out.
+Where the settings name no console credential, or the folder does not make a face the crate accepts, the
+service says why as it starts and serves no face: its manifest and its files are answered 404 `no-route`, the
+console leaves the theater out, and the theater's other routes are answered as ever.
 
 The words carry, beside the screens' own, `theater.title` (the sidebar's name) and `theater.share.locale`
 and `theater.share.siteName` for the share head.
@@ -392,6 +391,9 @@ Beside the common codes of bmo-chat's `docs/conventions.md` (`bad-request`, `una
 - `bmo-theater health` ends 0 where the service its settings name answers ready.
 - `bmo-theater openapi` prints the OpenAPI document, which `docs/openapi.json` holds.
 - `bmo-theater tool-env` writes the data root's `env/theater.env`, where the tool finds the service.
+- `bmo-theater console-reach` prints how a console reaches the service, one JSON object of `address` (the
+  service's base address), `consoleToken` and `token`, for a deployment's console probe (bmo-testbed
+  `docs/declaration.md`, `[deploy.console]`).
 
 ## Settings
 

@@ -5,6 +5,7 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str::FromStr;
+use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
@@ -25,6 +26,34 @@ pub const MEMBER_B: &str = "3";
 pub const ADMIN: &str = "1";
 
 static COUNT: AtomicU64 = AtomicU64::new(0);
+
+/// The console bundle's project, from the repository's root.
+const CLIENT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/client");
+
+/// bmo-ui's release file the console bundle vendors, as its package manifest names it.
+pub fn vendored_release() -> PathBuf {
+  let manifest: Value =
+    serde_json::from_slice(&std::fs::read(Path::new(CLIENT).join("package.json")).unwrap()).unwrap();
+  let taken = manifest["devDependencies"]["bmo-ui"].as_str().expect("the client takes bmo-ui");
+  Path::new(CLIENT).join(taken.strip_prefix("file:").expect("bmo-ui is taken as a file"))
+}
+
+/// The layer the vendored release names, as its own layer file in the packed file holds it: the layer a bundle
+/// built on it names.
+pub fn release_layer() -> &'static str {
+  static LAYER: OnceLock<String> = OnceLock::new();
+  LAYER.get_or_init(|| {
+    let read = Command::new("tar")
+      .arg("-xzOf")
+      .arg(vendored_release())
+      .arg("package/shared/layer.json")
+      .output()
+      .expect("tar runs");
+    assert!(read.status.success(), "{}", String::from_utf8_lossy(&read.stderr));
+    let file: Value = serde_json::from_slice(&read.stdout).unwrap();
+    file["layer"].as_str().expect("the layer file names the layer").to_owned()
+  })
+}
 
 /// The test server, as the suite names it, and the machine's own socket where nothing does.
 pub fn test_address() -> String {
@@ -141,6 +170,8 @@ impl Service {
       std::fs::write(dist.join("bundle.js"), "export default [];").unwrap();
       std::fs::write(dist.join("bundle.css"), ".theater {}").unwrap();
       std::fs::write(dist.join("words.json"), words.to_string()).unwrap();
+      let layer = serde_json::json!({ "layer": release_layer() });
+      std::fs::write(dist.join("layer.json"), layer.to_string()).unwrap();
     }
     let mut settings = Settings::read(&folder, Some(Default::default())).unwrap();
     settings.server.token = TOKEN.into();

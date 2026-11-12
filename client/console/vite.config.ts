@@ -4,25 +4,21 @@ import { fileURLToPath } from "node:url";
 
 import tailwindcss from "@tailwindcss/vite";
 import vue from "@vitejs/plugin-vue";
+import { consoleBundle } from "bmo-ui/bundle/console-bundle.js";
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 import { defineConfig } from "vite";
 
 import type { Plugin } from "vite";
 
-// The served bundle's build (bmo-ui's `docs/console-bundles.md`): the pages' routes as one browser
-// module, the utility classes they use as one stylesheet, and the language pack as one words object, all
-// written into `dist/`, which the service answers under its manifest. The same sources are typechecked as a
-// Nuxt app over bmo-ui (`nuxt.config.ts`), so what a Nuxt build supplies without an import is imported here.
+// The served bundle's build, on bmo-ui's bundle build (bmo-ui's `docs/console-bundles.md`, "The layer a bundle is
+// built on"): the pages' routes as one browser module, the utility classes they use as one stylesheet, the language
+// pack as one words object and the layer the bundle is built on, all written into `dist/`, which the service answers
+// under its manifest. The libraries a console shares stay imports of the package's own path, as bmo-ui's plugin
+// leaves them. The same sources are typechecked as a Nuxt app over bmo-ui (`nuxt.config.ts`), so what a Nuxt build
+// supplies without an import is imported here.
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-
-// The libraries every bundle shares with its console, left unbundled under the package's own path.
-const SHARED = ["vue", "vue-router", "vue-i18n", "nuxt/app", "@nuxt/ui", "bmo-ui"];
-
-function shared(id: string): boolean {
-  return SHARED.some((name) => id === name || id.startsWith(`${name}/`));
-}
 
 // The layer's components, by the name a page writes them under.
 const LAYER_COMPONENTS = new Set(readdirSync(join(root, "node_modules/bmo-ui/app/components")).map((file) => basename(file, ".vue")));
@@ -66,12 +62,12 @@ export default defineConfig({
     Components({ dirs: [join(root, "app/components")], resolvers: [libraryComponent, layerComponent], dts: false }),
     vue(),
     tailwindcss(),
-    words()
+    words(),
+    consoleBundle()
   ],
   build: {
     outDir: join(root, "dist"),
     emptyOutDir: true,
-    lib: { entry: join(root, "console/routes.ts"), formats: ["es"], fileName: () => "bundle.js", cssFileName: "bundle" },
-    rollupOptions: { external: shared }
+    lib: { entry: join(root, "console/routes.ts"), formats: ["es"], fileName: () => "bundle.js", cssFileName: "bundle" }
   }
 });

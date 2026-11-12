@@ -8,7 +8,7 @@ use bmo_theater::openapi::{openapi, openapi_json};
 const ROOT: &str = env!("CARGO_MANIFEST_DIR");
 
 /// The routes docs/api.md states, by method and path.
-const ROUTES: [&str; 55] = [
+const ROUTES: [&str; 52] = [
   "get /health",
   "get /libraries",
   "post /libraries",
@@ -61,9 +61,6 @@ const ROUTES: [&str; 55] = [
   "get /shares/{token}/episodes/{episodeId}/subtitles",
   "get /shares/{token}/subtitles/{subtitleId}.vtt",
   "get /events",
-  "get /console-manifest",
-  "get /console/words",
-  "get /console/{file}",
 ];
 
 #[test]

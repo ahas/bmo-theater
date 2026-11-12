@@ -25,7 +25,7 @@ dir = "tools"
 # The sweeps that read the tree before anything runs: the README's folder table, the dependencies the manifests
 # name, the build profiles and the shared versions.
 quick = ["layout", "dependencies", "cargo-profile", "shared-versions"]
-base_libraries = ["bmo-chat", "bmo-chat-client", "bmo-ui"]
+base_libraries = ["bmo-chat", "bmo-chat-client", "bmo-console-face", "bmo-ui"]
 
 # The repository whose root holds the shared versions the manifests and the lock hold to.
 [check.shared_versions]
@@ -61,6 +61,11 @@ env_links = [{ link = "settings.local.toml", target = "env/theater.toml" }]
 units = ["deploy/*.service"]
 # Answers 0 once the service the deployed settings name answers ready (docs/api.md, 「Health」).
 health = "~/.local/share/bmo-theater/deploy/bin/bmo-theater health"
+
+# The console screen the service brings, whose face the deployment probes once the service is up: how a console
+# reaches it, printed from the release's settings (docs/api.md, 「Console」, 「Commands」).
+[deploy.console]
+reach = "bin/bmo-theater console-reach"
 
 # The console bundle the service serves from the release (docs/api.md, 「Console」): its locked packages installed
 # and its folder built inside client/, where the settings' console.folder reads it. A release whose client/ holds no

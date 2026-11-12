@@ -1,6 +1,7 @@
 //! The `bmo-theater` command: `serve` answers the routes until it is told to stop; `migrate` brings the database
 //! to its schema; `health` ends 0 only where the service its settings name answers ready; `openapi` prints the
-//! OpenAPI document; `tool-env` writes the env file the tool reads the service's address, token and account from.
+//! OpenAPI document; `console-reach` prints how a console reaches the service; `tool-env` writes the env file the
+//! tool reads the service's address, token and account from.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -28,6 +29,8 @@ enum Verb {
   Health,
   /// Prints the OpenAPI document.
   Openapi,
+  /// Prints how a console reaches the service, as one JSON object, for a deployment's console probe.
+  ConsoleReach,
   /// Writes the env file the tool reads the service's address, token and account from, under the data root.
   ToolEnv {
     /// The data root; the settings' where none is given.
@@ -76,6 +79,10 @@ async fn main() -> ExitCode {
           Err(why) => Err(why),
         },
         Verb::Health => health(&settings).await,
+        Verb::ConsoleReach => {
+          println!("{}", bmo_theater::console::reach(&settings));
+          Ok(())
+        }
         Verb::ToolEnv { data_root } => {
           let root = data_root.unwrap_or_else(|| settings.data_root());
           write_env(&settings, &root).map(|written| match written {

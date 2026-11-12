@@ -13,6 +13,7 @@ use super::subtitles::{subtitle_file, vtt_of};
 use super::{Answer, Shared, body, created, episodes, id_of, no_content, query, titles};
 use crate::app::App;
 use crate::caller::{Caller, Standing, caller, credential};
+use crate::console;
 use crate::error::ApiError;
 use crate::store::{self, Stored, share_of};
 use crate::wire::{
@@ -317,9 +318,9 @@ pub async fn head(
   let language = given.language.as_deref();
   let word = |key: &str, default: &str| {
     app
-      .bundle
+      .face
       .as_ref()
-      .and_then(|bundle| bundle.word(language, key))
+      .and_then(|face| console::word(face, language, key))
       .unwrap_or_else(|| default.to_owned())
   };
   Ok(Json(ShareHead {

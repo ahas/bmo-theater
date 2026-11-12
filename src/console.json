@@ -1,0 +1,22 @@
+{
+  "name": "theater",
+  "title": "theater.title",
+  "icon": "i-material-symbols-theaters-outline",
+  "screenPath": "/theater",
+  "serviceName": "theater",
+  "apiPrefix": "/",
+  "role": "member",
+  "ownerKey": true,
+  "events": true,
+  "websocket": false,
+  "shareReads": [
+    "/shares/{token}",
+    "/shares/{token}/playlist",
+    "/shares/{token}/episodes",
+    "/shares/{token}/episodes/{episodeId}/stream",
+    "/shares/{token}/episodes/{episodeId}/poster",
+    "/shares/{token}/episodes/{episodeId}/subtitles",
+    "/shares/{token}/subtitles/{subtitleFile}"
+  ],
+  "shareHead": "/shares/{token}/head"
+}

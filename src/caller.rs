@@ -58,14 +58,6 @@ pub fn credential(settings: &Settings, headers: &HeaderMap) -> Result<bool, ApiE
   }
 }
 
-/// The console's credential alone, as the console bundle's own routes take it (401 for any other).
-pub fn console_credential(settings: &Settings, headers: &HeaderMap) -> Result<(), ApiError> {
-  match credential(settings, headers)? {
-    false => Ok(()),
-    true => Err(ApiError::unauthorized()),
-  }
-}
-
 /// The caller of a route the screens use: the service, or the console with a reader's key and role.
 pub fn caller(settings: &Settings, headers: &HeaderMap) -> Result<Caller, ApiError> {
   let service = credential(settings, headers)?;

@@ -1,67 +1,51 @@
-//! The console bundle: none answered where none is built, and a built one answered by its manifest, its module,
-//! its stylesheet and its words to the console's credential alone, the service token refused.
+//! The console face (docs/api.md, 「Console」): the manifest the service serves, read through bmo-ui's own reading of
+//! the contract on the release the client vendors, the face wired to the service's declaration, bundle folder and
+//! credential, and no face where no bundle is built. The face's own rules are bmo-console-face's tests'.
 
+use bmo_console_face::read_manifest;
 use reqwest::Method;
-use serde_json::{Value, json};
+use serde_json::json;
 
-use crate::support::{CONSOLE, Service, TOKEN};
+use crate::support::{CONSOLE, MEMBER_A, Service, TOKEN, release_layer, vendored_release};
 
 #[tokio::test]
-async fn no_bundle_is_answered_where_none_is_built() {
-  let service = Service::start().await;
-  for path in ["/console-manifest", "/console/words", "/console/bundle-0000000000000000.js"] {
-    let (status, refusal) = service.ask(Method::GET, path, Some(CONSOLE), &[], None).await;
-    assert_eq!((status, refusal["code"].as_str()), (404, Some("not-found")), "{path}");
-  }
+async fn the_served_manifest_is_read_by_the_contract_on_the_vendored_release() {
+  let words = json!({ "en": { "theater": { "title": "Theater" } }, "ko": { "theater": { "title": "T" } } });
+  let service = Service::start_with(Some(words.clone())).await;
+  let (status, served) = service.ask(Method::GET, "/console-manifest", Some(CONSOLE), &[], None).await;
+  assert_eq!(status, 200, "{served}");
+  let read = read_manifest(&served, &vendored_release()).unwrap_or_else(|why| panic!("{why}"));
+  assert_eq!(read["layer"], release_layer());
+  assert_eq!(read["name"], "theater");
+  assert_eq!(read["screenPath"], "/theater");
+  assert_eq!(read["role"], "member");
+  assert_eq!(read["ownerKey"], true);
+  assert_eq!(read["shareHead"], "/shares/{token}/head");
+  assert_eq!(read["shareReads"].as_array().map(Vec::len), Some(7));
+
+  // The face takes the console's credential, never the service's own token.
+  assert_eq!(service.ask(Method::GET, "/console-manifest", Some(TOKEN), &[], None).await.0, 401);
+
+  // The words are the bundle's, and the module is answered with no role, since the manifest names share reads.
+  let (status, answered) = service
+    .ask(Method::GET, read["words"].as_str().unwrap(), Some(CONSOLE), &[], None)
+    .await;
+  assert_eq!((status, answered), (200, words));
+  let module = service
+    .raw(Method::GET, read["bundle"].as_str().unwrap(), Some(CONSOLE), &[], None)
+    .await;
+  assert_eq!(module.status().as_u16(), 200);
+  assert_eq!(module.text().await.unwrap(), "export default [];");
   service.stop().await;
 }
 
 #[tokio::test]
-async fn a_built_bundle_is_answered_by_its_manifest() {
-  let words = json!({ "en": { "theater": { "title": "Theater" } }, "ko": { "theater": { "title": "T" } } });
-  let service = Service::start_with(Some(words.clone())).await;
-  let (status, manifest) = service.ask(Method::GET, "/console-manifest", Some(CONSOLE), &[], None).await;
+async fn no_face_stands_where_no_bundle_is_built_and_the_routes_are_answered() {
+  let service = Service::start().await;
+  let (status, refusal) = service.ask(Method::GET, "/console-manifest", Some(CONSOLE), &[], None).await;
+  assert_eq!((status, refusal["code"].as_str()), (404, Some("no-route")));
+  let (status, _) = service.member(MEMBER_A, Method::GET, "/titles", None).await;
   assert_eq!(status, 200);
-  assert_eq!(manifest["name"], "theater");
-  assert_eq!(manifest["title"], "theater.title");
-  assert_eq!(manifest["icon"], "i-material-symbols-theaters-outline");
-  assert_eq!(manifest["screenPath"], "/theater");
-  assert_eq!(
-    (manifest["role"].as_str(), manifest["ownerKey"].as_bool()),
-    (Some("member"), Some(true))
-  );
-  assert_eq!(
-    (manifest["events"].as_bool(), manifest["websocket"].as_bool()),
-    (Some(true), Some(false))
-  );
-  assert_eq!(manifest["pushKinds"], json!([]));
-  assert_eq!(manifest["calls"], json!([]));
-  assert_eq!(manifest["shareHead"], "/shares/{token}/head");
-  let reads: Vec<&str> = manifest["shareReads"]
-    .as_array()
-    .unwrap()
-    .iter()
-    .map(|read| read.as_str().unwrap())
-    .collect();
-  assert!(reads.contains(&"/shares/{token}/episodes/{episodeId}/stream"));
-  for read in &reads {
-    assert_eq!(read.matches("{token}").count(), 1, "{read}");
-  }
-
-  let module = manifest["bundle"].as_str().unwrap();
-  assert!(module.starts_with("/console/bundle-") && module.ends_with(".js"));
-  let answered = service.raw(Method::GET, module, Some(CONSOLE), &[], None).await;
-  assert_eq!(answered.headers()["content-type"], "text/javascript");
-  assert_eq!(answered.headers()["cache-control"], "private, max-age=31536000, immutable");
-  let (_, served): (u16, Value) =
-    service.ask(Method::GET, "/console/words", Some(CONSOLE), &[], None).await;
-  assert_eq!(served, words);
-  for bearer in [None, Some(TOKEN)] {
-    for path in ["/console-manifest", "/console/words", module] {
-      let (status, _) = service.ask(Method::GET, path, bearer, &[], None).await;
-      assert_eq!(status, 401, "{path} by {bearer:?}");
-    }
-  }
   service.stop().await;
 }
 

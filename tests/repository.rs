@@ -15,7 +15,7 @@ use serde_json::Value;
 const ROOT: &str = env!("CARGO_MANIFEST_DIR");
 
 /// The only `bmo-*` packages a package here may depend on: the base libraries.
-const BASE_LIBRARIES: [&str; 3] = ["bmo-chat", "bmo-chat-client", "bmo-ui"];
+const BASE_LIBRARIES: [&str; 4] = ["bmo-chat", "bmo-chat-client", "bmo-console-face", "bmo-ui"];
 
 /// Shared crates of the single repository this one was separated from; their parts live in-tree here.
 const OLD_SHARED_CRATES: [&str; 11] = [

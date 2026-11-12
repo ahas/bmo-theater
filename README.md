@@ -15,7 +15,7 @@ database of its own on the suite's server and a file root of its own: a file's n
 (`names.rs`), the subtitle formats converted (`subtitles.rs`), ranges served (`range.rs`), progress and the next
 episode (`progress.rs`), a library planned, scanned, streamed, rescanned and burned over tiny videos ffmpeg makes,
 and a video filed by upload and by path (`scan.rs`, skipped where ffmpeg is not installed), the realms, the
-guard, playlists and positions (`realms.rs`), share links (`shares.rs`), the console bundle (`console.rs`), the
+guard, playlists and positions (`realms.rs`), share links (`shares.rs`), the console face (`console.rs`), the
 OpenAPI document (`openapi.rs`) and the repository's own checks (`repository.rs`). The tool's crate carries its
 own harness, `tools/theater/tests/main.rs`, against a stand-in theater service. The console bundle's tests stand in
 `client/tests/`, run by `bun run check` against a Bun stand-in of the service.
@@ -24,7 +24,7 @@ own harness, `tools/theater/tests/main.rs`, against a stand-in theater service. 
 
 | Folder | Holds |
 |---|---|
-| `src/` | The service and its command: the routes, the tables and their migrations, the scans, the burns, the subtitle converters, the range serving, the console bundle's serving and the OpenAPI document |
+| `src/` | The service and its command: the routes, the tables and their migrations, the scans, the burns, the subtitle converters, the range serving, the console face's wiring and the OpenAPI document |
 | `tools/` | The theater tool the deployment places on the tool host: its crate, its manifest, its input schemas and its manual |
 | `client/` | The console plugin bundle, a project of its own |
 | `deploy/` | The service's user unit |
