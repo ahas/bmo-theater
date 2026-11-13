@@ -1,8 +1,11 @@
 import type { ShareLink, ShareRoad } from "bmo-ui/app/domain/share-links";
-import type { Share } from "../../shared/types";
+import type { ShareMemberRoad, SharePerson } from "bmo-ui/app/domain/share-members";
+import type { Grant, Permission, Share } from "../../shared/types";
 
-// A share link as the layer's one share dialog reads it: the road its links are read, made and ended by, over
-// the service's own (`docs/api.md`, 「Share links」), and the spans a link is offered for.
+// What the layer's one share dialog reads of a shared thing: the road its links are read, made and ended by,
+// over the service's own (`docs/api.md`, 「Share links」), with the spans a link is offered for; and the road
+// its members go by, people found through the console's directory and kept as the service's grants
+// (`docs/api.md`, 「Grants」).
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -51,5 +54,39 @@ export function shareRoad(links: Links, now: () => number = Date.now): ShareRoad
       return known(await links.make(ms === null ? null : now() + ms));
     },
     remove: (link) => links.remove(link)
+  };
+}
+
+/** The key the console offers its people directory under (bmo-ui `docs/console-bundles.md`, the people directory). */
+export const CONSOLE_PEOPLE = "bmo-console-people";
+
+/** What the screens read of the console's people directory: the reader's company searched, one account by its key. */
+export interface ConsolePeople {
+  search: (words: string) => Promise<SharePerson[]>;
+  person: (user: string) => Promise<SharePerson | null>;
+}
+
+interface Grants {
+  read: () => Promise<Grant[]>;
+  grant: (users: string[], permission: Permission) => Promise<void>;
+  change: (user: string, permission: Permission) => Promise<void>;
+  remove: (user: string) => Promise<void>;
+}
+
+/** The dialog's road over one episode's grants: each drawn by the name the directory gives its account, else by
+ * the key alone. */
+export function memberRoad(people: ConsolePeople, grants: Grants): ShareMemberRoad {
+  async function personOf(user: string): Promise<SharePerson> {
+    const found = await people.person(user).catch(() => null);
+
+    return found ?? { user, name: user, organization: "", jobTitle: "" };
+  }
+
+  return {
+    search: (words) => people.search(words),
+    read: async () => Promise.all((await grants.read()).map(async (grant) => ({ person: await personOf(grant.user), permission: grant.permission }))),
+    share: grants.grant,
+    change: grants.change,
+    remove: grants.remove
   };
 }

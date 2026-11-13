@@ -23,7 +23,7 @@ pub async fn list(
   Path(id): Path<String>,
 ) -> Answer<Json<Page<Subtitle>>> {
   let caller = caller(&app.settings, &headers)?;
-  let stored = episodes::readable(&app, &caller, &id).await?;
+  let stored = episodes::watchable(&app, &caller, &id).await?;
   Ok(Json(Page {
     items: store::episode_subtitles(&app.pool, stored.episode.id).await?,
     more: false,
@@ -124,15 +124,31 @@ fn unknown_format(word: &str) -> ApiError {
   ApiError::of("unknown-format", format!("{word} is none of srt, ass, smi and vtt."))
 }
 
+fn no_subtitle() -> ApiError {
+  ApiError::not_found("No subtitle stands there.")
+}
+
+/// A subtitle, wherever it stands.
+async fn subtitle(app: &App, id: i64) -> Answer<Subtitle> {
+  store::subtitle(&app.pool, id).await?.ok_or_else(no_subtitle)
+}
+
 /// A subtitle the caller reads, and where its episode stands.
 async fn readable(app: &App, caller: &Caller, id: i64) -> Answer<(Subtitle, Standing)> {
-  let subtitle = store::subtitle(&app.pool, id)
-    .await?
-    .ok_or_else(|| ApiError::not_found("No subtitle stands there."))?;
+  let subtitle = subtitle(app, id).await?;
   let stored = episodes::readable(app, caller, &subtitle.episode_id.to_string())
     .await
-    .map_err(|_| ApiError::not_found("No subtitle stands there."))?;
+    .map_err(|_| no_subtitle())?;
   Ok((subtitle, stored.standing))
+}
+
+/// A subtitle of an episode the caller watches, a granted one among them.
+async fn watchable(app: &App, caller: &Caller, id: i64) -> Answer<Subtitle> {
+  let subtitle = subtitle(app, id).await?;
+  episodes::watchable(app, caller, &subtitle.episode_id.to_string())
+    .await
+    .map_err(|_| no_subtitle())?;
+  Ok(subtitle)
 }
 
 /// A subtitle's WebVTT answered.
@@ -161,13 +177,13 @@ pub fn subtitle_file(segment: &str) -> Answer<(i64, bool)> {
 pub async fn read(State(app): Shared, headers: HeaderMap, Path(segment): Path<String>) -> Answer<Response> {
   let caller = caller(&app.settings, &headers)?;
   let (id, vtt) = subtitle_file(&segment)?;
-  let (subtitle, _) = readable(&app, &caller, id).await?;
+  let subtitle = watchable(&app, &caller, id).await?;
   if vtt { vtt_of(&app, subtitle.id).await } else { Ok(Json(subtitle).into_response()) }
 }
 
 pub async fn original(State(app): Shared, headers: HeaderMap, Path(id): Path<String>) -> Answer<Response> {
   let caller = caller(&app.settings, &headers)?;
-  let (subtitle, _) = readable(&app, &caller, id_of(&id, "subtitle")?).await?;
+  let subtitle = watchable(&app, &caller, id_of(&id, "subtitle")?).await?;
   let bytes = tokio::fs::read(app.subtitle_folder(subtitle.id).join(original_name(subtitle.format)))
     .await
     .map_err(|_| ApiError::not_found("The subtitle's original is not on disk."))?;

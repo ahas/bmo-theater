@@ -32,7 +32,7 @@ for a reader with no sign-in.
 A realm is `mine` or `organization`. A route that makes a member takes `realm` in its body; a list takes it
 in its query and, where none is given, answers both realms the caller reads. In `mine` the member belongs to
 the calling account. A member of another account's `mine` realm is answered 404 `not-found`, as if it did not
-stand. In `organization` every account reads; a title, a playlist, a subtitle and a share link are changed or
+stand, but for the reads a grant opens to the account it names (「Grants」). In `organization` every account reads; a title, a playlist, a subtitle and a share link are changed or
 deleted by the administrator and by the account that made it (`creator`), anyone else being refused 403
 `forbidden`. A library is registered, changed, scanned and deleted by the administrator alone.
 
@@ -125,8 +125,8 @@ has none), `name`, `label` (may be empty), `fileName`, `mediaType`, `byteCount`,
 `height`, `videoCodec`, `audioCodec` (each null where ffprobe gave none), `available` (whether its file is on
 disk), `hasPoster`, `subtitleCount`, `burnedFrom` (for a burned clip, `{episodeId, subtitleId}`; null
 otherwise), `position` (the caller's position in it, as 「Positions and progress」 answers one, or null where
-the caller has none or names no account), `creator`, `createdAt`, `changedAt`. An episode's changes are made
-by whoever changes its title.
+the caller has none or names no account), `granted` (true where the caller reads it by a grant alone, false
+otherwise), `creator`, `createdAt`, `changedAt`. An episode's changes are made by whoever changes its title.
 
 `titleId` moves a `clip` episode under another title of its realm and answers it under the new title. The
 caller changes both the episode's title and the title it joins, so a caller without the right is 403
@@ -267,6 +267,31 @@ playlist), `image` (the poster's share read, where the episode or the playlist's
 `theater.share.locale` and `theater.share.siteName` in the asked language (English where it holds none of
 it; `en_US` and `Theater` where no face is served). A link has no public address where the settings name no
 share address, so its head is then 404 `not-found` and a console writes no head for it.
+
+## Grants
+
+| Method | Path | Does |
+|---|---|---|
+| GET | `/episodes/{episodeId}/grants` | Who the episode is granted to, oldest first — `{items, more}`, `more` false |
+| POST | `/episodes/{episodeId}/grants` | `users`, `permission?` — 200, every grant of the episode as the GET answers them |
+| PUT | `/episodes/{episodeId}/grants/{user}` | `permission` — 200, the grant |
+| DELETE | `/episodes/{episodeId}/grants/{user}` | Ends it — 204 |
+
+A grant is `user` (the account key, as the console's `Owner-Key` carries it), `permission` (`read` or `edit`),
+`grantor` (the account that granted it, empty where the service token named none) and `grantedAt`. The rule
+is docs/design.md, 「Grants」.
+
+- **Who calls:** whoever changes the episode (「Realms」); any other reader is 403 `forbidden`, and a caller
+  who does not read the episode is 404 `not-found`, a grant giving no reach to these routes.
+- **Granting:** `users` is one or more account keys, each 1 to 200 characters; none, an empty one or a longer
+  one is 400 `bad-request`. `permission` is `read` where none is given. An account already granted takes the
+  permission given; the account the episode belongs to in `mine` is passed over.
+- **Changing and ending:** an account the episode is not granted to is 404 `not-found`.
+- **What it opens:** to a console call whose `Owner-Key` is the grant's account, `GET /episodes/{episodeId}`,
+  its `stream` and `poster`, `GET` and `PUT` of its `position`, `GET /episodes/{episodeId}/subtitles`, and
+  `GET /subtitles/{subtitleId}`, its `.vtt` and its `original` for a subtitle of the episode, each answered as
+  it is to the owner. Every other route answers that account as it answers anyone outside the realm.
+- **Events:** a grant publishes none; the share dialog reads the grants afresh each time it opens.
 
 ## Events the theater publishes
 

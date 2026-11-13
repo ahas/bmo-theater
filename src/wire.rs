@@ -357,6 +357,8 @@ pub struct Episode {
   pub burned_from: Option<BurnedFrom>,
   /// The caller's position in it.
   pub position: Option<Position>,
+  /// Whether the caller reads it by a grant alone (`docs/design.md`, 「Grants」).
+  pub granted: bool,
   pub creator: String,
   pub created_at: i64,
   pub changed_at: i64,
@@ -558,6 +560,65 @@ pub struct Share {
   pub creator: String,
   pub created_at: i64,
   pub expires_at: Option<i64>,
+}
+
+/// What a grant opens (`docs/design.md`, 「Grants」): both permissions open the same reads.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum Permission {
+  /// The permission a grant takes where none is given.
+  #[default]
+  Read,
+  Edit,
+}
+
+impl Permission {
+  /// The word the tables write it as.
+  pub fn word(self) -> &'static str {
+    match self {
+      Self::Read => "read",
+      Self::Edit => "edit",
+    }
+  }
+
+  /// The permission a word names.
+  pub fn of(word: &str) -> Option<Self> {
+    match word {
+      "read" => Some(Self::Read),
+      "edit" => Some(Self::Edit),
+      _ => None,
+    }
+  }
+}
+
+/// One account an episode is shared with.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Grant {
+  /// The account key, as the console's `Owner-Key` carries it.
+  pub user: String,
+  pub permission: Permission,
+  /// The account that granted it; empty where the service token named none.
+  pub grantor: String,
+  pub granted_at: i64,
+}
+
+/// The accounts to share an episode with.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct NewGrants {
+  /// Account keys, each 1 to 200 characters.
+  pub users: Vec<String>,
+  /// `read` where none is given.
+  #[serde(default)]
+  pub permission: Permission,
+}
+
+/// A grant's permission set.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct GrantChange {
+  pub permission: Permission,
 }
 
 /// A link to make: one of the two members.

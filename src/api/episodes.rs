@@ -36,6 +36,27 @@ pub async fn readable(app: &App, caller: &Caller, id: &str) -> Answer<Stored> {
   }
 }
 
+/// An episode the caller watches: one it reads, or one granted to its account, marked so (`docs/api.md`,
+/// 「Grants」). Only the routes that watch an episode reach it this way; every other route reads it as
+/// `readable` does.
+pub async fn watchable(app: &App, caller: &Caller, id: &str) -> Answer<Stored> {
+  let id = id_of(id, "episode")?;
+  let account = caller.account.as_deref();
+  let Some(mut stored) = store::episode(&app.pool, id, account).await? else {
+    return Err(ApiError::not_found("No episode stands there."));
+  };
+  if caller.reads(&stored.standing) {
+    return Ok(stored);
+  }
+  match account {
+    Some(account) if store::granted(&app.pool, id, account).await? => {
+      stored.episode.granted = true;
+      Ok(stored)
+    }
+    _ => Err(ApiError::not_found("No episode stands there.")),
+  }
+}
+
 /// What a filing names beside the file.
 struct Filing {
   name: Option<String>,
@@ -150,7 +171,7 @@ fn not_a_video(file_name: &str) -> ApiError {
 
 pub async fn read(State(app): Shared, headers: HeaderMap, Path(id): Path<String>) -> Answer<Json<Episode>> {
   let caller = caller(&app.settings, &headers)?;
-  Ok(Json(readable(&app, &caller, &id).await?.episode))
+  Ok(Json(watchable(&app, &caller, &id).await?.episode))
 }
 
 pub async fn change(
@@ -283,13 +304,13 @@ pub async fn stream_of(app: &App, stored: &Stored, headers: &HeaderMap) -> Answe
 
 pub async fn stream(State(app): Shared, headers: HeaderMap, Path(id): Path<String>) -> Answer<Response> {
   let caller = caller(&app.settings, &headers)?;
-  let stored = readable(&app, &caller, &id).await?;
+  let stored = watchable(&app, &caller, &id).await?;
   stream_of(&app, &stored, &headers).await
 }
 
 pub async fn poster(State(app): Shared, headers: HeaderMap, Path(id): Path<String>) -> Answer<Response> {
   let caller = caller(&app.settings, &headers)?;
-  let stored = readable(&app, &caller, &id).await?;
+  let stored = watchable(&app, &caller, &id).await?;
   titles::poster_of(&app, stored.episode.id).await
 }
 
@@ -300,7 +321,7 @@ pub async fn position(
 ) -> Answer<Json<Position>> {
   let caller = caller(&app.settings, &headers)?;
   let account = caller.account()?.to_owned();
-  let stored = readable(&app, &caller, &id).await?;
+  let stored = watchable(&app, &caller, &id).await?;
   store::position(&app.pool, &account, stored.episode.id)
     .await?
     .map(Json)
@@ -315,7 +336,7 @@ pub async fn set_position(
 ) -> Answer<Json<Position>> {
   let caller = caller(&app.settings, &headers)?;
   let account = caller.account()?.to_owned();
-  let stored = readable(&app, &caller, &id).await?;
+  let stored = watchable(&app, &caller, &id).await?;
   let set: PositionSet = body(&bytes)?;
   if !set.seconds.is_finite() || set.seconds < 0.0 {
     return Err(ApiError::bad_request("seconds is a number, 0 or more."));

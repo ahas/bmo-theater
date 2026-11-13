@@ -141,6 +141,10 @@
           "fileName": {
             "type": "string"
           },
+          "granted": {
+            "description": "Whether the caller reads it by a grant alone (`docs/design.md`, 「Grants」).",
+            "type": "boolean"
+          },
           "hasPoster": {
             "type": "boolean"
           },
@@ -239,6 +243,7 @@
           "subtitleCount",
           "burnedFrom",
           "position",
+          "granted",
           "creator",
           "createdAt",
           "changedAt"
@@ -361,6 +366,46 @@
         ],
         "type": "object"
       },
+      "Grant": {
+        "description": "One account an episode is shared with.",
+        "properties": {
+          "grantedAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "grantor": {
+            "description": "The account that granted it; empty where the service token named none.",
+            "type": "string"
+          },
+          "permission": {
+            "$ref": "#/components/schemas/Permission"
+          },
+          "user": {
+            "description": "The account key, as the console's `Owner-Key` carries it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user",
+          "permission",
+          "grantor",
+          "grantedAt"
+        ],
+        "type": "object"
+      },
+      "GrantChange": {
+        "additionalProperties": false,
+        "description": "A grant's permission set.",
+        "properties": {
+          "permission": {
+            "$ref": "#/components/schemas/Permission"
+          }
+        },
+        "required": [
+          "permission"
+        ],
+        "type": "object"
+      },
       "Health": {
         "description": "Whether the service answers.",
         "properties": {
@@ -480,6 +525,29 @@
         },
         "required": [
           "subtitleId"
+        ],
+        "type": "object"
+      },
+      "NewGrants": {
+        "additionalProperties": false,
+        "description": "The accounts to share an episode with.",
+        "properties": {
+          "permission": {
+            "$ref": "#/components/schemas/Permission",
+            "default": "read",
+            "description": "`read` where none is given."
+          },
+          "users": {
+            "description": "Account keys, each 1 to 200 characters.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "users",
+          "permission"
         ],
         "type": "object"
       },
@@ -643,6 +711,25 @@
         ],
         "type": "object"
       },
+      "Page10": {
+        "description": "A page of a list.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StreamEvent"
+            },
+            "type": "array"
+          },
+          "more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "more"
+        ],
+        "type": "object"
+      },
       "Page2": {
         "description": "A page of a list.",
         "properties": {
@@ -724,7 +811,7 @@
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/Burn"
+              "$ref": "#/components/schemas/Grant"
             },
             "type": "array"
           },
@@ -743,7 +830,7 @@
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/Playlist"
+              "$ref": "#/components/schemas/Burn"
             },
             "type": "array"
           },
@@ -762,7 +849,7 @@
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/Share"
+              "$ref": "#/components/schemas/Playlist"
             },
             "type": "array"
           },
@@ -781,7 +868,7 @@
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/StreamEvent"
+              "$ref": "#/components/schemas/Share"
             },
             "type": "array"
           },
@@ -794,6 +881,22 @@
           "more"
         ],
         "type": "object"
+      },
+      "Permission": {
+        "description": "What a grant opens (`docs/design.md`, 「Grants」): both permissions open the same reads.",
+        "oneOf": [
+          {
+            "enum": [
+              "edit"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "read",
+            "description": "The permission a grant takes where none is given.",
+            "type": "string"
+          }
+        ]
       },
       "Playlist": {
         "description": "A playlist.",
@@ -1837,7 +1940,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page6"
+                  "$ref": "#/components/schemas/Page7"
                 }
               }
             },
@@ -1992,6 +2095,331 @@
           "forbidden",
           "not-found",
           "unknown-subtitle"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/episodes/{episodeId}/grants": {
+      "get": {
+        "operationId": "listGrants",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page6"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Who an episode is granted to.",
+        "tags": [
+          "grants"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "post": {
+        "operationId": "grantEpisode",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewGrants"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page6"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Grant an episode to one or more accounts; answers every grant of it.",
+        "tags": [
+          "grants"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/episodes/{episodeId}/grants/{user}": {
+      "delete": {
+        "operationId": "endGrant",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The account key the episode is granted to.",
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no content."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "End a grant.",
+        "tags": [
+          "grants"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found"
+        ],
+        "x-console": "screen"
+      },
+      "put": {
+        "operationId": "changeGrant",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The account key the episode is granted to.",
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Grant"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          }
+        },
+        "summary": "Set a grant's permission.",
+        "tags": [
+          "grants"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "not-found"
         ],
         "x-console": "screen"
       }
@@ -2676,7 +3104,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page9"
+                  "$ref": "#/components/schemas/Page10"
                 }
               },
               "text/event-stream": {
@@ -3441,7 +3869,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page7"
+                  "$ref": "#/components/schemas/Page8"
                 }
               }
             },
@@ -4026,7 +4454,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page8"
+                  "$ref": "#/components/schemas/Page9"
                 }
               }
             },
@@ -6039,6 +6467,9 @@
     },
     {
       "name": "subtitles"
+    },
+    {
+      "name": "grants"
     },
     {
       "name": "burns"

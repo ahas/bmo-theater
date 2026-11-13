@@ -8,8 +8,8 @@ use sqlx::{PgPool, Postgres, QueryBuilder, Row};
 
 use crate::caller::Standing;
 use crate::wire::{
-  Burn, BurnedFrom, Episode, EpisodeKind, JobState, Library, Playlist, Position, Realm, Scan, Share,
-  Subtitle, SubtitleFormat, Title, TitleKind,
+  Burn, BurnedFrom, Episode, EpisodeKind, Grant, JobState, Library, Permission, Playlist, Position, Realm,
+  Scan, Share, Subtitle, SubtitleFormat, Title, TitleKind,
 };
 
 type Read<T> = Result<T, sqlx::Error>;
@@ -206,6 +206,7 @@ pub fn episode_of(row: &PgRow) -> Read<Stored> {
         subtitle_id,
       }),
       position,
+      granted: false,
       creator: row.try_get("creator")?,
       created_at: row.try_get("created_at")?,
       changed_at: row.try_get("changed_at")?,
@@ -436,4 +437,37 @@ pub async fn share(pool: &PgPool, token: &str, address: &str) -> Read<Option<Sha
     .as_ref()
     .map(|row| share_of(row, address))
     .transpose()
+}
+
+// Grants
+
+/// A grant as stored.
+pub fn grant_of(row: &PgRow) -> Read<Grant> {
+  let permission: String = row.try_get("permission")?;
+  Ok(Grant {
+    user: row.try_get("account")?,
+    permission: Permission::of(&permission).ok_or_else(|| decode("the permission", &permission))?,
+    grantor: row.try_get("grantor")?,
+    granted_at: row.try_get("granted_at")?,
+  })
+}
+
+/// An episode's grants, oldest first.
+pub async fn grants(pool: &PgPool, episode: i64) -> Read<Vec<Grant>> {
+  sqlx::query("SELECT * FROM grants WHERE episode_id = $1 ORDER BY granted_at, account")
+    .bind(episode)
+    .fetch_all(pool)
+    .await?
+    .iter()
+    .map(grant_of)
+    .collect()
+}
+
+/// Whether the episode is granted to the account.
+pub async fn granted(pool: &PgPool, episode: i64, account: &str) -> Read<bool> {
+  sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM grants WHERE episode_id = $1 AND account = $2)")
+    .bind(episode)
+    .bind(account)
+    .fetch_one(pool)
+    .await
 }

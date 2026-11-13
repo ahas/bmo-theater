@@ -1,12 +1,12 @@
 import { ofetch } from "ofetch";
 
 import type { Call, Send } from "../app/domain/api";
-import type { Burn, Episode, Library, Playlist, Position, Progress, Realm, Share, Subtitle, Title } from "../shared/types";
+import type { Burn, Episode, Grant, Library, Permission, Playlist, Position, Progress, Realm, Share, Subtitle, Title } from "../shared/types";
 
 // A stand-in of the theater service's routes the screens call (`docs/api.md`), served on the loopback for the
 // length of a test: titles and playlists in two realms, episodes with the caller's positions, subtitles and
-// burns, progress with the next episode, share links and their reads, and libraries the administrator alone
-// registers. A write on a member named in `refused` is refused 403 `forbidden`, as one on another account's
+// burns, progress with the next episode, share links and their reads, an episode's grants, and libraries the
+// administrator alone registers. A write on a member named in `refused` is refused 403 `forbidden`, as one on another account's
 // organization member is.
 
 export interface StandIn {
@@ -19,6 +19,8 @@ export interface StandIn {
   burns: Burn[];
   positions: Map<number, Position>;
   shares: Share[];
+  /** Each episode's grants, by its id. */
+  grants: Map<number, Grant[]>;
   libraries: Library[];
   /** Members a write on is refused, as `kind:id`. */
   refused: Set<string>;
@@ -60,6 +62,7 @@ export function episode(id: number, titleId: number, realm: Realm, extra: Partia
     subtitleCount: 0,
     burnedFrom: null,
     position: null,
+    granted: false,
     creator: "2",
     createdAt: 1,
     changedAt: 1,
@@ -109,6 +112,7 @@ export function startStandIn(seed: Partial<Pick<StandIn, "titles" | "episodes" |
     burns: [] as Burn[],
     positions: new Map<number, Position>(),
     shares: [...(seed.shares ?? [])],
+    grants: new Map<number, Grant[]>(),
     libraries: [...(seed.libraries ?? [])],
     refused: new Set<string>(),
     calls: [] as string[],
@@ -226,6 +230,29 @@ export function startStandIn(seed: Partial<Pick<StandIn, "titles" | "episodes" |
           state.episodes = state.episodes.filter((one) => one.id !== id);
 
           return new Response(null, { status: 204 });
+        }
+        if (third === "grants") {
+          const held = state.grants.get(id) ?? [];
+
+          if (fourth === undefined && method === "POST") {
+            const permission = (body.permission as Permission | undefined) ?? "read";
+            const users = body.users as string[];
+
+            state.grants.set(id, [...held.filter((one) => !users.includes(one.user)), ...users.map((user) => ({ user, permission, grantor: "2", grantedAt: ++clock }))]);
+          }
+          if (fourth === undefined) return list(state.grants.get(id) ?? []);
+
+          const grant = held.find((one) => one.user === fourth);
+
+          if (!grant) return refusal(404, "not-found", "Not granted to that account.");
+          if (method === "DELETE") {
+            state.grants.set(id, held.filter((one) => one !== grant));
+
+            return new Response(null, { status: 204 });
+          }
+          grant.permission = body.permission as Permission;
+
+          return Response.json(grant);
         }
         if (third === "position" && method === "PUT") {
           const seconds = Number(body.seconds);

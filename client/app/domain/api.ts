@@ -1,4 +1,4 @@
-import type { Burn, Episode, Library, ListPage, Playlist, Position, Progress, Realm, Scan, Share, Subtitle, Title } from "../../shared/types";
+import type { Burn, Episode, Grant, Library, ListPage, Permission, Playlist, Position, Progress, Realm, Scan, Share, Subtitle, Title } from "../../shared/types";
 
 // The screens' calls to the theater service, each at the path the service's own API writes it (`docs/api.md`).
 // The caller hands the call itself — through the console's relay in the browser, to a stand-in in a test — so
@@ -90,6 +90,10 @@ export interface TheaterApi {
   shareOf: (member: { episodeId: number } | { playlistId: number }) => Promise<Share | null>;
   makeShare: (member: { episodeId: number } | { playlistId: number }, expiresAt: number | null) => Promise<Share>;
   endShare: (token: string) => Promise<void>;
+  grants: (episodeId: number) => Promise<Grant[]>;
+  grant: (episodeId: number, users: string[], permission: Permission) => Promise<Grant[]>;
+  changeGrant: (episodeId: number, user: string, permission: Permission) => Promise<Grant>;
+  endGrant: (episodeId: number, user: string) => Promise<void>;
   libraries: () => Promise<Library[]>;
   library: (id: number) => Promise<Library>;
   makeLibrary: (realm: Realm, path: string, name: string | null) => Promise<Library>;
@@ -185,6 +189,10 @@ export function createTheaterApi(call: Call, send: Send): TheaterApi {
     shareOf: async (member) => (await sent<ListPage<Share>>("/shares", { query: memberQuery(member) })).items[0] ?? null,
     makeShare: (member, expiresAt) => sent<Share>("/shares", { method: "POST", body: { ...member, expiresAt } }),
     endShare: (value) => sent<void>(`/shares/${token(value)}`, { method: "DELETE" }),
+    grants: (episodeId) => items<Grant>(`/episodes/${episodeId}/grants`),
+    grant: async (episodeId, users, permission) => (await sent<ListPage<Grant>>(`/episodes/${episodeId}/grants`, { method: "POST", body: { users, permission } })).items,
+    changeGrant: (episodeId, user, permission) => sent<Grant>(`/episodes/${episodeId}/grants/${encodeURIComponent(user)}`, { method: "PUT", body: { permission } }),
+    endGrant: (episodeId, user) => sent<void>(`/episodes/${episodeId}/grants/${encodeURIComponent(user)}`, { method: "DELETE" }),
     libraries: () => all<Library>("/libraries"),
     library: (id) => sent<Library>(`/libraries/${id}`),
     makeLibrary: (realm, path, name) => sent<Library>("/libraries", { method: "POST", body: name ? { realm, path, name } : { realm, path } }),

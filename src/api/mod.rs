@@ -2,6 +2,7 @@
 //! routes in a module of its own, and the console face's routes beside them where a face stands.
 
 mod episodes;
+mod grants;
 mod libraries;
 mod playlists;
 mod shares;
@@ -20,7 +21,7 @@ use axum::extract::{DefaultBodyLimit, Query, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::sse::{Event as Sent, KeepAlive, Sse};
 use axum::response::{IntoResponse, Json, Response};
-use axum::routing::{get, post};
+use axum::routing::{get, post, put};
 use futures_util::{StreamExt, stream};
 use serde::de::DeserializeOwned;
 
@@ -87,6 +88,8 @@ fn screens() -> Router<Arc<App>> {
       "/episodes/{episodeId}/subtitles",
       get(subtitles::list).post(subtitles::add).layer(DefaultBodyLimit::disable()),
     )
+    .route("/episodes/{episodeId}/grants", get(grants::list).post(grants::grant))
+    .route("/episodes/{episodeId}/grants/{user}", put(grants::change).delete(grants::end))
     .route("/episodes/{episodeId}/burns", get(episodes::burns).post(episodes::burn))
     .route("/burns/{burnId}", get(episodes::read_burn))
     .route("/subtitles/{subtitleFile}", get(subtitles::read).delete(subtitles::delete))

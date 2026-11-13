@@ -60,6 +60,8 @@ export interface Episode {
   subtitleCount: number;
   burnedFrom: { episodeId: number; subtitleId: number } | null;
   position: Position | null;
+  /** Whether the reader watches it by a grant alone, so nothing but watching is open to them. */
+  granted: boolean;
   creator: string;
   createdAt: number;
   changedAt: number;
@@ -112,6 +114,17 @@ export interface Progress {
   doneCount: number;
   next: number | null;
   nextSeconds: number;
+}
+
+/** What a grant opens; both open the same reads (`docs/design.md`, 「Grants」). */
+export type Permission = "read" | "edit";
+
+/** One account an episode is shared with, by the account key. */
+export interface Grant {
+  user: string;
+  permission: Permission;
+  grantor: string;
+  grantedAt: number;
 }
 
 export interface Share {

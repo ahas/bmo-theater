@@ -10,9 +10,10 @@ use sqlx::{Connection, PgConnection, PgPool};
 const MIGRATION_LOCK: i64 = 0x0074_6865_6174_6572;
 
 /// The migrations, by number, each a script of statements.
-pub const MIGRATIONS: [(i64, &str); 1] = [(
-  1,
-  r#"
+pub const MIGRATIONS: [(i64, &str); 2] = [
+  (
+    1,
+    r#"
 CREATE TABLE libraries (
   id BIGSERIAL PRIMARY KEY,
   realm TEXT NOT NULL,
@@ -153,7 +154,21 @@ CREATE TABLE shares (
 CREATE UNIQUE INDEX shares_episode ON shares (episode_id) WHERE episode_id IS NOT NULL;
 CREATE UNIQUE INDEX shares_playlist ON shares (playlist_id) WHERE playlist_id IS NOT NULL;
 "#,
-)];
+  ),
+  (
+    2,
+    r#"
+CREATE TABLE grants (
+  episode_id BIGINT NOT NULL REFERENCES episodes (id) ON DELETE CASCADE,
+  account TEXT NOT NULL,
+  permission TEXT NOT NULL CHECK (permission IN ('read', 'edit')),
+  grantor TEXT NOT NULL,
+  granted_at BIGINT NOT NULL,
+  PRIMARY KEY (episode_id, account)
+);
+"#,
+  ),
+];
 
 /// A pool over the database the address names.
 pub async fn connect(url: &str) -> Result<PgPool, String> {

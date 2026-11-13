@@ -11,7 +11,7 @@ import type { StandIn } from "./stand-in";
 // The screens' hold on the theater service, against a stand-in of its routes: the realms kept apart, a title's
 // progress and what to watch next, a playlist's order sent whole and taken back when refused, a video and a
 // subtitle filed as multipart bodies, a burn followed by its events, whether the reader administers the
-// theater, and what a share link opens.
+// theater, what a share link opens, and an episode's grants as the share dialog's member road reads them.
 
 let standIn: StandIn | null = null;
 
@@ -337,3 +337,32 @@ describe("the share page", () => {
     expect(await road.read()).toEqual(made);
   });
 });
+
+describe("sharing with people", () => {
+  const people = {
+    search: async (words: string) => (words === "ki" ? [{ user: "5", name: "Kim", organization: "Studio", jobTitle: "Editor" }] : []),
+    person: async (user: string) => (user === "5" ? { user, name: "Kim", organization: "Studio", jobTitle: "Editor" } : null)
+  };
+
+  test("an episode's grants are kept by the service and drawn by the names the directory gives", async () => {
+    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
+
+    const { memberRoad } = await import("../app/domain/share");
+    const { store } = storeOver(standIn);
+    const road = memberRoad(people, store.grantRoad(11));
+
+    expect((await road.search("ki")).map((person) => person.name)).toEqual(["Kim"]);
+    await road.share(["5", "a b"], "read");
+    expect(standIn.bodies.get("POST /episodes/11/grants")).toEqual({ users: ["5", "a b"], permission: "read" });
+    expect(await road.read()).toEqual([
+      { person: { user: "5", name: "Kim", organization: "Studio", jobTitle: "Editor" }, permission: "read" },
+      { person: { user: "a b", name: "a b", organization: "", jobTitle: "" }, permission: "read" }
+    ]);
+
+    await road.change("a b", "edit");
+    expect(standIn.calls).toContain("PUT /episodes/11/grants/a%20b");
+    await road.remove("5");
+    expect((await road.read()).map((member) => [member.person.user, member.permission])).toEqual([["a b", "edit"]]);
+  });
+});
+

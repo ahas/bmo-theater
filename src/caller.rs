@@ -9,7 +9,7 @@ use crate::settings::Settings;
 use crate::wire::Realm;
 
 /// The longest `Owner-Key` taken.
-const LONGEST_KEY: usize = 200;
+pub const LONGEST_KEY: usize = 200;
 
 /// Who calls.
 #[derive(Clone, Debug, PartialEq, Eq)]

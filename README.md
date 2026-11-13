@@ -3,7 +3,8 @@
 The platform's store of videos as one service: titles made of episodes, from videos filed as outputs into its
 own file root and from libraries of video files already on disk, indexed in place; each episode streamed as its
 file with HTTP ranges, subtitles converted to WebVTT and burned in on request, playlists, each viewer's watch
-position and what to watch next, and share links that open a video with no sign-in; in two realms kept apart,
+position and what to watch next, share links that open a video with no sign-in, and grants that open one to a
+named account of the company; in two realms kept apart,
 each account's own and the organization's; and the console bundle that shows them under its sidebar entry.
 `docs/design.md` states what it is and `docs/api.md` its boundary: every route, the events it publishes, the
 tool it places, the commands it runs and its settings.
@@ -15,7 +16,7 @@ database of its own on the suite's server and a file root of its own: a file's n
 (`names.rs`), the subtitle formats converted (`subtitles.rs`), ranges served (`range.rs`), progress and the next
 episode (`progress.rs`), a library planned, scanned, streamed, rescanned and burned over tiny videos ffmpeg makes,
 and a video filed by upload and by path (`scan.rs`, skipped where ffmpeg is not installed), the realms, the
-guard, playlists and positions (`realms.rs`), share links (`shares.rs`), the console face (`console.rs`), the
+guard, playlists and positions (`realms.rs`), share links (`shares.rs`), grants (`grants.rs`), the console face (`console.rs`), the
 OpenAPI document (`openapi.rs`) and the repository's own checks (`repository.rs`). The tool's crate carries its
 own harness, `tools/theater/tests/main.rs`, against a stand-in theater service. The console bundle's tests stand in
 `client/tests/`, run by `bun run check` against a Bun stand-in of the service.

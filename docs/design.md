@@ -11,8 +11,9 @@ agents made. Videos come in two ways and are seen the same way afterwards:
   rewritten.
 
 Each episode streams to a browser as the file it is, with subtitles laid over it by the player, a watch
-position kept for each viewer, playlists that say how far a viewer has come and what to watch next, and
-share links that open a video to whoever holds the link.
+position kept for each viewer, playlists that say how far a viewer has come and what to watch next, share
+links that open a video to whoever holds the link, and grants that open a video to named people of the
+company.
 
 ## The model
 
@@ -38,6 +39,7 @@ share links that open a video to whoever holds the link.
   watched, and when it was last set.
 - **A share link** opens one episode or one playlist to whoever holds its token, with an end in time or
   none.
+- **A grant** opens one episode to one account of the company, at a permission, `read` or `edit`.
 - **A burn** is the work of writing a subtitle into an episode's picture, and its outcome.
 - **A scan** is one reading of a library's folder, and its outcome.
 
@@ -53,7 +55,9 @@ A position is always the viewer's own, in either realm: the same organization pl
 their own progress. A playlist holds only episodes its readers can read, so an organization playlist holds
 organization episodes alone, and a `mine` playlist its account's episodes and the organization's.
 
-An episode, a subtitle, a burn and a share link stand in the realm of the title or playlist they belong to.
+An episode, a subtitle, a burn, a share link and a grant stand in the realm of the title or playlist they
+belong to. A grant is the one way past the realm: the account it names watches that one episode, and reads
+nothing else of the realm by it (「Grants」).
 
 A library is registered by the administrator alone, in either realm, since registering one reads a folder
 of the host's. The titles a scan makes stand in the library's realm and belong to the account that
@@ -115,6 +119,25 @@ the playlist's episodes, their posters, their streams and their subtitles, and n
 playlist has at most one live link. A link ends at its `expiresAt` where it has one, or when it is deleted,
 and with the episode or the playlist it opens.
 
+## Grants
+
+A grant shares one episode with one person of the company, named by the account key the console signs them
+in with. The console's people directory finds the person; the theater keeps the key alone and names nobody.
+
+- **What it holds:** the episode, the account, the permission (`read` where none is given), who granted it
+  and when. An episode has at most one grant to an account; granting again sets its permission.
+- **Who grants:** whoever changes the episode (「Two realms」) makes, changes and ends its grants, and reads
+  them. A grant to the account the episode already belongs to adds nothing and is not kept.
+- **What it opens:** to the signed-in account it names, the episode watched as its owner watches it: the
+  episode, its stream, its poster, its subtitles and their files, and the account's own position in it. Both
+  permissions open these reads alone; no write is opened by a grant, so the account does not change, delete,
+  burn, subtitle, link, move or list the episode, nor reads its title, its other episodes or its burns.
+- **What it does not touch:** anyone the episode is not granted to is answered as before, as if it did not
+  stand. A grant and a share link are independent; neither makes, ends nor changes the other.
+- **Where it matters:** an episode of a `mine` realm. An `organization` episode is read by every account
+  already, so a grant on one opens nothing more.
+- **When it ends:** when it is taken off, or with the episode.
+
 ## The file root
 
 The theater's file root, a setting, holds what the theater itself keeps:
@@ -150,6 +173,14 @@ A console bundle, built from `client/`, stands under the sidebar entry the words
 - **The libraries,** shown to the administrator alone: a folder registered, renamed, scanned again or removed.
   No route says whether a reader administers the theater, so the bundle asks the one route only the
   administrator may call with a body it refuses, which makes nothing either way.
+- **Sharing:** an episode and a playlist open the layer's one share dialog (bmo-ui `docs/components.md`,
+  「Sharing」). Its link part makes, shows and ends the share link. Its people part stands for an episode of
+  the reader's own `mine` realm where the console offers its people directory (bmo-ui
+  `docs/console-bundles.md`, the people directory and sharing): people found through the directory's search,
+  each grant drawn by the name the directory gives its account, else by the key. A playlist is shared by link
+  alone.
+- **Watching by a grant:** the player alone, its title shown only where the reader reads it, with no share,
+  subtitle, burn or playlist action, since the service opens none of them to a grant.
 - **The share page,** the screen path's `/share/` and a token: the same player for whoever holds a link, with no
   sign-in and no position set, a playlist's episodes following one another.
 

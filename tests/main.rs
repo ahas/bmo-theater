@@ -4,6 +4,7 @@
 mod support;
 
 mod console;
+mod grants;
 mod names;
 mod openapi;
 mod progress;

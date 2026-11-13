@@ -11,11 +11,11 @@ use serde_json::{Map, Value, json};
 use crate::error::CODES;
 use crate::events::KINDS;
 use crate::wire::{
-  Burn, Deleted, Episode, EpisodeChange, EventsQuery, FiledByPath, HeadQuery, Health, Library,
-  LibraryChange, NewBurn, NewLibrary, NewPlaylist, NewShare, NewTitle, Page, PageQuery, Playlist,
-  PlaylistChange, PlaylistItems, Position, PositionSet, Progress, RealmQuery, Scan, Share, ShareDeleted,
-  ShareHead, SharesQuery, StreamEvent, Subtitle, SubtitleByPath, Title, TitleChange, TitlesQuery,
-  WireError,
+  Burn, Deleted, Episode, EpisodeChange, EventsQuery, FiledByPath, Grant, GrantChange, HeadQuery, Health,
+  Library, LibraryChange, NewBurn, NewGrants, NewLibrary, NewPlaylist, NewShare, NewTitle, Page, PageQuery,
+  Playlist, PlaylistChange, PlaylistItems, Position, PositionSet, Progress, RealmQuery, Scan, Share,
+  ShareDeleted, ShareHead, SharesQuery, StreamEvent, Subtitle, SubtitleByPath, Title, TitleChange,
+  TitlesQuery, WireError,
 };
 
 const SCHEMAS: &str = "/components/schemas";
@@ -333,6 +333,7 @@ fn routes(g: &mut SchemaGenerator) -> Vec<Route> {
   let episode = || path_id("episodeId", "The episode's id.");
   let playlist = || path_id("playlistId", "The playlist's id.");
   let token = || path_text("token", "The share link's token.");
+  let user = || path_text("user", "The account key the episode is granted to.");
   let streamed = bytes(&[
     "video/mp4",
     "video/webm",
@@ -630,6 +631,50 @@ fn routes(g: &mut SchemaGenerator) -> Vec<Route> {
       upload_body::<SubtitleByPath>(g, &["language", "label", "format"]),
       vec![(201, content::<Subtitle>(g))],
       vec!["bad-request", "not-found", "not-a-file", "unknown-format", "no-cues"],
+    ),
+    route(
+      "get",
+      "/episodes/{episodeId}/grants",
+      "listGrants",
+      "grants",
+      "Who an episode is granted to.",
+      vec![episode()],
+      None,
+      vec![(200, content::<Page<Grant>>(g))],
+      vec!["forbidden", "not-found"],
+    ),
+    route(
+      "post",
+      "/episodes/{episodeId}/grants",
+      "grantEpisode",
+      "grants",
+      "Grant an episode to one or more accounts; answers every grant of it.",
+      vec![episode()],
+      json_body::<NewGrants>(g),
+      vec![(200, content::<Page<Grant>>(g))],
+      vec!["bad-request", "forbidden", "not-found"],
+    ),
+    route(
+      "put",
+      "/episodes/{episodeId}/grants/{user}",
+      "changeGrant",
+      "grants",
+      "Set a grant's permission.",
+      vec![episode(), user()],
+      json_body::<GrantChange>(g),
+      vec![(200, content::<Grant>(g))],
+      vec!["bad-request", "forbidden", "not-found"],
+    ),
+    route(
+      "delete",
+      "/episodes/{episodeId}/grants/{user}",
+      "endGrant",
+      "grants",
+      "End a grant.",
+      vec![episode(), user()],
+      None,
+      vec![(204, None)],
+      vec!["forbidden", "not-found"],
     ),
     route(
       "post",

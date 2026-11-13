@@ -4,7 +4,7 @@ import { Refusal, Unreachable } from "./api";
 import { moved, removedAt } from "./order";
 
 import type { TheaterApi } from "./api";
-import type { Burn, Episode, Library, Playlist, Position, Progress, Realm, Share, StreamEvent, Subtitle, Title } from "../../shared/types";
+import type { Burn, Episode, Library, Permission, Playlist, Position, Progress, Realm, Share, StreamEvent, Subtitle, Title } from "../../shared/types";
 
 // What the screens hold of the theater service: the titles and playlists of both realms, the episodes, the
 // progress and the subtitles of what has been opened, the burns of what is being burned, and the libraries.
@@ -582,6 +582,15 @@ export function createTheaterStore(options: StoreOptions) {
     };
   }
 
+  function grantRoad(episodeId: number) {
+    return {
+      read: () => api.grants(episodeId),
+      grant: (users: string[], permission: Permission) => api.grant(episodeId, users, permission).then(() => undefined),
+      change: (user: string, permission: Permission) => api.changeGrant(episodeId, user, permission).then(() => undefined),
+      remove: (user: string) => api.endGrant(episodeId, user)
+    };
+  }
+
   // ---- The event stream ---------------------------------------------------------------------------
 
   // The progress read for what an event changed, read again so its next stands as the service answers it.
@@ -720,6 +729,7 @@ export function createTheaterStore(options: StoreOptions) {
     scanLibrary,
     deleteLibrary,
     shareRoad,
+    grantRoad,
     apply
   };
 }

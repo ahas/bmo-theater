@@ -12,7 +12,7 @@
       <div class="min-w-0 flex-1 shrink!">
         <span class="truncate text-muted">{{ playlist?.name ?? title?.name ?? "" }}</span>
       </div>
-      <ActionGroup :actions="actions" :narrow-fold="false" class="ms-auto" />
+      <ActionGroup v-if="actions.length > 0" :actions="actions" :narrow-fold="false" class="ms-auto" />
     </ToolBar>
 
     <div class="theater-stage shrink-0 bg-black">
@@ -85,12 +85,12 @@
 
     <SubtitleDialog v-model:open="subtitlesOpen" :episode="episode" />
     <AddToPlaylistDialog v-if="episode" v-model:open="addingOpen" :episode-ids="[episode.id]" :realm="episode.realm" :subject="episode.name" />
-    <ShareDialog v-if="episode" v-model:open="sharingOpen" :road="road" :spans="spans" :span="FIRST_SPAN" :subject="episode.name" />
+    <ShareDialog v-if="episode" v-model:open="sharingOpen" :road="road" :spans="spans" :span="FIRST_SPAN" :members="members" :subject="episode.name" />
   </TheaterFrame>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, inject, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
@@ -112,7 +112,7 @@ import { episodeLabel } from "../../../domain/a11y";
 import { paths } from "../../../domain/api";
 import { episodeAfter, episodeTitle, placeAfter, placeOf, watchedEpisode } from "../../../domain/episodes";
 import { firstTrack, positionMoved, startAt, trackName } from "../../../domain/player";
-import { FIRST_SPAN, SHARE_SPANS, shareRoad } from "../../../domain/share";
+import { CONSOLE_PEOPLE, FIRST_SPAN, SHARE_SPANS, memberRoad, shareRoad } from "../../../domain/share";
 import { refusalWord } from "../../../domain/store";
 import { useDialogFocus } from "../../../composables/useDialogFocus";
 import { SERVICE, theaterAddress, useTheater } from "../../../composables/useTheater";
@@ -120,6 +120,7 @@ import { useTheaterEvents } from "../../../composables/useTheaterEvents";
 
 import type { BarAction } from "bmo-ui/app/domain/tabs";
 import type { PlayerTrack } from "../../../components/theater/VideoPlayer.vue";
+import type { ConsolePeople } from "../../../domain/share";
 import type { Episode, Playlist } from "../../../../shared/types";
 
 const route = useRoute();
@@ -139,7 +140,10 @@ let lastKept: { episode: number; seconds: number } | null = null;
 
 const episodeId = computed(() => Number(route.params.id));
 const episode = computed<Episode | null>(() => store.episodeOf(episodeId.value) ?? null);
-const actions = computed<BarAction[]>(() => [
+// An episode watched by a grant opens nothing but watching (`docs/design.md`, 「Grants」), so no action stands.
+const granted = computed(() => episode.value?.granted === true);
+const actions = computed<BarAction[]>(() => (granted.value ? [] : ownActions.value));
+const ownActions = computed<BarAction[]>(() => [
   { id: "subtitles", label: t("theater.action.subtitles"), icon: "i-material-symbols-subtitles-outline", disabled: !episode.value, onSelect: () => (subtitlesOpen.value = true) },
   { id: "add-to-playlist", label: t("theater.action.add_to_playlist"), icon: "i-material-symbols-playlist-add", disabled: !episode.value, onSelect: () => (addingOpen.value = true) },
   { id: "share", label: t("theater.action.share"), icon: "i-material-symbols-share-outline", disabled: !episode.value, onSelect: () => (sharingOpen.value = true) }
@@ -173,10 +177,21 @@ const nextEpisode = computed<Episode | null>(() => {
 });
 const nextWords = computed(() => (nextEpisode.value ? t("theater.action.next_named", { name: episodeTitle(nextEpisode.value) }) : null));
 
-const backPath = computed(() => (playlist.value ? `/theater/playlists/${playlist.value.id}` : episode.value ? `/theater/titles/${episode.value.titleId}` : "/theater"));
-const backWords = computed(() => (playlist.value ? t("theater.label.playlist") : t("theater.label.title")));
+const backPath = computed(() => {
+  if (playlist.value) return `/theater/playlists/${playlist.value.id}`;
+
+  return episode.value && !granted.value ? `/theater/titles/${episode.value.titleId}` : "/theater";
+});
+const backWords = computed(() => {
+  if (playlist.value) return t("theater.label.playlist");
+
+  return granted.value ? t("theater.label.library") : t("theater.label.title");
+});
 
 const road = computed(() => shareRoad(store.shareRoad({ episodeId: episodeId.value })));
+// People are shared with only where the console offers its directory, and only an episode of the reader's own.
+const people = inject<ConsolePeople | null>(CONSOLE_PEOPLE, null);
+const members = computed(() => (people && episode.value?.realm === "mine" && !granted.value ? memberRoad(people, store.grantRoad(episodeId.value)) : undefined));
 const spans = computed(() => SHARE_SPANS.map((span) => ({ value: span.value, label: t(span.label) })));
 
 watch([episodeId, () => route.query.playlist], () => void load(), { immediate: true });
@@ -190,7 +205,8 @@ async function load(): Promise<void> {
     const playlistId = Number(route.query.playlist);
 
     await Promise.all([
-      store.titleOf(read.titleId) ? Promise.resolve() : store.loadTitle(read.titleId).then(() => undefined),
+      // An episode watched by a grant opens nothing of its title, so its title is not asked for.
+      read.granted || store.titleOf(read.titleId) ? Promise.resolve() : store.loadTitle(read.titleId).then(() => undefined),
       store.loadSubtitles(read.id).catch(() => []),
       Number.isSafeInteger(playlistId) && playlistId > 0 ? loadPlaylist(playlistId) : Promise.resolve((playlist.value = null))
     ]);
@@ -198,7 +214,7 @@ async function load(): Promise<void> {
     track.value = firstTrack(store.subtitles.value[read.id] ?? [], locale.value);
     tracksRead.value = true;
 
-    if (!playlist.value && !store.episodes.value[read.titleId]) await store.loadEpisodes(read.titleId).catch(() => undefined);
+    if (!playlist.value && !read.granted && !store.episodes.value[read.titleId]) await store.loadEpisodes(read.titleId).catch(() => undefined);
   } catch (error) {
     failed.value = t(refusalWord(error));
   }
