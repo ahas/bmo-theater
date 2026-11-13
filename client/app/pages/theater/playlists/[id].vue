@@ -96,7 +96,7 @@
     <p class="sr-only" aria-live="polite" aria-atomic="true">{{ announced }}</p>
 
     <NameDialog v-model:open="renaming" :title="$t('theater.heading.rename_playlist')" :action="$t('common.action.save')" :current="playlist?.name ?? ''" :send="rename" />
-    <ShareLinkDialog v-if="playlist" v-model:open="sharing" :road="road" :spans="spans" :span="FIRST_SPAN" :subject="playlist.name" />
+    <ShareDialog v-if="playlist" v-model:open="sharing" :road="road" :spans="spans" :span="FIRST_SPAN" :subject="playlist.name" />
   </TheaterFrame>
 </template>
 
@@ -107,7 +107,7 @@ import { useI18n } from "vue-i18n";
 import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
 import MovingList from "bmo-ui/app/components/MovingList.vue";
-import ShareLinkDialog from "bmo-ui/app/components/ShareLinkDialog.vue";
+import ShareDialog from "bmo-ui/app/components/ShareDialog.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
 import RollingNumber from "bmo-ui/app/components/RollingNumber.vue";

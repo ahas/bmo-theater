@@ -85,7 +85,7 @@
 
     <SubtitleDialog v-model:open="subtitlesOpen" :episode="episode" />
     <AddToPlaylistDialog v-if="episode" v-model:open="addingOpen" :episode-ids="[episode.id]" :realm="episode.realm" :subject="episode.name" />
-    <ShareLinkDialog v-if="episode" v-model:open="sharingOpen" :road="road" :spans="spans" :span="FIRST_SPAN" :subject="episode.name" />
+    <ShareDialog v-if="episode" v-model:open="sharingOpen" :road="road" :spans="spans" :span="FIRST_SPAN" :subject="episode.name" />
   </TheaterFrame>
 </template>
 
@@ -95,7 +95,7 @@ import { RouterLink } from "vue-router";
 import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
-import ShareLinkDialog from "bmo-ui/app/components/ShareLinkDialog.vue";
+import ShareDialog from "bmo-ui/app/components/ShareDialog.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
 import SkeletonStatus from "bmo-ui/app/components/SkeletonStatus.vue";

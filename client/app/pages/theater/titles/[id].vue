@@ -63,7 +63,7 @@
     <UploadDialog v-if="title" v-model:open="uploading" :realm="title.realm" :title-id="title.id" />
     <SubtitleDialog v-model:open="subtitlesOpen" :episode="chosen" />
     <AddToPlaylistDialog v-if="chosen" v-model:open="addingOpen" :episode-ids="[chosen.id]" :realm="chosen.realm" :subject="chosen.name" />
-    <ShareLinkDialog v-if="chosen" v-model:open="sharingOpen" :road="road" :spans="spans" :span="FIRST_SPAN" :subject="chosen.name" />
+    <ShareDialog v-if="chosen" v-model:open="sharingOpen" :road="road" :spans="spans" :span="FIRST_SPAN" :subject="chosen.name" />
   </TheaterFrame>
 </template>
 
@@ -73,7 +73,7 @@ import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
-import ShareLinkDialog from "bmo-ui/app/components/ShareLinkDialog.vue";
+import ShareDialog from "bmo-ui/app/components/ShareDialog.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
 import RollingNumber from "bmo-ui/app/components/RollingNumber.vue";

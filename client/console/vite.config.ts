@@ -33,16 +33,23 @@ function layerComponent(name: string) {
   return LAYER_COMPONENTS.has(name) ? { name: "default", from: `bmo-ui/app/components/${name}.vue` } : undefined;
 }
 
-/** The language pack, one file to a locale, written as one object keyed by the locale's code. */
+/** The language pack, one file to a locale, read as one object keyed by the locale's code. */
+function readWords(): Record<string, unknown> {
+  const folder = join(root, "i18n");
+  const locales = readdirSync(folder).filter((file) => file.endsWith(".json")).sort();
+
+  return Object.fromEntries(locales.map((file) => [basename(file, ".json"), JSON.parse(readFileSync(join(folder, file), "utf8"))]));
+}
+
+// The bundle's words: what the bundle build holds the pages to, and what the service answers.
+const WORDS = readWords();
+
+/** The language pack written as the bundle's words. */
 function words(): Plugin {
   return {
     name: "theater-words",
     generateBundle() {
-      const folder = join(root, "i18n");
-      const locales = readdirSync(folder).filter((file) => file.endsWith(".json")).sort();
-      const pack = Object.fromEntries(locales.map((file) => [basename(file, ".json"), JSON.parse(readFileSync(join(folder, file), "utf8"))]));
-
-      this.emitFile({ type: "asset", fileName: "words.json", source: JSON.stringify(pack) });
+      this.emitFile({ type: "asset", fileName: "words.json", source: JSON.stringify(WORDS) });
     }
   };
 }
@@ -63,7 +70,7 @@ export default defineConfig({
     vue(),
     tailwindcss(),
     words(),
-    consoleBundle()
+    consoleBundle({ name: "theater", words: WORDS })
   ],
   build: {
     outDir: join(root, "dist"),
