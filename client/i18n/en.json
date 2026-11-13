@@ -23,6 +23,7 @@
       "play": "Play",
       "refresh": "Refresh",
       "register": "Register",
+      "register_library": "Register library",
       "remove": "Remove",
       "rename": "Rename",
       "reorder": "Reorder",
@@ -30,6 +31,7 @@
       "share": "Share",
       "subtitles": "Subtitles",
       "upload": "Upload",
+      "upload_video": "Upload video",
       "turn": "Turn the picture"
     },
     "aria": {

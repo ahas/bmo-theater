@@ -3,7 +3,11 @@
        last scan found, a scan asked for again, a rename and its removal; a folder registered from here. Anyone
        else is shown nothing of them. -->
   <TheaterFrame id="theater-libraries" nav :actions="actions">
-    <div v-if="administrator" class="min-h-0 flex-1 overflow-y-auto">
+    <template v-if="administrator" #create="{ cell }">
+      <CreateButton :class="cell" :label="$t('theater.action.register_library')" @click="registering = true" />
+    </template>
+
+    <div v-if="administrator" class="min-h-0 flex-1 overflow-y-auto pb-(--bmo-create-room)">
       <p v-if="librariesFailed && !libraries.length" role="alert" class="badge-ink p-4 text-sm text-error">{{ $t("theater.error.libraries_failed") }}</p>
 
       <ContentSkeleton v-else-if="!librariesRead" list-class="flex flex-col py-2" :rows="2" :label="$t('theater.status.libraries_loading')">
@@ -50,6 +54,7 @@ import { computed, ref, watch } from "vue";
 import { navigateTo } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
+import CreateButton from "bmo-ui/app/components/CreateButton.vue";
 import MovingList from "bmo-ui/app/components/MovingList.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
 import { countText } from "bmo-ui/app/domain/numbers";
@@ -74,11 +79,10 @@ const registering = ref(false);
 const renaming = ref(false);
 const refreshing = ref(false);
 
-// Registering and scanning are the administrator's alone, so nobody else is offered them.
+// Refreshing the libraries, as registering one, is the administrator's alone, so nobody else is offered it.
 const actions = computed<BarAction[]>(() =>
   administrator.value
     ? [
-        { id: "register", label: t("theater.action.register"), icon: "i-material-symbols-create-new-folder-outline", onSelect: () => (registering.value = true) },
         { id: "refresh", label: t("theater.action.refresh"), icon: "i-material-symbols-refresh", loading: refreshing.value, onSelect: () => void refresh() }
       ]
     : []

@@ -125,6 +125,20 @@ describe("the bars", () => {
     }
   });
 
+  test("a screen makes from the layer's one create button, once, standing in its own row", () => {
+    const creating = templates.filter(({ elements }) => elements.some((element) => element.tag === "CreateButton"));
+
+    expect(creating.length).toBeGreaterThan(0);
+    for (const { path, elements } of creating) {
+      const rows = elements.filter((element) => element.tag === "ToolBar" || (element.tag === "template" && element.attributes.has(":create")));
+      const held = new Set(rows.flatMap((row) => within(row.children)));
+      const buttons = elements.filter((element) => element.tag === "CreateButton");
+
+      expect([path, buttons.length]).toEqual([path, 1]);
+      expect([path, held.has(buttons[0]!)]).toEqual([path, true]);
+    }
+  });
+
   test("a toolbar's way back leads it, and its buttons are the library's small ones at their own size", () => {
     const toolbars = templates.flatMap(({ path, elements }) => elements.filter((element) => element.tag === "ToolBar").map((toolbar) => ({ path, toolbar })));
 

@@ -23,6 +23,7 @@
       "play": "재생",
       "refresh": "새로고침",
       "register": "등록",
+      "register_library": "라이브러리 등록",
       "remove": "제거",
       "rename": "이름 변경",
       "reorder": "순서 변경",
@@ -30,6 +31,7 @@
       "share": "공유",
       "subtitles": "자막",
       "upload": "업로드",
+      "upload_video": "영상 업로드",
       "turn": "화면 회전"
     },
     "aria": {

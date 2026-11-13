@@ -3,7 +3,8 @@
        it offers one, the screen's own otherwise, holding the theater's name and mark alone. What acts on the
        screen stands in the screen's own row directly under that bar: on the screens the theater is switched
        between, the frame draws that row, with their tabs and the realm they show, and the screen's actions at
-       its right end; every other screen draws its toolbar there itself. -->
+       its right end, the screen's create button, handed in as `create`, the last of them; every other screen
+       draws its toolbar there itself. -->
   <UDashboardPanel :id="props.id" :ui="{ body: 'p-0 sm:p-0 gap-0 sm:gap-0 overflow-y-hidden [&>*]:max-w-none' }">
     <template v-if="!barOffered" #header>
       <UDashboardNavbar :title="$t('theater.title')" icon="i-material-symbols-theaters-outline" />
@@ -24,7 +25,10 @@
         </UTabs>
 
         <!-- The realm switch and the screen's actions each stand as a group of small buttons centred in the
-             row, parted from the tabs by a line, as bmo-ui's own tab row stands its switch and actions. -->
+             row, parted from the tabs by a line, as bmo-ui's own tab row stands its switch and actions. The
+             create button is a cell of its own after them, the library's small button as every other, as a
+             toolbar holds it; the line parting it is handed to its own cell, which stands only where the
+             button stands in the row, so a phone, where it floats instead, draws no empty cell. -->
         <div v-if="props.realms" class="flex shrink-0 items-center border-l border-default px-1">
           <TabSwitch v-model="realm" :items="realmItems" :label="$t('theater.aria.realm')" :compact="narrow" />
         </div>
@@ -32,6 +36,10 @@
         <div v-if="props.actions.length" class="flex shrink-0 items-center border-l border-default px-1">
           <ActionGroup :actions="props.actions" :narrow-fold="false" />
         </div>
+
+        <UTheme :props="SMALL">
+          <slot name="create" :cell="CREATE_CELL" />
+        </UTheme>
       </nav>
 
       <slot />
@@ -68,6 +76,12 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), { nav: false, realms: false, actions: () => [] });
+
+// The size every library button in the row takes, handed to the create button as a toolbar hands it.
+const SMALL = { button: { size: "sm" } } as const;
+
+// Where the create button's cell stands in the row: parted from what precedes it by a line, as every cell is.
+const CREATE_CELL = "border-l border-default px-1";
 
 const SCREEN_PATHS: Record<Screen, string> = { library: "/theater", playlists: "/theater/playlists", libraries: "/theater/libraries" };
 

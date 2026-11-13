@@ -2,7 +2,11 @@
   <!-- The library (`docs/design.md`, 「The console」): the posters of the realm's titles in a grid, the reader's own
        in one tab and the organization's in the other. A title opens its seasons and episodes. -->
   <TheaterFrame id="theater-library" nav realms :actions="actions">
-    <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto">
+    <template #create="{ cell }">
+      <CreateButton :class="cell" :label="$t('theater.action.upload_video')" @click="uploading = true" />
+    </template>
+
+    <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto pb-(--bmo-create-room)">
       <p v-if="titlesFailed[realm] && !shown.length" role="alert" class="badge-ink p-4 text-sm text-error">{{ $t("theater.error.titles_failed") }}</p>
 
       <ContentSkeleton v-else-if="!titlesRead[realm]" :list-class="GRID" :rows="8" :label="$t('theater.status.titles_loading')">
@@ -31,6 +35,7 @@ import { computed, ref, useTemplateRef, watch } from "vue";
 import { navigateTo } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
+import CreateButton from "bmo-ui/app/components/CreateButton.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
 
@@ -58,7 +63,6 @@ const refreshing = ref(false);
 
 const shown = computed(() => [...titles.value[realm.value]].sort((a, b) => a.name.localeCompare(b.name)));
 const actions = computed<BarAction[]>(() => [
-  { id: "upload", label: t("theater.action.upload"), icon: "i-material-symbols-upload", onSelect: () => (uploading.value = true) },
   { id: "refresh", label: t("theater.action.refresh"), icon: "i-material-symbols-refresh", loading: refreshing.value, onSelect: () => void refresh() }
 ]);
 

@@ -14,9 +14,10 @@
       </div>
 
       <ActionGroup :actions="actions" :narrow-fold="false" class="ms-auto" />
+      <CreateButton :label="$t('theater.action.upload_video')" :disabled="title === null" @click="uploading = true" />
     </ToolBar>
 
-    <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto">
+    <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto pb-(--bmo-create-room)">
       <p v-if="failed" role="alert" class="badge-ink p-4 text-sm text-error">{{ failed }}</p>
 
       <template v-else>
@@ -73,6 +74,7 @@ import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
+import CreateButton from "bmo-ui/app/components/CreateButton.vue";
 import ShareDialog from "bmo-ui/app/components/ShareDialog.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
@@ -116,7 +118,6 @@ const sharingOpen = ref(false);
 const titleId = computed(() => Number(route.params.id));
 const title = computed(() => store.titleOf(titleId.value) ?? null);
 const actions = computed<BarAction[]>(() => [
-  { id: "upload", label: t("theater.action.upload"), icon: "i-material-symbols-upload", disabled: title.value === null, onSelect: () => (uploading.value = true) },
   { id: "refresh", label: t("theater.action.refresh"), icon: "i-material-symbols-refresh", loading: refreshing.value, onSelect: () => void refresh() }
 ]);
 const episodeList = computed<Episode[] | null>(() => store.episodes.value[titleId.value] ?? null);

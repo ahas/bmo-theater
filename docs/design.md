@@ -193,6 +193,13 @@ title, a playlist and the player. Every button in that row is the component libr
 its hover confined to its own shape; on a narrow screen the row of screens names each screen by its mark
 alone, so the actions keep standing beside it.
 
+A screen that makes something makes it from the layer's one create button (bmo-ui `docs/components.md`,
+「Creating」) and from no other: the library and a title upload a video, the playlists make a new playlist, the
+libraries register a folder. On a wide screen it stands as the last cell at the right end of the screen's
+row, its tooltip naming what it makes and its key, n; on a phone it floats at the screen's bottom right, and
+the screen's list keeps the layer's create room at its scrolling end, so its last item scrolls clear of it.
+Adding an episode to a playlist is an action on that episode, not a create button.
+
 ## The tool
 
 The supervisor reaches the theater through the tool host: find titles, show a title or an episode, file a

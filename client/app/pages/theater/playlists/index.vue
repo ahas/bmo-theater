@@ -2,7 +2,11 @@
   <!-- The playlists of a realm (`docs/design.md`, 「The console」): each by its name, how many episodes it holds and
        how long they run. A playlist opens its episodes, how far the viewer has come and the way to go on. -->
   <TheaterFrame id="theater-playlists" nav realms :actions="actions">
-    <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto">
+    <template #create="{ cell }">
+      <CreateButton :class="cell" :label="$t('theater.action.new_playlist')" @click="making = true" />
+    </template>
+
+    <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto pb-(--bmo-create-room)">
       <p v-if="playlistsFailed[realm] && !shown.length" role="alert" class="badge-ink p-4 text-sm text-error">{{ $t("theater.error.playlists_failed") }}</p>
 
       <ContentSkeleton v-else-if="!playlistsRead[realm]" list-class="flex flex-col py-2" :rows="4" :label="$t('theater.status.playlists_loading')">
@@ -49,6 +53,7 @@ import { RouterLink } from "vue-router";
 import { navigateTo } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
+import CreateButton from "bmo-ui/app/components/CreateButton.vue";
 import MovingList from "bmo-ui/app/components/MovingList.vue";
 import ShareDialog from "bmo-ui/app/components/ShareDialog.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
@@ -85,7 +90,6 @@ const refreshing = ref(false);
 
 const shown = computed(() => [...playlists.value[realm.value]].sort((a, b) => a.name.localeCompare(b.name)));
 const actions = computed<BarAction[]>(() => [
-  { id: "new-playlist", label: t("theater.action.new_playlist"), icon: "i-material-symbols-playlist-add", onSelect: () => (making.value = true) },
   { id: "refresh", label: t("theater.action.refresh"), icon: "i-material-symbols-refresh", loading: refreshing.value, onSelect: () => void refresh() }
 ]);
 const road = computed(() => shareRoad(store.shareRoad({ playlistId: chosen.value?.id ?? 0 })));
