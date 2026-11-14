@@ -85,9 +85,10 @@ interface Session {
   cdp: CDPSession;
 }
 
-// The page at one width and in one mode, the browser's clock installed before anything runs.
+// The page at one width and in one mode, the browser's clock installed before anything runs. The phone is one of
+// the width the screens are designed against, 360px in portrait.
 async function session(width: Width, scheme: Scheme): Promise<Session> {
-  const context = await browser.newContext(width === "desktop" ? { viewport: { width: 1280, height: 800 } } : { ...devices["Pixel 5"] });
+  const context = await browser.newContext(width === "desktop" ? { viewport: { width: 1280, height: 800 } } : { ...devices["Galaxy S24"] });
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
 
@@ -156,6 +157,11 @@ describe.skipIf(!ready)("the player stage", () => {
         expect([player.x, player.y, player.width, player.height]).toEqual([stage.x, stage.y, stage.width, stage.height]);
         expect([await ground(page, PLAYING), await ground(page, `${PLAYING} ${PLAYER}`)]).toEqual(["rgb(0, 0, 0)", "rgb(0, 0, 0)"]);
         expect(await page.getAttribute(`${PLAYING} ${PLAYER}`, "aria-label")).toBe("Harbour, episode 1 player");
+
+        const controls = await page.$$eval(`${PLAYING} ${CONTROLS} button`, (buttons) => buttons.map((button) => button.getBoundingClientRect()).map((at) => ({ left: at.left, right: at.right })));
+
+        expect(controls.length).toBeGreaterThan(0);
+        expect(controls.filter((at) => at.left < stage.x || at.right > stage.x + stage.width)).toEqual([]);
 
         expect(await page.locator(`${READING} [role='status']`).getAttribute("aria-label")).toBe("Loading the video");
         expect(await ground(page, READING)).toBe("rgb(0, 0, 0)");
