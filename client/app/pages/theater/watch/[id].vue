@@ -15,27 +15,17 @@
       <ActionGroup v-if="actions.length > 0" :actions="actions" :narrow-fold="false" class="ms-auto" />
     </ToolBar>
 
-    <div class="theater-stage shrink-0 bg-black">
-      <p v-if="failed" role="alert" class="flex size-full items-center justify-center p-4 text-center text-base text-white">{{ failed }}</p>
-      <VideoPlayer
-        v-else-if="episode && tracksRead"
-        :key="`${episode.id}:${at}`"
-        v-model:track="track"
-        :episode="episode.id"
-        :src="theaterAddress(paths.stream(episode.id))"
-        :poster="episode.hasPoster ? theaterAddress(paths.episodePoster(episode.id)) : null"
-        :title="episodeTitle(episode)"
-        :tracks="tracks"
-        :start="start"
-        :autoplay="autoplay"
-        :next="nextWords"
-        @position="keep"
-        @leaving="keepLeaving"
-        @ended="ended"
-        @next="goNext(true)"
-      />
-      <SkeletonStatus v-else as="div" class="flex size-full" :label="$t('common.status.video_loading')"><SkeletonBar class="size-full" /></SkeletonStatus>
-    </div>
+    <PlayerStage
+      :key="`${episodeId}:${at}`"
+      v-model:track="track"
+      class="theater-stage"
+      :failed="failed"
+      :player="player"
+      @position="keep"
+      @leaving="keepLeaving"
+      @ended="ended"
+      @next="goNext(true)"
+    />
 
     <div class="min-h-0 flex-1 overflow-y-auto">
       <header class="flex flex-col gap-1 px-4 py-4">
@@ -96,18 +86,16 @@ import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
 import ShareDialog from "bmo-ui/app/components/ShareDialog.vue";
-import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
-import SkeletonStatus from "bmo-ui/app/components/SkeletonStatus.vue";
 import ToolBar from "bmo-ui/app/components/ToolBar.vue";
 import { countText } from "bmo-ui/app/domain/numbers";
 import { relayCall } from "bmo-ui/app/domain/relay";
 
 import AddToPlaylistDialog from "../../../components/theater/AddToPlaylistDialog.vue";
 import EpisodeRow from "../../../components/theater/EpisodeRow.vue";
+import PlayerStage from "../../../components/theater/PlayerStage.vue";
 import SubtitleDialog from "../../../components/theater/SubtitleDialog.vue";
 import TheaterFrame from "../../../components/theater/TheaterFrame.vue";
-import VideoPlayer from "../../../components/theater/VideoPlayer.vue";
 import { episodeLabel } from "../../../domain/a11y";
 import { paths } from "../../../domain/api";
 import { episodeAfter, episodeTitle, placeAfter, placeOf, watchedEpisode } from "../../../domain/episodes";
@@ -119,7 +107,8 @@ import { SERVICE, theaterAddress, useTheater } from "../../../composables/useThe
 import { useTheaterEvents } from "../../../composables/useTheaterEvents";
 
 import type { BarAction } from "bmo-ui/app/domain/tabs";
-import type { PlayerTrack } from "../../../components/theater/VideoPlayer.vue";
+import type { PlayerTrack } from "bmo-ui/app/domain/video";
+import type { StagePlayer } from "../../../components/theater/PlayerStage.vue";
 import type { ConsolePeople } from "../../../domain/share";
 import type { Episode, Playlist } from "../../../../shared/types";
 
@@ -176,6 +165,24 @@ const nextEpisode = computed<Episode | null>(() => {
   return after === null ? null : (store.episodeOf(after) ?? null);
 });
 const nextWords = computed(() => (nextEpisode.value ? t("theater.action.next_named", { name: episodeTitle(nextEpisode.value) }) : null));
+
+// The episode on the stage, once it and its subtitles are read.
+const player = computed<StagePlayer | null>(() => {
+  const shown = episode.value;
+
+  if (!shown || !tracksRead.value) return null;
+
+  return {
+    episode: shown.id,
+    src: theaterAddress(paths.stream(shown.id)),
+    poster: shown.hasPoster ? theaterAddress(paths.episodePoster(shown.id)) : null,
+    title: episodeTitle(shown),
+    tracks: tracks.value,
+    start: start.value,
+    autoplay: autoplay.value,
+    next: nextWords.value
+  };
+});
 
 const backPath = computed(() => {
   if (playlist.value) return `/theater/playlists/${playlist.value.id}`;

@@ -1,0 +1,11 @@
+/* The harness page's sheet: the layer's own stylesheet with the utility classes the stage, the layer's player and
+   the parts it is built from are drawn with. */
+@import "bmo-ui/app/assets/css/main.css";
+
+@source "../../app/components/theater/PlayerStage.vue";
+@source "../../node_modules/bmo-ui/app/components/VideoPlayer.vue";
+@source "../../node_modules/bmo-ui/app/components/IconButton.vue";
+@source "../../node_modules/bmo-ui/app/components/HintTip.vue";
+@source "../../node_modules/bmo-ui/app/components/SkeletonBar.vue";
+@source "../../node_modules/bmo-ui/app/components/SkeletonStatus.vue";
+@source "./stage-harness.ts";

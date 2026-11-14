@@ -5,24 +5,15 @@
        the console. -->
   <ScreenFrame class="bg-default">
     <section class="flex min-h-0 flex-1 flex-col" :aria-label="heading || $t('theater.title')">
-      <div class="theater-share-stage shrink-0 bg-black">
-        <p v-if="failed" role="alert" class="flex size-full items-center justify-center p-4 text-center text-base text-white">{{ failed }}</p>
-        <VideoPlayer
-          v-else-if="episode && tracksRead"
-          :key="`${episode.id}:${at}`"
-          v-model:track="track"
-          :episode="episode.id"
-          :src="theaterAddress(paths.shared.stream(token, episode.id))"
-          :poster="episode.hasPoster ? theaterAddress(paths.shared.poster(token, episode.id)) : null"
-          :title="episodeTitle(episode)"
-          :tracks="tracks"
-          :autoplay="autoplay"
-          :next="nextWords"
-          @ended="ended"
-          @next="go(at + 1, true)"
-        />
-        <SkeletonStatus v-else as="div" class="flex size-full" :label="$t('common.status.video_loading')"><SkeletonBar class="size-full" /></SkeletonStatus>
-      </div>
+      <PlayerStage
+        :key="`${episode?.id}:${at}`"
+        v-model:track="track"
+        class="theater-share-stage"
+        :failed="failed"
+        :player="player"
+        @ended="ended"
+        @next="go(at + 1, true)"
+      />
 
       <div class="min-h-0 flex-1 overflow-y-auto">
         <header v-if="!failed" class="mx-auto flex max-w-3xl flex-col gap-1 px-4 py-4">
@@ -59,13 +50,11 @@ import { computed, ref, watch } from "vue";
 import { useHead, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ScreenFrame from "bmo-ui/app/components/ScreenFrame.vue";
-import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
-import SkeletonStatus from "bmo-ui/app/components/SkeletonStatus.vue";
 import { countText } from "bmo-ui/app/domain/numbers";
 
 import TheaterPoster from "../../../components/theater/TheaterPoster.vue";
-import VideoPlayer from "../../../components/theater/VideoPlayer.vue";
+import PlayerStage from "../../../components/theater/PlayerStage.vue";
 import { episodeName } from "../../../domain/a11y";
 import { paths } from "../../../domain/api";
 import { episodeTitle, lengthClock, placeAfter } from "../../../domain/episodes";
@@ -73,7 +62,8 @@ import { readShared, sharedFailure } from "../../../domain/shared";
 import { firstTrack, trackName } from "../../../domain/player";
 import { theaterAddress, theaterApi } from "../../../composables/useTheater";
 
-import type { PlayerTrack } from "../../../components/theater/VideoPlayer.vue";
+import type { PlayerTrack } from "bmo-ui/app/domain/video";
+import type { StagePlayer } from "../../../components/theater/PlayerStage.vue";
 import type { SharedOpening } from "../../../domain/shared";
 import type { Subtitle } from "../../../../shared/types";
 
@@ -103,6 +93,23 @@ const nextWords = computed(() => {
   const next = nextPlace.value === null ? null : episodes.value[nextPlace.value];
 
   return next ? t("theater.action.next_named", { name: episodeTitle(next) }) : null;
+});
+
+// The episode on the stage, once it and its subtitles are read. A reader here starts each episode at its start.
+const player = computed<StagePlayer | null>(() => {
+  const shown = episode.value;
+
+  if (!shown || !tracksRead.value) return null;
+
+  return {
+    episode: shown.id,
+    src: theaterAddress(paths.shared.stream(token.value, shown.id)),
+    poster: shown.hasPoster ? theaterAddress(paths.shared.poster(token.value, shown.id)) : null,
+    title: episodeTitle(shown),
+    tracks: tracks.value,
+    autoplay: autoplay.value,
+    next: nextWords.value
+  };
 });
 
 useHead({ title: computed(() => heading.value || t("theater.title")) });

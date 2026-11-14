@@ -8,13 +8,9 @@
     "action": {
       "add": "추가",
       "add_to_playlist": "플레이리스트 추가",
-      "back_10": "10초 뒤로",
       "burn": "자막 굽기",
       "continue": "이어 보기",
       "delete": "삭제",
-      "exit_fullscreen": "전체 화면 종료",
-      "forward_10": "10초 앞으로",
-      "fullscreen": "전체 화면",
       "make": "만들기",
       "move_down": "아래로",
       "move_up": "위로",
@@ -31,19 +27,15 @@
       "share": "공유",
       "subtitles": "자막",
       "upload": "업로드",
-      "upload_video": "영상 업로드",
-      "turn": "화면 회전"
+      "upload_video": "영상 업로드"
     },
     "aria": {
-      "player": "{name} 플레이어",
       "playlist_bar": "플레이리스트 툴바",
       "playlist_progress": "플레이리스트 진행",
       "realm": "범위",
       "reorder_hint": "위아래 화살표 키로 순서를 바꿉니다.",
       "reorder_named": "{name} 순서 변경",
       "screens": "극장 화면",
-      "seek": "재생 위치",
-      "speed_named": "재생 속도 {speed}",
       "title_bar": "작품 툴바",
       "title_progress": "작품 진행",
       "upload_progress": "업로드 진행",
@@ -118,10 +110,8 @@
       "span_1d": "1일",
       "span_7d": "7일",
       "span_30d": "30일",
-      "speed_normal": "{speed} 보통",
       "subtitle_file": "자막 파일",
       "subtitle_label": "이름",
-      "subtitles_off": "끄기",
       "title": "작품",
       "titles_count": "작품 {n}개",
       "unavailable": "파일 없음",
@@ -152,27 +142,17 @@
       "delete_subtitle": "자막을 삭제할까요?"
     },
     "status": {
-      "brightness": "밝기 {n}%",
       "burned": "구운 클립",
       "burn_failed": "굽기 실패",
       "burning": "굽는 중",
       "episodes_loading": "에피소드 불러오는 중",
       "libraries_loading": "라이브러리 불러오는 중",
       "moved": "{name}, {all}개 중 {n}번째",
-      "muted": "음소거",
       "playlists_loading": "플레이리스트 불러오는 중",
       "removed": "{name} 제거함",
       "scanning": "색인 중",
-      "speed": "재생 속도 {speed}",
       "subtitles_loading": "자막 불러오는 중",
-      "subtitles_off": "자막 끔",
-      "subtitles_on": "자막 {name}",
-      "titles_loading": "작품 불러오는 중",
-      "unmuted": "음소거 해제",
-      "volume": "볼륨 {n}%",
-      "went_back": "{n}초 뒤로",
-      "went_forward": "{n}초 앞으로",
-      "turned": "{degrees}도 돌렸습니다"
+      "titles_loading": "작품 불러오는 중"
     }
   }
 }

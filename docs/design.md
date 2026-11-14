@@ -164,10 +164,15 @@ A console bundle, built from `client/`, stands under the sidebar entry the words
 - **The playlists:** made, renamed, reordered (dragged by a handle, moved by its arrow keys, or on a phone by
   each item's up and down buttons), an item removed, each change sending the whole order, and a button to go
   on from where the viewer stopped.
-- **The player:** the stream with its subtitles as text tracks (off unless one is in the screen's language),
-  playback speed, ten-second skips, the next episode, which a playlist goes on to by itself, the volume,
-  fullscreen, turning the picture, resuming, and the keys space, the arrows, f, m, c and r. Turning goes to full screen and locks the screen to the other orientation where the browser can; where it cannot, as on a desktop or an iPhone, it turns the picture itself a quarter at a time inside the player, fitted to the player's box. Leaving full screen or the player gives the screen's orientation back and sets the picture straight, and on a phone a second press does the same. A press on the picture plays or pauses with a mouse, and a double press turns it full screen; a finger's tap shows hidden controls, which stand for a few seconds before they go, and hides controls that are standing. On a touch screen the picture also takes gestures: a double tap on its left or right half skips ten seconds back or forward, a held finger plays faster until it lifts, a horizontal drag moves the position as the finger travels and settles where it lifts, and a vertical drag sets the picture's brightness on the left half and the volume on the right, each with a cue over the picture. No gesture answers while a dialog, a menu or the console's overlay stands open. It sets the viewer's position every five
-  seconds, as it pauses and as it is left.
+- **The player:** the layer's one video player (bmo-ui `docs/components.md`, 「The video player」), at its full
+  size, standing on a black stage as tall as its picture at the screen's width with room left under it, and the
+  screen less its bars above it on a phone on its side. Its controls, its keys, a finger's gestures, turning
+  the picture, full screen and playing one thing at a time are the player's own, as that document states them;
+  the theater hands it the episode's stream and poster, its subtitles as text tracks, where it starts and the
+  next episode's words. The theater decides the rest: the subtitle shown first is the one in the screen's
+  language, else none; an episode starts where the viewer stopped unless it was watched; a playlist goes on to
+  its next episode by itself; and the viewer's position, which the player tells every five seconds, as it
+  pauses and as it is left, is set again only once it has moved a second or more.
 - **Subtitles:** a file added to an episode or a subtitle deleted, and a subtitle burned in, the burn's state
   told by the event stream until its clip stands under the title.
 - **The libraries,** shown to the administrator alone: a folder registered, renamed, scanned again or removed.

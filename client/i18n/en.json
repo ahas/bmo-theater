@@ -8,13 +8,9 @@
     "action": {
       "add": "Add",
       "add_to_playlist": "Add to playlist",
-      "back_10": "Back 10 seconds",
       "burn": "Burn in",
       "continue": "Continue",
       "delete": "Delete",
-      "exit_fullscreen": "Exit full screen",
-      "forward_10": "Forward 10 seconds",
-      "fullscreen": "Full screen",
       "make": "Make",
       "move_down": "Move down",
       "move_up": "Move up",
@@ -31,19 +27,15 @@
       "share": "Share",
       "subtitles": "Subtitles",
       "upload": "Upload",
-      "upload_video": "Upload video",
-      "turn": "Turn the picture"
+      "upload_video": "Upload video"
     },
     "aria": {
-      "player": "{name} player",
       "playlist_bar": "Playlist toolbar",
       "playlist_progress": "Playlist progress",
       "realm": "Realm",
       "reorder_hint": "Use the up and down arrow keys to move it.",
       "reorder_named": "Reorder {name}",
       "screens": "Theater screens",
-      "seek": "Playback position",
-      "speed_named": "Playback speed {speed}",
       "title_bar": "Title toolbar",
       "title_progress": "Title progress",
       "upload_progress": "Upload progress",
@@ -118,10 +110,8 @@
       "span_1d": "1 day",
       "span_7d": "7 days",
       "span_30d": "30 days",
-      "speed_normal": "{speed} normal",
       "subtitle_file": "Subtitle file",
       "subtitle_label": "Name",
-      "subtitles_off": "Off",
       "title": "Title",
       "titles_count": "Titles {n}",
       "unavailable": "File missing",
@@ -152,27 +142,17 @@
       "delete_subtitle": "Delete this subtitle?"
     },
     "status": {
-      "brightness": "Brightness {n}%",
       "burned": "Burned clip",
       "burn_failed": "Burn failed",
       "burning": "Burning",
       "episodes_loading": "Loading episodes",
       "libraries_loading": "Loading libraries",
       "moved": "{name}, {n} of {all}",
-      "muted": "Muted",
       "playlists_loading": "Loading playlists",
       "removed": "Removed {name}",
       "scanning": "Scanning",
-      "speed": "Speed {speed}",
       "subtitles_loading": "Loading subtitles",
-      "subtitles_off": "Subtitles off",
-      "subtitles_on": "Subtitles {name}",
-      "titles_loading": "Loading titles",
-      "unmuted": "Unmuted",
-      "volume": "Volume {n}%",
-      "went_back": "Back {n} seconds",
-      "went_forward": "Forward {n} seconds",
-      "turned": "Turned to {degrees} degrees"
+      "titles_loading": "Loading titles"
     }
   }
 }
