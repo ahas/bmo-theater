@@ -12,7 +12,7 @@
     class="theater-player relative flex size-full items-center justify-center overflow-hidden bg-black text-white"
     :class="controlsShown ? '' : 'cursor-none'"
     @pointermove="wake"
-    @pointerdown="onPress"
+    @pointerdown.capture="onPress"
     @focusin="wake"
   >
     <video
@@ -363,7 +363,8 @@ function toggle(): void {
   else element.pause();
 }
 
-// A press is read before it brings the controls, so what it finds is whether they were standing.
+// A press is read before it brings the controls, so what it finds is whether they were standing. It is read as the
+// press comes down through the player, ahead of the picture's gesture reader, which brings the controls itself.
 function onPress(event: PointerEvent): void {
   hiddenAtPress = !controlsShown.value;
 
