@@ -14,6 +14,7 @@
       :start="props.player.start"
       :autoplay="props.player.autoplay"
       :next="props.player.next"
+      :auto-next="props.player.autoNext ?? false"
       @position="(video, seconds) => emit('position', Number(video), seconds)"
       @leaving="(video, seconds) => emit('leaving', Number(video), seconds)"
       @ended="(video, seconds) => emit('ended', Number(video), seconds)"
@@ -43,6 +44,8 @@ export interface StagePlayer {
   autoplay: boolean;
   /** The next episode's words, where there is one to go on to. */
   next: string | null;
+  /** Whether the next episode follows on its own, offered near the end. */
+  autoNext?: boolean;
 }
 
 const props = defineProps<{

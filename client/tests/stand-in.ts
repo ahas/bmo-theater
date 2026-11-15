@@ -36,7 +36,7 @@ export interface StandIn {
 }
 
 export function title(id: number, realm: Realm, name: string, extra: Partial<Title> = {}): Title {
-  return { id, realm, name, kind: "show", description: "", labels: {}, libraryId: null, episodeCount: 0, hasPoster: false, creator: "2", createdAt: 1, changedAt: 1, ...extra };
+  return { id, realm, name, kind: "show", description: "", labels: {}, libraryId: null, episodeCount: 0, hasPoster: false, posterWidth: null, posterHeight: null, creator: "2", createdAt: 1, changedAt: 1, addedAt: 1, ...extra };
 }
 
 export function episode(id: number, titleId: number, realm: Realm, extra: Partial<Episode> = {}): Episode {
@@ -59,6 +59,8 @@ export function episode(id: number, titleId: number, realm: Realm, extra: Partia
     audioCodec: "aac",
     available: true,
     hasPoster: false,
+    posterWidth: null,
+    posterHeight: null,
     subtitleCount: 0,
     burnedFrom: null,
     position: null,
@@ -99,7 +101,7 @@ function progressOf(ids: number[], episodes: Episode[], positions: Map<number, P
 
   const nextSeconds = next === null ? 0 : positions.get(next)?.done ? 0 : (positions.get(next)?.seconds ?? 0);
 
-  return { items, doneCount: items.filter((item) => item.done).length, next, nextSeconds };
+  return { items, doneCount: items.filter((item) => item.done).length, next, nextSeconds, upNext: next, upNextSeconds: nextSeconds };
 }
 
 export function startStandIn(seed: Partial<Pick<StandIn, "titles" | "episodes" | "playlists" | "subtitles" | "shares" | "libraries" | "role">> = {}): StandIn {
@@ -187,7 +189,28 @@ export function startStandIn(seed: Partial<Pick<StandIn, "titles" | "episodes" |
       }
 
       // ---- Titles
-      if (head === "titles" && parts.length === 1 && method === "GET") return list(state.titles.filter((one) => one.realm === url.searchParams.get("realm")));
+      if (head === "titles" && parts.length === 1 && method === "GET") {
+        const held = state.titles.filter((one) => one.realm === url.searchParams.get("realm"));
+
+        return list(url.searchParams.get("order") === "added" ? held.sort((a, b) => b.addedAt - a.addedAt || b.id - a.id) : held);
+      }
+
+      // ---- Continue watching and next up
+      if (head === "watching" && parts.length === 1) {
+        const started = state.episodes.filter((one) => one.realm === url.searchParams.get("realm") && (state.positions.get(one.id)?.seconds ?? 0) > 0 && !state.positions.get(one.id)!.done && !state.positions.get(one.id)!.setAside);
+
+        return list(started.sort((a, b) => state.positions.get(b.id)!.updatedAt - state.positions.get(a.id)!.updatedAt).map((one) => ({ ...one, position: state.positions.get(one.id)! })));
+      }
+      if (head === "watching" && method === "DELETE") {
+        const held = state.positions.get(id);
+
+        if (!held) return refusal(404, "not-found", "No position there.");
+
+        state.positions.set(id, { ...held, setAside: true });
+
+        return new Response(null, { status: 204 });
+      }
+      if (head === "next-up") return list([]);
       if (head === "titles" && parts.length === 1 && method === "POST") {
         const made = title(++ids, body.realm as Realm, String(body.name), { kind: (body.kind as Title["kind"]) ?? "clip" });
 
@@ -258,7 +281,7 @@ export function startStandIn(seed: Partial<Pick<StandIn, "titles" | "episodes" |
           const seconds = Number(body.seconds);
           const held = state.positions.get(id);
           const done = body.done === false ? false : body.done === true || (held?.done ?? false) || (found.durationMs !== null && seconds >= (found.durationMs / 1000) * 0.9);
-          const position = { episodeId: id, seconds, done, updatedAt: ++clock };
+          const position = { episodeId: id, seconds, done, updatedAt: ++clock, setAside: false };
 
           state.positions.set(id, position);
 

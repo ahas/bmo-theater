@@ -6,9 +6,7 @@
   <TheaterFrame id="theater-playlist">
     <ToolBar :label="$t('theater.aria.playlist_bar')">
       <div>
-        <UTooltip :text="$t('theater.label.playlists')">
-          <UButton color="neutral" variant="ghost" size="sm" square icon="i-material-symbols-arrow-back" :aria-label="$t('theater.label.playlists')" :to="backPath" />
-        </UTooltip>
+        <IconButton size="sm" icon="i-material-symbols-arrow-back" :label="$t('theater.label.playlists')" :to="backPath" />
       </div>
 
       <ActionGroup :actions="actions" :narrow-fold="false" class="ms-auto" />
@@ -54,35 +52,26 @@
             @drop.prevent="drop(item.at)"
           >
             <template v-if="!narrow" #lead>
-              <UTooltip :text="$t('theater.action.reorder')">
-                <button
-                  type="button"
-                  draggable="true"
-                  class="flex size-9 shrink-0 cursor-grab items-center justify-center rounded-md text-muted transition-colors hover:bg-elevated hover:text-highlighted active:bg-accented active:cursor-grabbing"
-                  :aria-label="$t('theater.aria.reorder_named', { name: item.episode.name })"
-                  :aria-describedby="hintId"
-                  @dragstart="start(item.at, $event)"
-                  @dragend="finish"
-                  @keydown="moveByKey(item.at, $event)"
-                >
-                  <UIcon name="i-material-symbols-drag-indicator" class="size-5" />
-                </button>
-              </UTooltip>
+              <IconButton
+                data-reorder
+                draggable="true"
+                icon="i-material-symbols-drag-indicator"
+                class="cursor-grab text-muted active:cursor-grabbing"
+                :label="$t('theater.aria.reorder_named', { name: item.episode.name })"
+                :aria-describedby="hintId"
+                @dragstart="start(item.at, $event)"
+                @dragend="finish"
+                @keydown="moveByKey(item.at, $event)"
+              />
             </template>
 
             <template #trail>
               <div class="flex shrink-0 items-center">
                 <template v-if="narrow">
-                  <UTooltip :text="$t('theater.action.move_up')">
-                    <UButton color="neutral" variant="ghost" icon="i-material-symbols-arrow-upward" class="size-11 justify-center" :aria-label="$t('theater.action.move_up')" :disabled="item.at === 0" @click="move(item.at, item.at - 1)" />
-                  </UTooltip>
-                  <UTooltip :text="$t('theater.action.move_down')">
-                    <UButton color="neutral" variant="ghost" icon="i-material-symbols-arrow-downward" class="size-11 justify-center" :aria-label="$t('theater.action.move_down')" :disabled="item.at === lastPlace" @click="move(item.at, item.at + 1)" />
-                  </UTooltip>
+                  <IconButton icon="i-material-symbols-arrow-upward" class="size-11 justify-center" :label="$t('theater.action.move_up')" :disabled="item.at === 0" @click="move(item.at, item.at - 1)" />
+                  <IconButton icon="i-material-symbols-arrow-downward" class="size-11 justify-center" :label="$t('theater.action.move_down')" :disabled="item.at === lastPlace" @click="move(item.at, item.at + 1)" />
                 </template>
-                <UTooltip :text="$t('theater.action.remove')">
-                  <UButton color="neutral" variant="ghost" icon="i-material-symbols-close" class="pointer-coarse:size-11 pointer-coarse:justify-center" :aria-label="$t('theater.action.remove')" @click="removeAt(item.at)" />
-                </UTooltip>
+                <IconButton icon="i-material-symbols-close" class="pointer-coarse:size-11 pointer-coarse:justify-center" :label="$t('theater.action.remove')" @click="removeAt(item.at)" />
               </div>
             </template>
           </EpisodeRow>
@@ -106,6 +95,7 @@ import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
+import IconButton from "bmo-ui/app/components/IconButton.vue";
 import MovingList from "bmo-ui/app/components/MovingList.vue";
 import ShareDialog from "bmo-ui/app/components/ShareDialog.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
@@ -226,7 +216,7 @@ async function moveByKey(index: number, event: KeyboardEvent): Promise<void> {
   event.preventDefault();
   await move(index, to);
   await nextTick();
-  document.querySelectorAll<HTMLElement>("[draggable='true']")[Math.max(0, Math.min(to, lastPlace.value))]?.focus();
+  document.querySelectorAll<HTMLElement>("[data-reorder]")[Math.max(0, Math.min(to, lastPlace.value))]?.focus();
 }
 
 function start(index: number, event: DragEvent): void {

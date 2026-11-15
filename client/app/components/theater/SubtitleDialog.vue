@@ -18,21 +18,8 @@
 
           <BurnState v-if="burnOf(subtitle.id)" :burn="burnOf(subtitle.id)!" />
 
-          <UTooltip :text="$t('theater.action.burn')">
-            <UButton
-              color="neutral"
-              variant="ghost"
-              icon="i-material-symbols-local-fire-department-outline"
-              class="pointer-coarse:size-11 pointer-coarse:justify-center"
-              :aria-label="$t('theater.action.burn')"
-              :loading="burnOf(subtitle.id)?.state === 'running'"
-              :disabled="burnOf(subtitle.id)?.state === 'running'"
-              @click="burnIn(subtitle)"
-            />
-          </UTooltip>
-          <UTooltip :text="$t('theater.action.delete')">
-            <UButton color="error" variant="ghost" icon="i-material-symbols-delete-outline" class="pointer-coarse:size-11 pointer-coarse:justify-center" :aria-label="$t('theater.action.delete')" @click="remove(subtitle)" />
-          </UTooltip>
+          <IconButton icon="i-material-symbols-local-fire-department-outline" class="pointer-coarse:size-11 pointer-coarse:justify-center" :loading="burnOf(subtitle.id)?.state === 'running'" :disabled="burnOf(subtitle.id)?.state === 'running'" @click="burnIn(subtitle)" :label="$t('theater.action.burn')" />
+          <IconButton color="error" icon="i-material-symbols-delete-outline" class="pointer-coarse:size-11 pointer-coarse:justify-center" @click="remove(subtitle)" :label="$t('theater.action.delete')" />
         </li>
       </ul>
 
@@ -71,6 +58,7 @@
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
+import IconButton from "bmo-ui/app/components/IconButton.vue";
 import SettingsDialog from "bmo-ui/app/components/SettingsDialog.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
 import { countText } from "bmo-ui/app/domain/numbers";

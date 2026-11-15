@@ -23,22 +23,17 @@
         </header>
 
         <ul v-if="playlist && episodes.length > 1" class="mx-auto flex max-w-3xl flex-col pb-4" :aria-label="playlist.name">
-          <li v-for="(one, index) in episodes" :key="`${one.id}:${index}`" class="px-2 sm:px-4">
-            <button
-              type="button"
-              class="flex min-h-11 w-full min-w-0 items-center gap-3 rounded-md p-2 text-start transition-colors select-none hover:bg-elevated/60 active:bg-elevated focus-inset"
-              :class="index === at ? 'bg-elevated/60' : ''"
-              :aria-current="index === at ? 'true' : undefined"
-              :aria-label="episodeName($t, one, null)"
-              @click="go(index, true)"
-            >
-              <span class="w-24 shrink-0 sm:w-36">
-                <TheaterPoster :src="one.hasPoster ? theaterAddress(paths.shared.poster(token, one.id)) : null" />
-              </span>
-              <span class="min-w-0 flex-1 truncate text-base text-highlighted">{{ episodeTitle(one) }}</span>
-              <span class="shrink-0 text-sm text-muted tabular-nums">{{ lengthClock(one.durationMs) }}</span>
-            </button>
-          </li>
+          <EpisodeRow
+            v-for="(one, index) in episodes"
+            :key="`${one.id}:${index}`"
+            :episode="one"
+            :watched="UNWATCHED"
+            :to="placePath(index)"
+            :poster="one.hasPoster ? theaterAddress(paths.shared.poster(token, one.id)) : null"
+            :current="index === at"
+          >
+            <template #trail><span class="w-0" /></template>
+          </EpisodeRow>
         </ul>
       </div>
     </section>
@@ -47,17 +42,16 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { useHead, useRoute } from "nuxt/app";
+import { navigateTo, useHead, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ScreenFrame from "bmo-ui/app/components/ScreenFrame.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
 import { countText } from "bmo-ui/app/domain/numbers";
 
-import TheaterPoster from "../../../components/theater/TheaterPoster.vue";
+import EpisodeRow from "../../../components/theater/EpisodeRow.vue";
 import PlayerStage from "../../../components/theater/PlayerStage.vue";
-import { episodeName } from "../../../domain/a11y";
 import { paths } from "../../../domain/api";
-import { episodeTitle, lengthClock, placeAfter } from "../../../domain/episodes";
+import { UNWATCHED, episodeTitle, placeAfter } from "../../../domain/episodes";
 import { readShared, sharedFailure } from "../../../domain/shared";
 import { firstTrack, trackName } from "../../../domain/player";
 import { theaterAddress, theaterApi } from "../../../composables/useTheater";
@@ -78,11 +72,16 @@ const opening = ref<SharedOpening | null>(null);
 const subtitles = ref<Subtitle[]>([]);
 const track = ref<number | null>(null);
 const failed = ref("");
-const at = ref(0);
 const tracksRead = ref(false);
-const autoplay = ref(false);
 
 const token = computed(() => String(route.params.token ?? ""));
+// The episode a playlist's link plays, by its place, which the address keeps so a link opens the same one.
+const at = computed(() => {
+  const asked = Number(route.query.at);
+
+  return Number.isSafeInteger(asked) && asked >= 0 && asked < episodes.value.length ? asked : 0;
+});
+const autoplay = computed(() => route.query.play === "1");
 const playlist = computed(() => opening.value?.playlist ?? null);
 const episodes = computed(() => opening.value?.episodes ?? []);
 const episode = computed(() => episodes.value[at.value] ?? null);
@@ -133,7 +132,6 @@ watch(episode, async (shown) => {
 
 async function open(): Promise<void> {
   failed.value = "";
-  at.value = 0;
 
   try {
     opening.value = await readShared(api.shared, token.value);
@@ -144,11 +142,15 @@ async function open(): Promise<void> {
   }
 }
 
+// Where a place of the playlist plays, playing at once.
+function placePath(place: number) {
+  return { path: route.path, query: { at: String(place), play: "1" } };
+}
+
 function go(place: number, play: boolean): void {
   if (place < 0 || place >= episodes.value.length) return;
 
-  autoplay.value = play;
-  at.value = place;
+  void navigateTo(play ? placePath(place) : { path: route.path, query: { at: String(place) } });
 }
 
 // A playlist goes on to its next episode by itself; nothing is set for the reader.

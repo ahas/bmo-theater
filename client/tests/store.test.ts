@@ -27,6 +27,40 @@ function storeOver(stand: StandIn) {
   return { store, notices };
 }
 
+describe("continue watching", () => {
+  test("is read in the order the service answers, and an episode set aside leaves it at once", async () => {
+    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine"), episode(12, 1, "mine"), episode(13, 1, "mine")] });
+
+    const { store } = storeOver(standIn);
+    const api = createTheaterApi(standIn.call, standIn.send);
+
+    await api.setPosition(11, 10);
+    await api.setPosition(12, 20);
+    await api.setPosition(13, 95);
+    await store.loadWatching("mine");
+
+    expect(store.watching.value.mine?.map((one) => one.id)).toEqual([12, 11]);
+
+    expect(await store.setAside(store.watching.value.mine![0]!)).toBe(true);
+    expect(store.watching.value.mine?.map((one) => one.id)).toEqual([11]);
+    expect(standIn.calls).toContain("DELETE /watching/12");
+
+    await store.loadWatching("mine");
+    expect(store.watching.value.mine?.map((one) => one.id)).toEqual([11]);
+  });
+
+  test("a position set anywhere counts as a change the rows read again", () => {
+    standIn = startStandIn();
+
+    const { store } = storeOver(standIn);
+    const before = store.rowsChanged.value;
+
+    store.apply({ kind: "position.changed", data: { episodeId: 11, seconds: 40, done: false, updatedAt: 99, setAside: false } });
+
+    expect(store.rowsChanged.value).toBe(before + 1);
+  });
+});
+
 describe("the realms", () => {
   test("each realm's titles are read and kept apart", async () => {
     standIn = startStandIn({ titles: [title(1, "mine", "Pilot"), title(2, "organization", "Trailer")] });
@@ -37,7 +71,7 @@ describe("the realms", () => {
 
     expect(store.titles.value.mine.map((one) => one.name)).toEqual(["Pilot"]);
     expect(store.titles.value.organization.map((one) => one.name)).toEqual(["Trailer"]);
-    expect(standIn.calls).toContain("GET /titles?realm=mine");
+    expect(standIn.calls).toContain("GET /titles?realm=mine&order=added");
   });
 
   test("an event puts a title in its realm, moves it with its realm and takes it out when deleted", async () => {
@@ -50,7 +84,8 @@ describe("the realms", () => {
     store.apply({ kind: "title.changed", data: title(1, "organization", "Pilot") });
 
     expect(store.titles.value.mine).toEqual([]);
-    expect(store.titles.value.organization.map((one) => one.id)).toEqual([1, 5]);
+    // Held in the service's order of the one added to last first, a tie by the newer id.
+    expect(store.titles.value.organization.map((one) => one.id)).toEqual([5, 1]);
 
     store.apply({ kind: "title.deleted", data: { id: 5 } });
 
@@ -285,7 +320,7 @@ describe("the share page", () => {
   test("a playlist link opens its playlist and its episodes in its order, with no position", async () => {
     standIn = startStandIn({
       titles: [title(1, "organization", "Pilot")],
-      episodes: [episode(11, 1, "organization", { position: { episodeId: 11, seconds: 5, done: false, updatedAt: 1 } }), episode(12, 1, "organization")],
+      episodes: [episode(11, 1, "organization", { position: { episodeId: 11, seconds: 5, done: false, updatedAt: 1, setAside: false } }), episode(12, 1, "organization")],
       playlists: [playlist(7, "organization", "Season", [12, 11])],
       shares: [{ token: "tokenA", episodeId: null, playlistId: 7, url: null, creator: "2", createdAt: 1, expiresAt: null }]
     });

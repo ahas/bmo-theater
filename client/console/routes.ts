@@ -1,3 +1,4 @@
+import BrowsePage from "../app/pages/theater/browse.vue";
 import LibraryPage from "../app/pages/theater/index.vue";
 import LibrariesPage from "../app/pages/theater/libraries.vue";
 import PlaylistPage from "../app/pages/theater/playlists/[id].vue";
@@ -15,6 +16,7 @@ import type { ConsoleBundleModule } from "bmo-ui/shared/console-manifest";
 const bundle: ConsoleBundleModule = {
   routes: [
     { path: "/theater", name: "theater", component: LibraryPage, meta: { consoleTitleBar: true } },
+    { path: "/theater/browse", name: "theater-browse", component: BrowsePage, meta: { consoleTitleBar: true } },
     { path: "/theater/titles/:id", name: "theater-titles-id", component: TitlePage, meta: { consoleTitleBar: true } },
     { path: "/theater/watch/:id", name: "theater-watch-id", component: WatchPage, meta: { consoleTitleBar: true } },
     { path: "/theater/playlists", name: "theater-playlists", component: PlaylistsPage, meta: { consoleTitleBar: true } },

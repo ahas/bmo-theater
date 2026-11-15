@@ -6,8 +6,9 @@ import { moved, removedAt } from "./order";
 import type { TheaterApi } from "./api";
 import type { Burn, Episode, Library, Permission, Playlist, Position, Progress, Realm, Share, StreamEvent, Subtitle, Title } from "../../shared/types";
 
-// What the screens hold of the theater service: the titles and playlists of both realms, the episodes, the
-// progress and the subtitles of what has been opened, the burns of what is being burned, and the libraries.
+// What the screens hold of the theater service: the titles and playlists of both realms, the viewer's continue
+// watching and next up in each, the episodes, the progress and the subtitles of what has been opened, the burns
+// of what is being burned, and the libraries.
 //
 // A list is read once and kept, and the service's event stream keeps it current: a member made, changed or
 // deleted anywhere is put in or taken out where it is held. A change of a playlist's order is drawn at once and
@@ -55,6 +56,14 @@ function upsert<T extends { id: number }>(list: T[], item: T): T[] {
   return at === -1 ? [...list, item].sort((a, b) => a.id - b.id) : list.map((one) => (one.id === item.id ? item : one));
 }
 
+// A title put where the service's order of the one added to last first places it.
+function placedByAdded(list: Title[], title: Title): Title[] {
+  const rest = list.filter((one) => one.id !== title.id);
+  const at = rest.findIndex((one) => one.addedAt < title.addedAt || (one.addedAt === title.addedAt && one.id < title.id));
+
+  return at === -1 ? [...rest, title] : [...rest.slice(0, at), title, ...rest.slice(at)];
+}
+
 function without<T extends { id: number }>(list: T[], id: number): T[] {
   return list.filter((one) => one.id !== id);
 }
@@ -70,6 +79,11 @@ export function createTheaterStore(options: StoreOptions) {
   const titles = ref<Record<Realm, Title[]>>({ mine: [], organization: [] });
   const titlesRead = ref<Record<Realm, boolean>>({ mine: false, organization: false });
   const titlesFailed = ref<Record<Realm, boolean>>({ mine: false, organization: false });
+  const watching = ref<Record<Realm, Episode[] | null>>({ mine: null, organization: null });
+  const nextUp = ref<Record<Realm, Episode[] | null>>({ mine: null, organization: null });
+  // Counts the changes that may move what the rows of continue watching and next up hold, which a screen
+  // showing them reads again.
+  const rowsChanged = ref(0);
   // Titles opened by their id, where no list of them has been read.
   const opened = ref<Record<number, Title>>({});
   const episodes = ref<Record<number, Episode[]>>({});
@@ -114,9 +128,10 @@ export function createTheaterStore(options: StoreOptions) {
 
   // ---- Titles and episodes ------------------------------------------------------------------------
 
+  // A realm's titles are held in the service's order of the one added to last first, which the rows read.
   async function loadTitles(realm: Realm): Promise<void> {
     try {
-      const read = await api.titles(realm);
+      const read = await api.titles(realm, "added");
 
       titles.value = { ...titles.value, [realm]: read };
       titlesFailed.value = { ...titlesFailed.value, [realm]: false };
@@ -130,7 +145,7 @@ export function createTheaterStore(options: StoreOptions) {
   function putTitle(title: Title): void {
     const other: Realm = title.realm === "mine" ? "organization" : "mine";
 
-    titles.value = { ...titles.value, [title.realm]: upsert(titles.value[title.realm], title), [other]: without(titles.value[other], title.id) };
+    titles.value = { ...titles.value, [title.realm]: placedByAdded(titles.value[title.realm], title), [other]: without(titles.value[other], title.id) };
     if (opened.value[title.id]) opened.value = { ...opened.value, [title.id]: title };
   }
 
@@ -273,6 +288,44 @@ export function createTheaterStore(options: StoreOptions) {
     putEpisode(episode);
 
     return episode;
+  }
+
+  // ---- Continue watching and next up ---------------------------------------------------------------
+
+  /** The viewer's continue watching in a realm; a refusal leaves it as it stood. */
+  async function loadWatching(realm: Realm): Promise<void> {
+    try {
+      watching.value = { ...watching.value, [realm]: await api.watching(realm) };
+    } catch {
+      watching.value = { ...watching.value, [realm]: watching.value[realm] ?? [] };
+    }
+  }
+
+  /** The viewer's next up in a realm; a refusal leaves it as it stood. */
+  async function loadNextUp(realm: Realm): Promise<void> {
+    try {
+      nextUp.value = { ...nextUp.value, [realm]: await api.nextUp(realm) };
+    } catch {
+      nextUp.value = { ...nextUp.value, [realm]: nextUp.value[realm] ?? [] };
+    }
+  }
+
+  /** Sets an episode aside from continue watching: it leaves the row at once, and comes back where refused. */
+  async function setAside(episode: Episode): Promise<boolean> {
+    const before = watching.value;
+
+    watching.value = { mine: before.mine?.filter((one) => one.id !== episode.id) ?? null, organization: before.organization?.filter((one) => one.id !== episode.id) ?? null };
+
+    try {
+      await api.setAside(episode.id);
+
+      return true;
+    } catch (error) {
+      watching.value = before;
+      failWith(error);
+
+      return false;
+    }
   }
 
   // ---- The viewer's positions ---------------------------------------------------------------------
@@ -622,10 +675,12 @@ export function createTheaterStore(options: StoreOptions) {
 
         if (episodes.value[episode.titleId] || loose.value[episode.id]) putEpisode(episode);
         if (event.kind === "episode.created") void refreshTitle(episode.titleId);
+        rowsChanged.value++;
         break;
       }
       case "episode.deleted":
         dropEpisode(data.id);
+        rowsChanged.value++;
         break;
       case "subtitle.created":
         putSubtitle(data as unknown as Subtitle);
@@ -645,6 +700,7 @@ export function createTheaterStore(options: StoreOptions) {
 
         putPosition(position);
         rereadProgressHolding(position.episodeId);
+        rowsChanged.value++;
         break;
       }
       case "burn.running":
@@ -684,6 +740,9 @@ export function createTheaterStore(options: StoreOptions) {
     titles,
     titlesRead,
     titlesFailed,
+    watching,
+    nextUp,
+    rowsChanged,
     episodes,
     progress,
     playlists,
@@ -699,6 +758,9 @@ export function createTheaterStore(options: StoreOptions) {
     playlistOf,
     episodeOf,
     loadTitles,
+    loadWatching,
+    loadNextUp,
+    setAside,
     loadTitle,
     loadEpisodes,
     loadEpisode,

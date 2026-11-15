@@ -30,15 +30,9 @@
           </div>
 
           <div class="flex shrink-0 items-center">
-            <UTooltip :text="$t('theater.action.rescan')">
-              <UButton color="neutral" variant="ghost" icon="i-material-symbols-sync" class="pointer-coarse:size-11 pointer-coarse:justify-center" :aria-label="$t('theater.action.rescan')" :loading="library.scanning" :disabled="library.scanning" @click="store.scanLibrary(library)" />
-            </UTooltip>
-            <UTooltip :text="$t('theater.action.rename')">
-              <UButton color="neutral" variant="ghost" icon="i-material-symbols-edit-outline" class="pointer-coarse:size-11 pointer-coarse:justify-center" :aria-label="$t('theater.action.rename')" @click="openRename(library)" />
-            </UTooltip>
-            <UTooltip :text="$t('theater.action.delete')">
-              <UButton color="neutral" variant="ghost" icon="i-material-symbols-delete-outline" class="pointer-coarse:size-11 pointer-coarse:justify-center" :aria-label="$t('theater.action.delete')" @click="remove(library)" />
-            </UTooltip>
+            <IconButton icon="i-material-symbols-sync" class="pointer-coarse:size-11 pointer-coarse:justify-center" :loading="library.scanning" :disabled="library.scanning" @click="store.scanLibrary(library)" :label="$t('theater.action.rescan')" />
+            <IconButton icon="i-material-symbols-edit-outline" class="pointer-coarse:size-11 pointer-coarse:justify-center" @click="openRename(library)" :label="$t('theater.action.rename')" />
+            <IconButton icon="i-material-symbols-delete-outline" class="pointer-coarse:size-11 pointer-coarse:justify-center" @click="remove(library)" :label="$t('theater.action.delete')" />
           </div>
         </li>
       </MovingList>
@@ -54,6 +48,7 @@ import { computed, ref, watch } from "vue";
 import { navigateTo } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
+import IconButton from "bmo-ui/app/components/IconButton.vue";
 import CreateButton from "bmo-ui/app/components/CreateButton.vue";
 import MovingList from "bmo-ui/app/components/MovingList.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { episodeLabel, episodeName, percent, titleName, watchedWords } from "../app/domain/a11y";
-import { episodeAfter, episodeCode, episodeTitle, lengthClock, placeAfter, placeOf, seasonsOf, watchedEpisode, watchedOf } from "../app/domain/episodes";
+import { episodeCode, episodeTitle, factsOf, followingOf, lengthClock, minutesLeft, placeAfter, placeOf, sectionOf, sectionsOf, watchedEpisode, watchedOf } from "../app/domain/episodes";
 import { fileForm, nameOk, sentText } from "../app/domain/forms";
 import { itemKeys, moved, removedAt } from "../app/domain/order";
 import { episode, title } from "./stand-in";
@@ -21,14 +21,38 @@ describe("an episode's code and seasons", () => {
     expect(episodeTitle({ season: 1, number: 2, name: "Trailer" })).toBe("S01E02 Trailer");
   });
 
-  test("seasons stand in order, the episodes with none last", () => {
-    const seasons = seasonsOf([episode(1, 1, "mine", { season: 2 }), episode(2, 1, "mine", { season: null }), episode(3, 1, "mine", { season: 1 }), episode(4, 1, "mine", { season: 2 })]);
+  // A show as the service lists it: season 0 first, the seasons, the numberless at the end.
+  const show = [
+    episode(1, 1, "mine", { season: 0, number: 1 }),
+    episode(2, 1, "mine", { season: 0, number: 2 }),
+    episode(3, 1, "mine", { season: 1, number: 1 }),
+    episode(4, 1, "mine", { season: 1, number: 2 }),
+    episode(5, 1, "mine", { season: 2, number: 1 }),
+    episode(6, 1, "mine", { season: null, number: null, name: "Trailer" })
+  ];
 
-    expect(seasons.map((one) => [one.season, one.episodes.map((item) => item.id)])).toEqual([
-      [1, [3]],
-      [2, [1, 4]],
-      [null, [2]]
+  test("a show's seasons stand in order with the specials last, and its extras apart", () => {
+    const sections = sectionsOf("show", show);
+
+    expect(sections.chosen.map((one) => [one.key, one.name(t), one.episodes.map((item) => item.id)])).toEqual([
+      ["1", "Season 1", [3, 4]],
+      ["2", "Season 2", [5]],
+      ["specials", "Specials", [1, 2]]
     ]);
+    expect(sections.extras?.episodes.map((item) => item.id)).toEqual([6]);
+    expect(sections.extras?.name(t)).toBe("Extras");
+    expect(sectionOf(sections, 6)).toBe(sections.extras);
+  });
+
+  test("a title that is no show is one whole, and holds nothing apart", () => {
+    const sections = sectionsOf("clip", [episode(7, 2, "mine"), episode(8, 2, "mine")]);
+
+    expect(sections.chosen.map((one) => one.episodes.length)).toEqual([2]);
+    expect(sections.extras).toBeNull();
+  });
+
+  test("what a title is, in one line's figures", () => {
+    expect(factsOf(sectionsOf("show", show), show)).toEqual({ seasons: 2, episodes: 6, durationMs: 600_000 });
   });
 });
 
@@ -67,12 +91,31 @@ describe("how far the viewer has come", () => {
 });
 
 describe("what comes next", () => {
-  test("a title's next episode is the one after in its order, none at its end", () => {
-    const list = [{ id: 1 }, { id: 2 }, { id: 3 }];
+  test("a show goes on along its main line into the next season, specials among themselves, extras nowhere", () => {
+    const sections = sectionsOf("show", [
+      episode(1, 1, "mine", { season: 0, number: 1 }),
+      episode(2, 1, "mine", { season: 0, number: 2 }),
+      episode(3, 1, "mine", { season: 1, number: 1 }),
+      episode(4, 1, "mine", { season: 1, number: 2 }),
+      episode(5, 1, "mine", { season: 2, number: 1 }),
+      episode(6, 1, "mine", { season: null, number: null })
+    ]);
 
-    expect(episodeAfter(list, 1)).toBe(2);
-    expect(episodeAfter(list, 3)).toBeNull();
-    expect(episodeAfter(list, 9)).toBeNull();
+    expect(followingOf(sections, 3)?.id).toBe(4);
+    expect(followingOf(sections, 4)?.id).toBe(5);
+    expect(followingOf(sections, 5)).toBeNull();
+    expect(followingOf(sections, 1)?.id).toBe(2);
+    expect(followingOf(sections, 2)).toBeNull();
+    expect(followingOf(sections, 6)).toBeNull();
+    expect(followingOf(sections, 9)).toBeNull();
+  });
+
+  test("the minutes left of an episode started and not finished, rounded up", () => {
+    const started = episode(1, 1, "mine", { durationMs: 600_000, position: { episodeId: 1, seconds: 100, done: false, updatedAt: 1, setAside: false } });
+
+    expect(minutesLeft(started)).toBe(9);
+    expect(minutesLeft({ ...started, position: { ...started.position!, done: true } })).toBeNull();
+    expect(minutesLeft(episode(2, 1, "mine"))).toBeNull();
   });
 
   test("a playlist's next is the place after, an episode named twice opened at the place asked", () => {

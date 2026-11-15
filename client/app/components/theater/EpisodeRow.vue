@@ -1,46 +1,66 @@
 <template>
-  <!-- One episode in a list: its poster, its name, its code, what it is and how far the viewer has come as a
-       bar, and its length at the row's end. On a phone the code and the length stand on the line under the name,
-       so the name keeps the row's width; where the row carries controls of its own the poster gives way too.
-       The row plays it; its menu holds what else is done with it. -->
+  <!-- One episode in a list: its poster, its code and name, what it is and how far the viewer has come as a bar
+       along the poster's foot, a mark where it is watched, and its length at the row's end. On a phone the length
+       stands on the line under the name, so the name keeps the row's width; where the row carries controls of its
+       own the poster gives way too. The row plays it; its menu holds what else is done with it. -->
   <li class="flex min-w-0 items-center gap-2 px-2 sm:px-4" :aria-current="props.current ? 'true' : undefined">
     <slot name="lead" />
 
-    <RouterLink
+    <UPageCard
       :to="props.to"
+      variant="ghost"
       :aria-label="name"
-      class="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-md p-2 transition-colors select-none hover:bg-elevated/60 active:bg-elevated focus-inset"
+      class="min-w-0 flex-1"
       :class="props.current ? 'bg-elevated/60' : ''"
+      :ui="ROW_UI"
     >
-      <span class="w-24 shrink-0 sm:w-36" :class="props.compact ? 'hidden sm:block' : ''">
-        <TheaterPoster :src="poster" :icon="props.episode.kind === 'clip' ? 'i-material-symbols-video-file-outline' : 'i-material-symbols-movie-outline'" />
-      </span>
-
-      <span class="flex min-w-0 flex-1 flex-col gap-1">
-        <span class="flex min-w-0 items-center gap-2">
-          <span v-if="code" class="hidden shrink-0 text-sm text-muted tabular-nums sm:inline">{{ code }}</span>
-          <span class="truncate text-base text-highlighted">{{ props.episode.name }}</span>
+      <template #header>
+        <span class="block w-24 sm:w-36" :class="props.compact ? 'hidden sm:block' : ''">
+          <ArtworkFrame
+            :src="props.poster"
+            :size="posterSize(props.episode)"
+            :shape="LANDSCAPE"
+            :icon="props.episode.kind === 'clip' ? 'i-material-symbols-video-file-outline' : 'i-material-symbols-movie-outline'"
+            :name="props.episode.name"
+            class="rounded-md"
+          >
+            <UProgress
+              v-if="watched.fraction > 0 && !watched.done"
+              :model-value="percent(watched.fraction)"
+              size="xs"
+              class="absolute inset-x-0 bottom-0"
+              :ui="{ base: 'rounded-none bg-black/50', indicator: 'rounded-none' }"
+              aria-hidden="true"
+            />
+          </ArtworkFrame>
         </span>
-        <span v-if="secondary" class="flex min-w-0 items-center gap-2 text-sm text-muted tabular-nums">
+      </template>
+
+      <template #title>
+        <span class="flex min-w-0 items-center gap-2">
+          <span v-if="code" class="shrink-0 text-sm font-normal text-muted tabular-nums">{{ code }}</span>
+          <span class="truncate">{{ props.episode.name }}</span>
+        </span>
+      </template>
+
+      <template v-if="secondary" #description>
+        <span class="flex min-w-0 items-center gap-2">
           <UIcon v-if="!props.episode.available" name="i-material-symbols-link-off" class="size-4 shrink-0 text-warning sm:hidden" aria-hidden="true" />
-          <UIcon v-else-if="watched.done" name="i-material-symbols-check-circle-outline" class="size-4 shrink-0 text-primary sm:hidden" aria-hidden="true" />
+          <UIcon v-else-if="watched.done" name="i-material-symbols-check-circle" class="size-4 shrink-0 text-primary sm:hidden" aria-hidden="true" />
           <span class="truncate">{{ secondary }}</span>
         </span>
-        <UProgress v-if="watched.fraction > 0" :model-value="percent(watched.fraction)" size="xs" :aria-hidden="true" />
-      </span>
+      </template>
 
       <span class="hidden shrink-0 items-center gap-2 text-sm text-muted tabular-nums sm:flex">
         <UIcon v-if="!props.episode.available" name="i-material-symbols-link-off" class="size-5 text-warning" aria-hidden="true" />
-        <UIcon v-else-if="watched.done" name="i-material-symbols-check-circle-outline" class="size-5 text-primary" aria-hidden="true" />
+        <UIcon v-else-if="watched.done" name="i-material-symbols-check-circle" class="size-5 text-primary" aria-hidden="true" />
         <span>{{ lengthClock(props.episode.durationMs) }}</span>
       </span>
-    </RouterLink>
+    </UPageCard>
 
     <slot name="trail">
-      <UDropdownMenu :modal="false" :ui="{ item: 'pointer-coarse:min-h-11' }" v-if="props.menu.length" :items="props.menu" :content="{ align: 'end' }">
-        <UTooltip :text="$t('common.action.more')">
-          <UButton color="neutral" variant="ghost" icon="i-material-symbols-more-vert" class="pointer-coarse:size-11 pointer-coarse:justify-center" :aria-label="$t('common.action.more')" />
-        </UTooltip>
+      <UDropdownMenu v-if="props.menu.length" :modal="false" :ui="{ item: 'pointer-coarse:min-h-11' }" :items="props.menu" :content="{ align: 'end' }">
+        <IconButton icon="i-material-symbols-more-vert" class="pointer-coarse:size-11 pointer-coarse:justify-center" :label="$t('common.action.more')" />
       </UDropdownMenu>
     </slot>
   </li>
@@ -48,12 +68,14 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
+import ArtworkFrame from "bmo-ui/app/components/ArtworkFrame.vue";
+import IconButton from "bmo-ui/app/components/IconButton.vue";
+import { LANDSCAPE } from "bmo-ui/app/domain/artwork";
 import { useNarrow } from "bmo-ui/app/domain/screen";
 
-import TheaterPoster from "./TheaterPoster.vue";
 import { episodeLabel, episodeName, percent } from "../../domain/a11y";
+import { posterSize } from "../../domain/cards";
 import { episodeCode, lengthClock } from "../../domain/episodes";
 
 import type { DropdownMenuItem } from "@nuxt/ui";
@@ -76,14 +98,28 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), { menu: () => [], current: false, compact: false });
 
+// The component library's page card laid out as a row: the poster, then the name and the line under it, then the
+// length at the end; a row a finger presses is at least as tall as a finger.
+const ROW_UI = {
+  root: "rounded-md select-none active:bg-elevated",
+  container: "flex min-h-11 flex-row items-center gap-3 p-2 sm:p-2 lg:flex",
+  wrapper: "min-w-0 flex-1 flex-row items-center gap-3",
+  header: "mb-0 shrink-0",
+  body: "flex min-w-0 flex-1 flex-col gap-1",
+  title: "min-w-0 text-base font-normal text-nowrap",
+  description: "mt-0 min-w-0 text-sm text-muted tabular-nums text-nowrap"
+} as const;
+
 const { t } = useI18n();
+const narrow = useNarrow();
 
 const code = computed(() => episodeCode(props.episode));
-const poster = computed(() => props.poster);
-// The line under the name: on a phone the code and the length lead it, since the row's end has no room for them.
-const narrow = useNarrow();
+// The line under the name: on a phone the length leads it and the watched mark is named beside its icon, since the
+// row's end, where both stand on a wider screen, has no room for them.
 const secondary = computed(() =>
-  [narrow.value ? code.value : "", narrow.value ? lengthClock(props.episode.durationMs) : "", episodeLabel(t, props.episode), props.episode.available ? "" : t("theater.label.unavailable")].filter(Boolean).join(" · ")
+  [narrow.value ? lengthClock(props.episode.durationMs) : "", episodeLabel(t, props.episode), props.episode.available ? "" : t("theater.label.unavailable"), narrow.value && props.watched.done ? t("theater.label.watched") : ""]
+    .filter(Boolean)
+    .join(" · ")
 );
 const watched = computed(() => props.watched);
 const name = computed(() => episodeName(t, props.episode, watched.value));

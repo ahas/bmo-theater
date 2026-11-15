@@ -26,16 +26,26 @@ export interface Title {
   libraryId: number | null;
   episodeCount: number;
   hasPoster: boolean;
+  /** Its poster's pixel size, where it has one and its size was read. */
+  posterWidth: number | null;
+  posterHeight: number | null;
   creator: string;
   createdAt: number;
   changedAt: number;
+  /** The latest of its own making and every episode's under it. */
+  addedAt: number;
 }
+
+/** The orders the titles list answers in (`docs/api.md`, 「Titles」). */
+export type TitleOrder = "id" | "added" | "name" | "watched";
 
 export interface Position {
   episodeId: number;
   seconds: number;
   done: boolean;
   updatedAt: number;
+  /** Whether the viewer set it aside from continue watching. */
+  setAside: boolean;
 }
 
 export interface Episode {
@@ -57,6 +67,9 @@ export interface Episode {
   audioCodec: string | null;
   available: boolean;
   hasPoster: boolean;
+  /** Its poster frame's pixel size, where it has one and its size was read. */
+  posterWidth: number | null;
+  posterHeight: number | null;
   subtitleCount: number;
   burnedFrom: { episodeId: number; subtitleId: number } | null;
   position: Position | null;
@@ -114,6 +127,9 @@ export interface Progress {
   doneCount: number;
   next: number | null;
   nextSeconds: number;
+  /** The episode to go on with along the main line, and where it starts (`docs/design.md`, 「Playing」). */
+  upNext: number | null;
+  upNextSeconds: number;
 }
 
 /** What a grant opens; both open the same reads (`docs/design.md`, 「Grants」). */

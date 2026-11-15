@@ -5,9 +5,7 @@
   <TheaterFrame id="theater-watch">
     <ToolBar :label="$t('theater.aria.watch_bar')">
       <div>
-        <UTooltip :text="backWords">
-          <UButton color="neutral" variant="ghost" size="sm" square icon="i-material-symbols-arrow-back" :aria-label="backWords" :to="backPath" />
-        </UTooltip>
+        <IconButton size="sm" icon="i-material-symbols-arrow-back" :to="backPath" :label="backWords" />
       </div>
       <div class="min-w-0 flex-1 shrink!">
         <span class="truncate text-muted">{{ playlist?.name ?? title?.name ?? "" }}</span>
@@ -85,6 +83,7 @@ import { RouterLink } from "vue-router";
 import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
+import IconButton from "bmo-ui/app/components/IconButton.vue";
 import ShareDialog from "bmo-ui/app/components/ShareDialog.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
 import ToolBar from "bmo-ui/app/components/ToolBar.vue";
@@ -98,10 +97,11 @@ import SubtitleDialog from "../../../components/theater/SubtitleDialog.vue";
 import TheaterFrame from "../../../components/theater/TheaterFrame.vue";
 import { episodeLabel } from "../../../domain/a11y";
 import { paths } from "../../../domain/api";
-import { episodeAfter, episodeTitle, placeAfter, placeOf, watchedEpisode } from "../../../domain/episodes";
+import { episodeTitle, followingOf, placeAfter, placeOf, sectionsOf, watchedEpisode } from "../../../domain/episodes";
 import { firstTrack, positionMoved, startAt, trackName } from "../../../domain/player";
 import { CONSOLE_PEOPLE, FIRST_SPAN, SHARE_SPANS, memberRoad, shareRoad } from "../../../domain/share";
 import { refusalWord } from "../../../domain/store";
+import { useAutoplay } from "../../../composables/useAutoplay";
 import { useDialogFocus } from "../../../composables/useDialogFocus";
 import { SERVICE, theaterAddress, useTheater } from "../../../composables/useTheater";
 import { useTheaterEvents } from "../../../composables/useTheaterEvents";
@@ -115,6 +115,7 @@ import type { Episode, Playlist } from "../../../../shared/types";
 const route = useRoute();
 const { t, locale } = useI18n();
 const store = useTheater();
+const { autoplay, setAutoplay } = useAutoplay();
 
 const playlist = ref<Playlist | null>(null);
 const track = ref<number | null>(null);
@@ -131,7 +132,9 @@ const episodeId = computed(() => Number(route.params.id));
 const episode = computed<Episode | null>(() => store.episodeOf(episodeId.value) ?? null);
 // An episode watched by a grant opens nothing but watching (`docs/design.md`, 「Grants」), so no action stands.
 const granted = computed(() => episode.value?.granted === true);
-const actions = computed<BarAction[]>(() => (granted.value ? [] : ownActions.value));
+const actions = computed<BarAction[]>(() => [autoplayAction.value, ...(granted.value ? [] : ownActions.value)]);
+// Whether the next episode follows on its own: the viewer's own switch, standing pressed while on.
+const autoplayAction = computed<BarAction>(() => ({ id: "autoplay", label: t("theater.action.autoplay"), icon: "i-material-symbols-autoplay", pressed: autoplay.value, onSelect: () => setAutoplay(!autoplay.value) }));
 const ownActions = computed<BarAction[]>(() => [
   { id: "subtitles", label: t("theater.action.subtitles"), icon: "i-material-symbols-subtitles-outline", disabled: !episode.value, onSelect: () => (subtitlesOpen.value = true) },
   { id: "add-to-playlist", label: t("theater.action.add_to_playlist"), icon: "i-material-symbols-playlist-add", disabled: !episode.value, onSelect: () => (addingOpen.value = true) },
@@ -140,14 +143,17 @@ const ownActions = computed<BarAction[]>(() => [
 const title = computed(() => (episode.value ? (store.titleOf(episode.value.titleId) ?? null) : null));
 const askedPlace = computed(() => (route.query.at === undefined ? null : Number(route.query.at)));
 const at = computed(() => (playlist.value ? placeOf(playlist.value.episodeIds, episodeId.value, askedPlace.value) : null));
-const autoplay = computed(() => route.query.play === "1");
+const startsPlaying = computed(() => route.query.play === "1");
 
 const tracks = computed<PlayerTrack[]>(() =>
   (store.subtitles.value[episodeId.value] ?? []).map((one) => ({ id: one.id, src: theaterAddress(paths.vtt(one.id)), label: trackName(one, locale.value), language: one.language }))
 );
 
-// Where it starts: the second the address names, else where the viewer stopped.
+// Where it starts: from the start where the title's page asked for it, the second the address names, else where
+// the viewer stopped.
 const start = computed(() => {
+  if (route.query.from === "start") return 0;
+
   const asked = Number(route.query.t);
 
   if (Number.isFinite(asked) && asked > 0) return asked;
@@ -159,10 +165,10 @@ const nextPlace = computed(() => (playlist.value && at.value !== null ? placeAft
 const nextEpisode = computed<Episode | null>(() => {
   if (playlist.value) return nextPlace.value === null ? null : (store.episodeOf(playlist.value.episodeIds[nextPlace.value]!) ?? null);
 
+  // A show goes on along its main line, specials one after another, extras to nothing.
   const list = episode.value ? store.episodes.value[episode.value.titleId] : undefined;
-  const after = list ? episodeAfter(list, episodeId.value) : null;
 
-  return after === null ? null : (store.episodeOf(after) ?? null);
+  return list && title.value ? followingOf(sectionsOf(title.value.kind, list), episodeId.value) : null;
 });
 const nextWords = computed(() => (nextEpisode.value ? t("theater.action.next_named", { name: episodeTitle(nextEpisode.value) }) : null));
 
@@ -179,8 +185,9 @@ const player = computed<StagePlayer | null>(() => {
     title: episodeTitle(shown),
     tracks: tracks.value,
     start: start.value,
-    autoplay: autoplay.value,
-    next: nextWords.value
+    autoplay: startsPlaying.value,
+    next: nextWords.value,
+    autoNext: autoplay.value
   };
 });
 
@@ -248,12 +255,11 @@ function keepLeaving(episodeOf: number, seconds: number): void {
   void relayCall(SERVICE, paths.position(episodeOf), { method: "PUT", keepalive: true, body: { seconds } }).catch(() => undefined);
 }
 
-// The end counts the episode watched; a playlist goes on to its next by itself.
+// The end counts the episode watched; what plays next is asked for by the player where the viewer leaves autoplay
+// on and did not cancel it.
 function ended(episodeOf: number, seconds: number): void {
   lastKept = { episode: episodeOf, seconds };
   void store.setPosition(episodeOf, seconds);
-
-  if (playlist.value && nextEpisode.value) goNext(true);
 }
 
 function goNext(play: boolean): void {

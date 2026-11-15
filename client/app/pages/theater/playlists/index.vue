@@ -20,22 +20,20 @@
 
       <MovingList v-else class="flex flex-col py-2" :aria-label="$t('theater.label.playlists')">
         <li v-for="playlist in shown" :key="playlist.id" class="flex min-w-0 items-center gap-2 px-2 sm:px-4">
-          <RouterLink
+          <UPageCard
             :to="`/theater/playlists/${playlist.id}`"
-            class="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-md p-2 transition-colors select-none hover:bg-elevated/60 active:bg-elevated focus-inset"
+            variant="ghost"
+            icon="i-material-symbols-playlist-play"
+            :title="playlist.name"
+            :description="$t('theater.label.episodes_count', { n: countText(playlist.episodeIds.length) })"
+            class="min-w-0 flex-1"
+            :ui="ROW_UI"
           >
-            <UIcon name="i-material-symbols-playlist-play" class="size-6 shrink-0 text-muted" aria-hidden="true" />
-            <span class="flex min-w-0 flex-1 flex-col">
-              <span class="truncate text-base text-highlighted">{{ playlist.name }}</span>
-              <span class="truncate text-sm text-muted tabular-nums">{{ $t("theater.label.episodes_count", { n: countText(playlist.episodeIds.length) }) }}</span>
-            </span>
             <span class="shrink-0 text-sm text-muted tabular-nums">{{ lengthClock(playlist.durationMs) }}</span>
-          </RouterLink>
+          </UPageCard>
 
           <UDropdownMenu :modal="false" :ui="{ item: 'pointer-coarse:min-h-11' }" :items="menuOf(playlist)" :content="{ align: 'end' }">
-            <UTooltip :text="$t('common.action.more')">
-              <UButton color="neutral" variant="ghost" icon="i-material-symbols-more-vert" class="pointer-coarse:size-11 pointer-coarse:justify-center" :aria-label="$t('common.action.more')" />
-            </UTooltip>
+            <IconButton icon="i-material-symbols-more-vert" class="pointer-coarse:size-11 pointer-coarse:justify-center" :label="$t('common.action.more')" />
           </UDropdownMenu>
         </li>
       </MovingList>
@@ -49,11 +47,11 @@
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch } from "vue";
-import { RouterLink } from "vue-router";
 import { navigateTo } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
 import CreateButton from "bmo-ui/app/components/CreateButton.vue";
+import IconButton from "bmo-ui/app/components/IconButton.vue";
 import MovingList from "bmo-ui/app/components/MovingList.vue";
 import ShareDialog from "bmo-ui/app/components/ShareDialog.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
@@ -88,7 +86,20 @@ const renaming = ref(false);
 const sharing = ref(false);
 const refreshing = ref(false);
 
-const shown = computed(() => [...playlists.value[realm.value]].sort((a, b) => a.name.localeCompare(b.name)));
+// The playlists in the service's order.
+const shown = computed(() => playlists.value[realm.value]);
+
+// The component library's page card laid out as a row: the mark, the name over the count, the length at the end.
+const ROW_UI = {
+  root: "rounded-md select-none active:bg-elevated",
+  container: "flex min-h-11 flex-row items-center gap-3 p-2 sm:p-2 lg:flex",
+  wrapper: "min-w-0 flex-1 flex-row items-center gap-3",
+  leading: "mb-0 shrink-0",
+  leadingIcon: "size-6 text-muted",
+  body: "flex min-w-0 flex-1 flex-col",
+  title: "truncate text-base font-normal text-nowrap",
+  description: "mt-0 truncate text-sm text-muted tabular-nums text-nowrap"
+} as const;
 const actions = computed<BarAction[]>(() => [
   { id: "refresh", label: t("theater.action.refresh"), icon: "i-material-symbols-refresh", loading: refreshing.value, onSelect: () => void refresh() }
 ]);

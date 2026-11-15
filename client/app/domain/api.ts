@@ -1,4 +1,4 @@
-import type { Burn, Episode, Grant, Library, ListPage, Permission, Playlist, Position, Progress, Realm, Scan, Share, Subtitle, Title } from "../../shared/types";
+import type { Burn, Episode, Grant, Library, ListPage, Permission, Playlist, Position, Progress, Realm, Scan, Share, Subtitle, Title, TitleOrder } from "../../shared/types";
 
 // The screens' calls to the theater service, each at the path the service's own API writes it (`docs/api.md`).
 // The caller hands the call itself — through the console's relay in the browser, to a stand-in in a test — so
@@ -66,7 +66,10 @@ export interface SharedReads {
 }
 
 export interface TheaterApi {
-  titles: (realm: Realm) => Promise<Title[]>;
+  titles: (realm: Realm, order?: TitleOrder) => Promise<Title[]>;
+  watching: (realm: Realm) => Promise<Episode[]>;
+  nextUp: (realm: Realm) => Promise<Episode[]>;
+  setAside: (episodeId: number) => Promise<void>;
   title: (id: number) => Promise<Title>;
   makeTitle: (realm: Realm, name: string) => Promise<Title>;
   episodes: (titleId: number) => Promise<Episode[]>;
@@ -121,7 +124,7 @@ export function createTheaterApi(call: Call, send: Send): TheaterApi {
     }
   }
 
-  // Every page of a list, oldest first, each read from the id after the last one held.
+  // Every page of a list in its own order, each read from the id after the last one held.
   async function all<T extends { id: number }>(path: string, query: Record<string, string> = {}): Promise<T[]> {
     const items: T[] = [];
     let after: number | null = null;
@@ -165,7 +168,10 @@ export function createTheaterApi(call: Call, send: Send): TheaterApi {
   const token = (value: string) => encodeURIComponent(value);
 
   return {
-    titles: (realm) => all<Title>("/titles", { realm }),
+    titles: (realm, order = "id") => all<Title>("/titles", order === "id" ? { realm } : { realm, order }),
+    watching: (realm) => all<Episode>("/watching", { realm }),
+    nextUp: (realm) => all<Episode>("/next-up", { realm }),
+    setAside: (episodeId) => sent<void>(`/watching/${episodeId}`, { method: "DELETE" }),
     title: (id) => sent<Title>(`/titles/${id}`),
     makeTitle: (realm, name) => sent<Title>("/titles", { method: "POST", body: { realm, name, kind: "clip" } }),
     episodes: (titleId) => items<Episode>(`/titles/${titleId}/episodes`),
