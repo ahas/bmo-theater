@@ -81,7 +81,7 @@ or changes by its own events.
 
 | Method | Path | Does |
 |---|---|---|
-| GET | `/titles?realm=&kind=&libraryId=&q=` | The titles the caller reads; `q` matches a part of the name, in any letter case — `{items, more}` |
+| GET | `/titles?realm=&kind=&libraryId=&q=&order=` | The titles the caller reads; `q` matches a part of the name, in any letter case; in the order `order` names — `{items, more}` |
 | POST | `/titles` | `realm`, `name`, `kind?` (`clip` where none), `description?`, `labels?` — 201 |
 | GET | `/titles/{titleId}` | One title |
 | PATCH | `/titles/{titleId}` | `name`, `kind`, `description`, `labels` — 200 |
@@ -93,8 +93,23 @@ or changes by its own events.
 
 A title is `id`, `realm`, `name`, `kind` (`show`, `film` or `clip`), `description` (may be empty), `labels`
 (an object of strings), `libraryId` (null for a title made by hand), `episodeCount`, `hasPoster`, `creator`,
-`createdAt`, `changedAt`. A blank name or one of more than one line is 400 `bad-request`. A retired title is
-not found by any route.
+`createdAt`, `changedAt`, `addedAt` (the latest of its own `createdAt` and every episode's under it), and
+`posterWidth` and `posterHeight` (the pixel size of the poster `GET /titles/{titleId}/poster` answers, each
+null where it has none or its size is not read yet). A blank name or one of more than one line is 400
+`bad-request`. A retired title is not found by any route.
+
+The list's `order` is one of:
+
+- `id`, where none is given: by id, oldest first, as every list.
+- `added`: by `addedAt`, the latest first, a tie by id, the newest first.
+- `name`: by name with its letter case folded, in the order of its characters' code points, so names in one
+  script stand together; a tie by id, oldest first.
+- `watched`: by the moment the caller last set a position in one of its episodes, the latest first; a title
+  the caller never watched follows, by `addedAt`, the latest first. A call naming no account orders as
+  `added`.
+
+`after` names the id of the title the page goes on after, in that order. Any other `order` is 400
+`bad-request`.
 
 **Filing a video** takes one of two bodies:
 
@@ -126,7 +141,9 @@ has none), `name`, `label` (may be empty), `fileName`, `mediaType`, `byteCount`,
 disk), `hasPoster`, `subtitleCount`, `burnedFrom` (for a burned clip, `{episodeId, subtitleId}`; null
 otherwise), `position` (the caller's position in it, as 「Positions and progress」 answers one, or null where
 the caller has none or names no account), `granted` (true where the caller reads it by a grant alone, false
-otherwise), `creator`, `createdAt`, `changedAt`. An episode's changes are made by whoever changes its title.
+otherwise), `posterWidth` and `posterHeight` (its poster frame's pixel size, each null where it has none or its
+size is not read yet), `creator`, `createdAt`, `changedAt`. An episode's changes are made by whoever changes its
+title.
 
 `titleId` moves a `clip` episode under another title of its realm and answers it under the new title. The
 caller changes both the episode's title and the title it joins, so a caller without the right is 403
@@ -216,7 +233,8 @@ is 422 `not-in-realm`. An episode deleted leaves every playlist it stood in.
 | GET | `/episodes/{episodeId}/position` | The caller's position in it; 404 `not-found` where it has none |
 | PUT | `/episodes/{episodeId}/position` | `seconds`, `done?` — 200, the position |
 
-A position is `episodeId`, `seconds` (a number, 0 or more), `done`, `updatedAt`. A PUT sets `seconds`; `done`
+A position is `episodeId`, `seconds` (a number, 0 or more), `done`, `updatedAt` and `setAside` (whether the
+viewer set it aside from continue watching). A PUT sets `seconds` and takes `setAside` back to false; `done`
 becomes true once `seconds` reaches nine tenths of the episode's duration, or where the body says `done`, and
 stays true until a body says `done: false`. A position is the calling account's own; a call naming no
 account is 422 `no-account`. Every account that reads the episode keeps one.
@@ -224,7 +242,22 @@ account is 422 `no-account`. Every account that reads the episode keeps one.
 A progress, of a playlist or of a title, is `items`, each `episodeId`, `durationMs`, `seconds` (0 where the
 viewer has no position), `done`; `doneCount`; `next`, the episode to watch next as docs/design.md
 「Playing」 states, or null where every one is done or there is none; and `nextSeconds`, the seconds to start
-`next` from (0 for an episode done or never played). A playlist naming one episode twice answers it twice.
+`next` from (0 for an episode done or never played); `upNext`, the episode to go on with as docs/design.md
+「Playing」 states, or null where there is none, and `upNextSeconds`, the seconds to start it from, read the same
+way (a playlist's are its `next` and `nextSeconds`). A playlist naming one episode twice answers it twice.
+
+## Continue watching and next up
+
+| Method | Path | Does |
+|---|---|---|
+| GET | `/watching?realm=` | The caller's continue watching (docs/design.md, 「Playing」): the episodes it has started and not finished nor set aside, each as `GET /episodes/{episodeId}` answers it with its `position`, the one whose position was set last first — `{items, more}` |
+| DELETE | `/watching/{episodeId}` | Sets the caller's position in the episode aside — 204; its position stays, and it leaves the list until the position is set again |
+| GET | `/next-up?realm=` | The caller's next up (docs/design.md, 「Playing」): for each show of the realm the caller set a position in within the last thirty days, its `upNext` where that episode is not started, as `GET /episodes/{episodeId}` answers it, the show last played first — `{items, more}` |
+
+Both lists read the realm as the titles list does, answer only episodes of titles the caller reads (an episode
+watched by a grant alone stands in neither), and take `after` as the id of the episode the page goes on after in
+their own order. A call naming no account is 422 `no-account`. Setting aside an episode the caller has no
+position in is 404 `not-found`; it publishes `position.changed` with the position as it now stands.
 
 ## Share links
 
@@ -308,7 +341,7 @@ for a `deleted` one (`{token}` for a link):
 | `episode.created`, `episode.changed`, `episode.deleted` | an episode filed or indexed, changed (a scan finding it gone or back among them), deleted |
 | `subtitle.created`, `subtitle.deleted` | a subtitle added, removed |
 | `playlist.created`, `playlist.changed`, `playlist.deleted` | a playlist made, changed (its items among it), deleted |
-| `position.changed` | the viewer's position set |
+| `position.changed` | the viewer's position set, or set aside |
 | `burn.running`, `burn.finished`, `burn.failed` | a burn started and ended |
 | `share.created`, `share.deleted` | a link made, ended |
 
@@ -385,6 +418,7 @@ The theater calls no other unit. It runs two commands, each named by the setting
 |---|---|
 | what a file holds | `ffprobe -v error -print_format json -show_format -show_streams <file>` |
 | a poster frame | `ffmpeg -nostdin -v error -ss <a tenth of the duration> -i <file> -frames:v 1 -vf scale=640:-2 -q:v 3 -y <poster>.jpg` |
+| a poster's size | `ffprobe -v error -print_format json -show_streams <poster>.jpg`, its first stream's width and height |
 | a burn | `ffmpeg -nostdin -v error -i <file> -vf subtitles=<subtitle> -c:v libx264 -preset veryfast -crf 20 -c:a copy -movflags +faststart -y output.mp4`, run in the burn's work folder, the subtitle the ASS original or the WebVTT written there in UTF-8 |
 
 A poster that fails leaves the episode without one; a probe that fails leaves its fields null for a library's
@@ -411,7 +445,8 @@ Beside the common codes of bmo-chat's `docs/conventions.md` (`bad-request`, `una
 ## Commands
 
 - `bmo-theater serve` brings the database to its schema, fails the scans and burns a stop cut short, and
-  answers the routes until it is told to stop.
+  answers the routes until it is told to stop; behind them it reads the size of every poster kept before its
+  size was read, with ffprobe, one at a time.
 - `bmo-theater migrate` brings the database the settings name to the schema the binary carries, and ends.
 - `bmo-theater health` ends 0 where the service its settings name answers ready.
 - `bmo-theater openapi` prints the OpenAPI document, which `docs/openapi.json` holds.

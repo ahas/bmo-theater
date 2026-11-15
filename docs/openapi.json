@@ -189,6 +189,22 @@
             ],
             "description": "The caller's position in it."
           },
+          "posterHeight": {
+            "description": "Its poster frame's pixel height, or null where it has none or its size is not read yet.",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "posterWidth": {
+            "description": "Its poster frame's pixel width, or null where it has none or its size is not read yet.",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "realm": {
             "$ref": "#/components/schemas/Realm"
           },
@@ -244,6 +260,8 @@
           "burnedFrom",
           "position",
           "granted",
+          "posterWidth",
+          "posterHeight",
           "creator",
           "createdAt",
           "changedAt"
@@ -1017,6 +1035,10 @@
             "format": "double",
             "type": "number"
           },
+          "setAside": {
+            "description": "Whether the viewer set it aside from continue watching; setting the position takes it back.",
+            "type": "boolean"
+          },
           "updatedAt": {
             "format": "int64",
             "type": "integer"
@@ -1026,7 +1048,8 @@
           "episodeId",
           "seconds",
           "done",
-          "updatedAt"
+          "updatedAt",
+          "setAside"
         ],
         "type": "object"
       },
@@ -1079,13 +1102,28 @@
             "description": "The seconds to start it from.",
             "format": "double",
             "type": "number"
+          },
+          "upNext": {
+            "description": "The episode to go on with along the main line (`docs/design.md`, 「Playing」), or null; a playlist's is its\n`next`.",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "upNextSeconds": {
+            "description": "The seconds to start it from.",
+            "format": "double",
+            "type": "number"
           }
         },
         "required": [
           "items",
           "doneCount",
           "next",
-          "nextSeconds"
+          "nextSeconds",
+          "upNext",
+          "upNextSeconds"
         ],
         "type": "object"
       },
@@ -1432,6 +1470,11 @@
       "Title": {
         "description": "A title.",
         "properties": {
+          "addedAt": {
+            "description": "The latest of its own `createdAt` and every episode's under it.",
+            "format": "int64",
+            "type": "integer"
+          },
           "changedAt": {
             "format": "int64",
             "type": "integer"
@@ -1477,6 +1520,22 @@
           "name": {
             "type": "string"
           },
+          "posterHeight": {
+            "description": "The pixel height of the poster the title answers, or null where it has none or its size is not read yet.",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "posterWidth": {
+            "description": "The pixel width of the poster the title answers, or null where it has none or its size is not read yet.",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "realm": {
             "$ref": "#/components/schemas/Realm"
           }
@@ -1493,7 +1552,10 @@
           "hasPoster",
           "creator",
           "createdAt",
-          "changedAt"
+          "changedAt",
+          "addedAt",
+          "posterWidth",
+          "posterHeight"
         ],
         "type": "object"
       },
@@ -1561,6 +1623,31 @@
           {
             "const": "clip",
             "description": "Filed outputs.",
+            "type": "string"
+          }
+        ]
+      },
+      "TitleOrder": {
+        "description": "The order a list of titles stands in (`docs/api.md`, 「Titles」).",
+        "oneOf": [
+          {
+            "const": "id",
+            "description": "By id, oldest first.",
+            "type": "string"
+          },
+          {
+            "const": "added",
+            "description": "By `addedAt`, the latest first.",
+            "type": "string"
+          },
+          {
+            "const": "name",
+            "description": "By name with its letter case folded, in the order of its characters' code points.",
+            "type": "string"
+          },
+          {
+            "const": "watched",
+            "description": "By the caller's last position set in one of its episodes, the latest first; the titles never watched\nafter, as `added`.",
             "type": "string"
           }
         ]
@@ -3811,6 +3898,124 @@
         "x-console": "screen"
       }
     },
+    "/next-up": {
+      "get": {
+        "operationId": "listNextUp",
+        "parameters": [
+          {
+            "description": "The id the page starts after.",
+            "in": "query",
+            "name": "after",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "The id the page starts after.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "At most this many, 1 to 1000; 200 where none.",
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "At most this many, 1 to 1000; 200 where none.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "The realm; both the caller reads where none.",
+            "in": "query",
+            "name": "realm",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Realm"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The realm; both the caller reads where none."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page4"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
+          }
+        },
+        "summary": "The caller's next up: for each show it played within thirty days, the episode to go on with, not yet started.",
+        "tags": [
+          "watching"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "no-account"
+        ],
+        "x-console": "screen"
+      }
+    },
     "/playlists": {
       "get": {
         "operationId": "listPlaylists",
@@ -5638,11 +5843,13 @@
         "operationId": "listTitles",
         "parameters": [
           {
+            "description": "The id of the title the page goes on after, in the order.",
             "in": "query",
             "name": "after",
             "required": true,
             "schema": {
               "default": null,
+              "description": "The id of the title the page goes on after, in the order.",
               "format": "int64",
               "type": [
                 "integer",
@@ -5690,6 +5897,24 @@
                 "integer",
                 "null"
               ]
+            }
+          },
+          {
+            "description": "The order; `id` where none.",
+            "in": "query",
+            "name": "order",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TitleOrder"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The order; `id` where none."
             }
           },
           {
@@ -5775,7 +6000,7 @@
             "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
           }
         },
-        "summary": "The titles the caller reads.",
+        "summary": "The titles the caller reads, in the order asked.",
         "tags": [
           "titles"
         ],
@@ -6424,9 +6649,200 @@
             "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
           }
         },
-        "summary": "The caller's progress through a title's episodes.",
+        "summary": "The caller's progress through a title's episodes, the episode to watch next and the one to go on with.",
         "tags": [
           "titles"
+        ],
+        "x-codes": [
+          "unauthorized",
+          "forbidden",
+          "not-found",
+          "no-account"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/watching": {
+      "get": {
+        "operationId": "listWatching",
+        "parameters": [
+          {
+            "description": "The id the page starts after.",
+            "in": "query",
+            "name": "after",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "The id the page starts after.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "At most this many, 1 to 1000; 200 where none.",
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "default": null,
+              "description": "At most this many, 1 to 1000; 200 where none.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "The realm; both the caller reads where none.",
+            "in": "query",
+            "name": "realm",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Realm"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "The realm; both the caller reads where none."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page4"
+                }
+              }
+            },
+            "description": "Answered."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`bad-request`: the body or the query is not the shape the route takes"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
+          }
+        },
+        "summary": "The caller's continue watching: the episodes it started and neither finished nor set aside, the one set last first.",
+        "tags": [
+          "watching"
+        ],
+        "x-codes": [
+          "bad-request",
+          "unauthorized",
+          "forbidden",
+          "no-account"
+        ],
+        "x-console": "screen"
+      }
+    },
+    "/watching/{episodeId}": {
+      "delete": {
+        "operationId": "setAsideWatching",
+        "parameters": [
+          {
+            "description": "The episode's id.",
+            "in": "path",
+            "name": "episodeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no content."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`unauthorized`: the token is missing or wrong"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`forbidden`: the token is right but the caller may not do this"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`not-found`: nothing stands at the key the path names"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WireError"
+                }
+              }
+            },
+            "description": "`no-account`: a mine list or write, or a position, on a call that names no account"
+          }
+        },
+        "summary": "Set the caller's position in an episode aside from continue watching; the position stays.",
+        "tags": [
+          "watching"
         ],
         "x-codes": [
           "unauthorized",
@@ -6464,6 +6880,9 @@
     },
     {
       "name": "positions"
+    },
+    {
+      "name": "watching"
     },
     {
       "name": "subtitles"

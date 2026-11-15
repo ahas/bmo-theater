@@ -1,5 +1,5 @@
-//! The commands the theater runs (`docs/api.md`, 「Calls the theater makes」): ffprobe for what a file holds,
-//! ffmpeg for a poster frame and for a burn. Each is waited on however long it takes.
+//! The commands the theater runs (`docs/api.md`, 「Calls the theater makes」): ffprobe for what a file holds and
+//! for a poster's size, ffmpeg for a poster frame and for a burn. Each is waited on however long it takes.
 
 use std::path::Path;
 
@@ -23,6 +23,13 @@ impl Probe {
   pub fn has_video(&self) -> bool {
     self.video_codec.is_some()
   }
+}
+
+/// A poster frame kept: its pixel size, where ffprobe read it.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Poster {
+  pub width: Option<i32>,
+  pub height: Option<i32>,
 }
 
 /// The last lines a command wrote to its error output, as the reason it failed.
@@ -71,8 +78,26 @@ pub async fn probe(media: &Media, file: &Path) -> Result<Probe, String> {
   Ok(read_probe(&json))
 }
 
+/// A poster frame taken a tenth of the way in and written as JPEG to `poster`, with its size read, where it was
+/// taken.
+pub async fn poster(media: &Media, file: &Path, duration_ms: Option<i64>, poster: &Path) -> Option<Poster> {
+  if !take_poster(media, file, duration_ms, poster).await {
+    return None;
+  }
+  match poster_size(media, poster).await {
+    Ok((width, height)) => Some(Poster {
+      width: Some(width),
+      height: Some(height),
+    }),
+    Err(why) => {
+      eprintln!("bmo-theater: {why}");
+      Some(Poster::default())
+    }
+  }
+}
+
 /// A poster frame taken a tenth of the way in and written as JPEG to `poster`; whether it was.
-pub async fn poster(media: &Media, file: &Path, duration_ms: Option<i64>, poster: &Path) -> bool {
+async fn take_poster(media: &Media, file: &Path, duration_ms: Option<i64>, poster: &Path) -> bool {
   let at = duration_ms.unwrap_or_default().max(0) as f64 / 10_000.0;
   if let Some(folder) = poster.parent()
     && tokio::fs::create_dir_all(folder).await.is_err()
@@ -99,6 +124,27 @@ pub async fn poster(media: &Media, file: &Path, duration_ms: Option<i64>, poster
       eprintln!("bmo-theater: {} could not be run: {why}", media.ffmpeg);
       false
     }
+  }
+}
+
+/// A poster's pixel width and height, as ffprobe reads its first stream.
+pub async fn poster_size(media: &Media, poster: &Path) -> Result<(i32, i32), String> {
+  let output = Command::new(&media.ffprobe)
+    .args(["-v", "error", "-print_format", "json", "-show_streams"])
+    .arg(poster)
+    .kill_on_drop(true)
+    .output()
+    .await
+    .map_err(|why| format!("{} could not be run: {why}", media.ffprobe))?;
+  if !output.status.success() {
+    return Err(format!("ffprobe refused {}: {}", poster.display(), said(&output)));
+  }
+  let json: Value = serde_json::from_slice(&output.stdout)
+    .map_err(|why| format!("ffprobe's answer does not read: {why}"))?;
+  let first = &json["streams"][0];
+  match (first["width"].as_i64(), first["height"].as_i64()) {
+    (Some(width), Some(height)) => Ok((width as i32, height as i32)),
+    _ => Err(format!("ffprobe read no size of {}", poster.display())),
   }
 }
 

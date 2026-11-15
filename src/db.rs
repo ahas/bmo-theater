@@ -10,7 +10,7 @@ use sqlx::{Connection, PgConnection, PgPool};
 const MIGRATION_LOCK: i64 = 0x0074_6865_6174_6572;
 
 /// The migrations, by number, each a script of statements.
-pub const MIGRATIONS: [(i64, &str); 2] = [
+pub const MIGRATIONS: [(i64, &str); 3] = [
   (
     1,
     r#"
@@ -166,6 +166,13 @@ CREATE TABLE grants (
   granted_at BIGINT NOT NULL,
   PRIMARY KEY (episode_id, account)
 );
+"#,
+  ),
+  (
+    3,
+    r#"
+ALTER TABLE episodes ADD COLUMN poster_width INTEGER, ADD COLUMN poster_height INTEGER;
+ALTER TABLE positions ADD COLUMN set_aside BOOLEAN NOT NULL DEFAULT FALSE;
 "#,
   ),
 ];

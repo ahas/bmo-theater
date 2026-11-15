@@ -80,7 +80,9 @@ extension (`mp4`, `m4v`, `mkv`, `webm`, `mov`, `avi`, `ogv`). It goes:
    The library's own group takes the library's name; any other group takes its folder's name.
 4. **A group holding no numbered file is one `film` title per file,** named by the file's name.
 5. **What the file holds is read** with ffprobe (duration, width, height, codecs), and a **poster frame** is
-   taken with ffmpeg at a tenth of the way in and kept in the file root.
+   taken with ffmpeg at a tenth of the way in and kept in the file root. The poster's own width and height
+   are read with ffprobe as it is taken, so a screen knows the picture's shape before it loads it; a poster
+   kept before its size was read is read as the service starts.
 
 A scan never deletes a row. It adds what is new, marks a file that is no longer on disk unavailable (and
 available again once it returns), reads a file again where its size or its modification time changed, and
@@ -111,6 +113,26 @@ the service starts again, and the next scan reads what it missed.
 - **What to watch next.** A playlist's progress, and a show's, answer each episode's position for the viewer
   and the next one to watch: the episode last played where it is not finished; else the first unfinished
   one after it, and from the start where none follows; else the first, where nothing was played.
+- **What to go on with.** A title's progress also answers the episode a viewer goes on with in it, its *up
+  next*, read along the title's main line rather than round its whole order:
+  - A show's **main line** is its numbered episodes outside season 0, in order. Season 0 holds its
+    **specials** (a pilot, a special), and the episodes with no number are its **extras** (a trailer, a
+    making-of); neither is on the main line. A film's or a clip title's main line is every episode it holds,
+    in order.
+  - Up next is the episode last played where it is not finished, whichever part of the title it stands in;
+    else the last main-line episode played where it is not finished, and the first unfinished main-line episode
+    after it where it is; else, where no main-line episode was played, the first unfinished one of the main
+    line. A title whose main line has no
+    unfinished episode after the last one played has none: it does not start over.
+  - A playlist's up next is its next, since a playlist is all main line.
+- **Continue watching.** The episodes a viewer has started and not finished — a position past nought, not
+  watched — stand in the viewer's *continue watching*, the one last played first. A viewer may set one aside:
+  its position stays as it was, and it leaves continue watching until its position is set again.
+- **Next up.** The viewer's *next up* holds, for each show they set a position in within the last thirty
+  days, its up next where that episode is not started, the show last played first. A show stays there thirty
+  days from its last position, and leaves sooner once its up next is started (it then stands in continue
+  watching) or its main line is finished. An episode set aside keeps its show out of both until it is played
+  again.
 
 ## Share links
 
@@ -155,12 +177,43 @@ file.
 
 A console bundle, built from `client/`, stands under the sidebar entry the words name:
 
-- **The library:** a grid of posters, the reader's own realm's titles in one tab and the organization's in
-  another, and a video filed from the browser as a clip, under a title of the realm or a new one, its bytes
-  sent with how far they have come.
-- **A title:** its seasons and episodes, each with the viewer's progress, the title's own progress and a button
-  to go on from where the viewer stopped; each episode added to a playlist, shared, given subtitles, and, for a
-  clip, deleted.
+- **The library:** the reader's own realm in one tab and the organization's in another, each a column of
+  rows, and a video filed from the browser as a clip, under a title of the realm or a new one, its bytes sent
+  with how far they have come. The rows, in this order, each standing only while it holds something:
+  - **Continue watching:** the viewer's continue watching (「Playing」), each a wide card of the episode's
+    poster with the title's name, the episode's code and name, a bar of how far it was watched along the
+    card's foot and the time left; a card's menu sets it aside.
+  - **Next up:** the viewer's next up, each a wide card of the episode to go on with.
+  - **Recently added:** the realm's titles, the one added to last first.
+  - **One row for each kind of title the realm holds:** shows, films, clips, each in the service's order of
+    the one added to last first.
+  - **Playlists.**
+
+  A row is the layer's row of cards (bmo-ui `docs/components.md`, 「Rows of cards」): it scrolls sideways,
+  paged by a button at either edge for a pointer and swiped by a finger, and every row of titles and the
+  playlists open in full from the row's *all* link. A row's order is the service's, never sorted again in the
+  browser. A realm holding nothing says so in one line, with the one action that fills it: a video filed, which
+  any reader of either realm may do.
+- **A row in full:** the titles of the row, or of one kind, as a grid of the same cards, ordered by the
+  choice the screen's row holds — added last first, by name, or watched last first — which stands in the
+  address with the realm and the kind.
+- **Cards:** each card stands at one of the layer's artwork shapes (bmo-ui `docs/components.md`, 「Artwork」),
+  and a row takes one shape for all its cards from the shapes most of its pictures have, read from the poster
+  sizes the service answers, never by loading the pictures. A picture of another shape stands whole inside its
+  card over a ground made of itself, never cut or stretched; a title or an episode with no poster stands as
+  its kind's mark with its name set in the card.
+- **A title:** a band across the top made of its poster, dimmed so what stands on it reads in either theme;
+  the poster; the name; one line of what it is (its kind, how many seasons, how many episodes and how long
+  they all run, each only where it applies); its actions in the order they are reached for — play, or go on,
+  naming the episode it goes on with (its up next, 「Playing」); from the start, where it goes on; add to a
+  playlist; share, these acting on the episode play names — then its description. What acts on the title as a
+  whole stands in the screen's toolbar: a refresh, an upload, and, for a title of one episode, its subtitles and,
+  for a clip, deleting it. A show then holds a choice of
+  its seasons (the season of its up next chosen first, the choice standing in the address) and that season's
+  episodes, each a row of its poster, its number and name, its length, a bar where it is partly watched and a
+  mark where it is watched, its own menu holding what is done with it. Specials stand last among the seasons
+  under their own name, and extras stand apart after the seasons, never at the end of an episode list. A film
+  or a clip title of one episode shows no list of episodes at all.
 - **The playlists:** made, renamed, reordered (dragged by a handle, moved by its arrow keys, or on a phone by
   each item's up and down buttons), an item removed, each change sending the whole order, and a button to go
   on from where the viewer stopped.
@@ -170,9 +223,15 @@ A console bundle, built from `client/`, stands under the sidebar entry the words
   the picture, full screen and playing one thing at a time are the player's own, as that document states them;
   the theater hands it the episode's stream and poster, its subtitles as text tracks, where it starts and the
   next episode's words. The theater decides the rest: the subtitle shown first is the one in the screen's
-  language, else none; an episode starts where the viewer stopped unless it was watched; a playlist goes on to
-  its next episode by itself; and the viewer's position, which the player tells every five seconds, as it
-  pauses and as it is left, is set again only once it has moved a second or more.
+  language, else none; an episode starts where the viewer stopped unless it was watched, asking nothing, and
+  from the start only where the title's page was asked to; and the viewer's position, which the player tells
+  every five seconds, as it pauses and as it is left, is set again only once it has moved a second or more.
+- **What plays next:** a playlist's next episode, and a show's next main-line episode after the one playing
+  (specials one after another, extras none). The player offers it near the end with its count-down (bmo-ui
+  `docs/components.md`, 「The video player」, the next video) and plays it as the episode ends, unless the
+  viewer cancels it there or has turned autoplay off. Autoplay is one switch on the player's toolbar, the
+  viewer's own, kept in the browser that set it, since the service keeps no settings of a viewer; it is on
+  where never set.
 - **Subtitles:** a file added to an episode or a subtitle deleted, and a subtitle burned in, the burn's state
   told by the event stream until its clip stands under the title.
 - **The libraries,** shown to the administrator alone: a folder registered, renamed, scanned again or removed.
@@ -220,3 +279,13 @@ rule decides who may change or delete what.
 
 Transcoding and HLS (until a file appears that browsers cannot play as it is), subtitles transcribed by the
 voice unit, metadata fetched from outside catalogues, and finer permissions such as forbidding a download.
+
+## Present limits
+
+- **Versions of one video stand as titles of their own.** A title holds episodes and nothing groups several
+  files that are cuts or revisions of one video, so each such file filed as its own title stands as a card of its
+  own.
+- **A name is the one the file or the filer gave.** An episode named by its file's name keeps that name until it
+  is renamed; nothing reads a better one.
+- **No previews that play, no profiles of viewers, no downloads offered on a screen and no ratings.** A card
+  shows its poster alone; a viewer is the account; a video is watched in the player.

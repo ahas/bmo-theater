@@ -349,8 +349,9 @@ pub async fn set_position(
     None => was || reaches_done(set.seconds, stored.episode.duration_ms),
   };
   sqlx::query(
-    "INSERT INTO positions (account, episode_id, seconds, done, updated_at) VALUES ($1, $2, $3, $4, $5) \
-     ON CONFLICT (account, episode_id) DO UPDATE SET seconds = $3, done = $4, updated_at = $5",
+    "INSERT INTO positions (account, episode_id, seconds, done, updated_at, set_aside) \
+     VALUES ($1, $2, $3, $4, $5, FALSE) \
+     ON CONFLICT (account, episode_id) DO UPDATE SET seconds = $3, done = $4, updated_at = $5, set_aside = FALSE",
   )
   .bind(&account)
   .bind(stored.episode.id)

@@ -29,7 +29,8 @@ use crate::settings::Settings;
 use crate::wire::now_ms;
 
 /// Brings the database to its schema, and answers the routes on the settings' address until the process is told
-/// to stop, the open event streams ended at once.
+/// to stop, the open event streams ended at once; behind them it reads the size of every poster kept before its
+/// size was read.
 pub async fn serve(settings: Settings) -> Result<(), String> {
   let listener = TcpListener::bind(settings.server.listen)
     .await
@@ -76,6 +77,7 @@ pub async fn serve_on(
   if let Some(why) = app.unready() {
     eprintln!("bmo-theater: {why}");
   }
+  tokio::spawn(scan::read_poster_sizes(std::sync::Arc::clone(&app)));
   let stopping = std::sync::Arc::clone(&app);
   axum::serve(listener, api::router(app))
     .with_graceful_shutdown(async move {

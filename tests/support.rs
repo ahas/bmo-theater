@@ -140,8 +140,29 @@ pub struct Service {
   pub folder: PathBuf,
   pub pool: PgPool,
   database: String,
+  settings: Settings,
   stop: Option<oneshot::Sender<()>>,
   ended: Option<std::thread::JoinHandle<Result<(), String>>>,
+}
+
+/// The service run over `settings` on a listener of its own: its address, what stops it, and its thread.
+fn run(settings: Settings) -> (String, oneshot::Sender<()>, std::thread::JoinHandle<Result<(), String>>) {
+  let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+  listener.set_nonblocking(true).unwrap();
+  let address = format!("http://{}", listener.local_addr().unwrap());
+  let (stop, stopped) = oneshot::channel();
+  // The service runs on a runtime of its own, as its binary does, so its future need not be sent between threads.
+  let ended = std::thread::spawn(move || {
+    let runtime = tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap();
+    runtime.block_on(async move {
+      let listener = tokio::net::TcpListener::from_std(listener).unwrap();
+      bmo_theater::serve_on(settings, listener, async move {
+        let _ = stopped.await;
+      })
+      .await
+    })
+  });
+  (address, stop, ended)
 }
 
 impl Service {
@@ -181,46 +202,59 @@ impl Service {
     settings.files.root = folder.join("root");
     settings.share.address = "https://console.test/theater/share".into();
     tune(&mut settings);
-    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    listener.set_nonblocking(true).unwrap();
-    let address = format!("http://{}", listener.local_addr().unwrap());
-    let (stop, stopped) = oneshot::channel();
-    // The service runs on a runtime of its own, as its binary does, so its future need not be sent between threads.
-    let ended = std::thread::spawn(move || {
-      let runtime = tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap();
-      runtime.block_on(async move {
-        let listener = tokio::net::TcpListener::from_std(listener).unwrap();
-        bmo_theater::serve_on(settings, listener, async move {
-          let _ = stopped.await;
-        })
-        .await
-      })
-    });
+    let (address, stop, ended) = run(settings.clone());
     let pool = PgPool::connect(&address_of(&database)).await.unwrap();
     let service = Self {
       address,
       folder,
       pool,
       database,
+      settings,
       stop: Some(stop),
       ended: Some(ended),
     };
+    service.ready().await;
+    service
+  }
+
+  /// Waits until the service answers ready.
+  async fn ready(&self) {
     for _ in 0..500 {
-      if service.ended.as_ref().is_some_and(|ended| ended.is_finished()) {
+      if self.ended.as_ref().is_some_and(|ended| ended.is_finished()) {
         panic!("the service ended as it started");
       }
       if let Ok(response) = reqwest::Client::new()
-        .get(format!("{}/health", service.address))
+        .get(format!("{}/health", self.address))
         .bearer_auth(TOKEN)
         .send()
         .await
         && response.json::<Value>().await.is_ok_and(|health| health["ready"] == true)
       {
-        return service;
+        return;
       }
       tokio::time::sleep(Duration::from_millis(20)).await;
     }
     panic!("the service never answered ready");
+  }
+
+  /// The service stopped and started again over the same database and file root, as a restart does.
+  pub async fn restart(&mut self) {
+    self.halt().await;
+    let (address, stop, ended) = run(self.settings.clone());
+    self.address = address;
+    self.stop = Some(stop);
+    self.ended = Some(ended);
+    self.ready().await;
+  }
+
+  /// The service's process stopped, its database and folder kept.
+  async fn halt(&mut self) {
+    if let Some(stop) = self.stop.take() {
+      let _ = stop.send(());
+    }
+    if let Some(ended) = self.ended.take() {
+      tokio::task::spawn_blocking(move || ended.join()).await.unwrap().unwrap().unwrap();
+    }
   }
 
   pub async fn start() -> Self {
@@ -229,12 +263,7 @@ impl Service {
 
   /// Stops the service, and drops its database.
   pub async fn stop(mut self) {
-    if let Some(stop) = self.stop.take() {
-      let _ = stop.send(());
-    }
-    if let Some(ended) = self.ended.take() {
-      tokio::task::spawn_blocking(move || ended.join()).await.unwrap().unwrap().unwrap();
-    }
+    self.halt().await;
     self.pool.close().await;
     let mut admin = admin().await;
     let _ = admin

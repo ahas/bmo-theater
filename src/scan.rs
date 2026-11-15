@@ -265,7 +265,7 @@ async fn library_standing(app: &App, library: i64) -> Result<Standing, ApiError>
 }
 
 /// What ffprobe reads of a file, and the poster it is given; a failure leaves the fields empty.
-pub async fn read_file(app: &App, episode: i64, path: &Path) -> (media::Probe, bool) {
+pub async fn read_file(app: &App, episode: i64, path: &Path) -> (media::Probe, Option<media::Poster>) {
   let probe = match media::probe(&app.settings.media, path).await {
     Ok(probe) => probe,
     Err(why) => {
@@ -273,8 +273,11 @@ pub async fn read_file(app: &App, episode: i64, path: &Path) -> (media::Probe, b
       media::Probe::default()
     }
   };
-  let poster = probe.has_video()
-    && media::poster(&app.settings.media, path, probe.duration_ms, &app.poster_path(episode)).await;
+  let poster = if probe.has_video() {
+    media::poster(&app.settings.media, path, probe.duration_ms, &app.poster_path(episode)).await
+  } else {
+    None
+  };
   (probe, poster)
 }
 
@@ -283,11 +286,12 @@ pub async fn write_read(
   app: &App,
   episode: i64,
   probe: &media::Probe,
-  poster: bool,
+  poster: Option<media::Poster>,
 ) -> Result<(), sqlx::Error> {
+  let size = poster.unwrap_or_default();
   sqlx::query(
     "UPDATE episodes SET duration_ms = $2, width = $3, height = $4, video_codec = $5, audio_codec = $6, \
-     has_poster = $7, changed_at = $8 WHERE id = $1",
+     has_poster = $7, poster_width = $8, poster_height = $9, changed_at = $10 WHERE id = $1",
   )
   .bind(episode)
   .bind(probe.duration_ms)
@@ -295,11 +299,49 @@ pub async fn write_read(
   .bind(probe.height)
   .bind(&probe.video_codec)
   .bind(&probe.audio_codec)
-  .bind(poster)
+  .bind(poster.is_some())
+  .bind(size.width)
+  .bind(size.height)
   .bind(now_ms())
   .execute(&app.pool)
   .await?;
   Ok(())
+}
+
+/// The size of every poster kept before its size was read, read with ffprobe one at a time; a poster that does
+/// not read is noted and passed over (`docs/design.md`, 「Libraries and scans」).
+pub async fn read_poster_sizes(app: Arc<App>) {
+  let unread: Vec<i64> = match sqlx::query_scalar(
+    "SELECT id FROM episodes WHERE has_poster AND (poster_width IS NULL OR poster_height IS NULL) ORDER BY id",
+  )
+  .fetch_all(&app.pool)
+  .await
+  {
+    Ok(unread) => unread,
+    Err(why) => {
+      eprintln!("bmo-theater: the posters of unread size could not be listed: {why}");
+      return;
+    }
+  };
+  for episode in unread {
+    let (width, height) = match media::poster_size(&app.settings.media, &app.poster_path(episode)).await {
+      Ok(size) => size,
+      Err(why) => {
+        eprintln!("bmo-theater: {why}");
+        continue;
+      }
+    };
+    let written =
+      sqlx::query("UPDATE episodes SET poster_width = $2, poster_height = $3 WHERE id = $1 AND has_poster")
+        .bind(episode)
+        .bind(width)
+        .bind(height)
+        .execute(&app.pool)
+        .await;
+    if let Err(why) = written {
+      eprintln!("bmo-theater: the poster size of episode {episode} could not be kept: {why}");
+    }
+  }
 }
 
 async fn publish_episode(app: &App, kind: &str, episode: i64) {

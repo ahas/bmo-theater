@@ -104,11 +104,17 @@ pub async fn scan(pool: &PgPool, id: i64) -> Read<Option<Scan>> {
 // ---------------------------------------------------------------------------------------------------------
 // Titles
 
-/// What a title is read with; every read adds its own condition after `WHERE NOT t.retired`.
+/// What a title is read with; every read adds its own condition after `WHERE NOT t.retired`. Its poster's size is
+/// that of its first episode with a poster, in the order of its episodes.
 pub const TITLE: &str = "SELECT t.*, \
   (SELECT COUNT(*) FROM episodes e WHERE e.title_id = t.id) AS episode_count, \
-  EXISTS (SELECT 1 FROM episodes e WHERE e.title_id = t.id AND e.has_poster) AS has_poster \
-  FROM titles t WHERE NOT t.retired";
+  EXISTS (SELECT 1 FROM episodes e WHERE e.title_id = t.id AND e.has_poster) AS has_poster, \
+  GREATEST(t.created_at, (SELECT MAX(e.created_at) FROM episodes e WHERE e.title_id = t.id)) AS added_at, \
+  poster.poster_width, poster.poster_height \
+  FROM titles t LEFT JOIN LATERAL (SELECT e.poster_width, e.poster_height FROM episodes e \
+    WHERE e.title_id = t.id AND e.has_poster \
+    ORDER BY (e.number IS NULL), e.season NULLS LAST, e.number, e.name, e.id LIMIT 1) poster ON TRUE \
+  WHERE NOT t.retired";
 
 pub fn title_of(row: &PgRow) -> Read<(Title, Standing)> {
   let kind: String = row.try_get("kind")?;
@@ -127,6 +133,9 @@ pub fn title_of(row: &PgRow) -> Read<(Title, Standing)> {
       creator: row.try_get("creator")?,
       created_at: row.try_get("created_at")?,
       changed_at: row.try_get("changed_at")?,
+      added_at: row.try_get("added_at")?,
+      poster_width: row.try_get("poster_width")?,
+      poster_height: row.try_get("poster_height")?,
     },
     standing(row, "creator")?,
   ))
@@ -149,7 +158,8 @@ pub async fn title(pool: &PgPool, id: i64) -> Read<Option<(Title, Standing)>> {
 /// condition after `WHERE TRUE`.
 pub const EPISODE: &str = "SELECT e.*, t.realm, t.owner, t.creator AS title_creator, \
   (SELECT COUNT(*) FROM subtitles s WHERE s.episode_id = e.id) AS subtitle_count, \
-  p.seconds AS position_seconds, p.done AS position_done, p.updated_at AS position_updated_at \
+  p.seconds AS position_seconds, p.done AS position_done, p.updated_at AS position_updated_at, \
+  p.set_aside AS position_set_aside \
   FROM episodes e JOIN titles t ON t.id = e.title_id AND NOT t.retired \
   LEFT JOIN positions p ON p.episode_id = e.id AND p.account = ";
 
@@ -175,6 +185,7 @@ pub fn episode_of(row: &PgRow) -> Read<Stored> {
       seconds,
       done: row.try_get::<Option<bool>, _>("position_done")?.unwrap_or_default(),
       updated_at: row.try_get::<Option<i64>, _>("position_updated_at")?.unwrap_or_default(),
+      set_aside: row.try_get::<Option<bool>, _>("position_set_aside")?.unwrap_or_default(),
     }),
     None => None,
   };
@@ -207,6 +218,8 @@ pub fn episode_of(row: &PgRow) -> Read<Stored> {
       }),
       position,
       granted: false,
+      poster_width: row.try_get("poster_width")?,
+      poster_height: row.try_get("poster_height")?,
       creator: row.try_get("creator")?,
       created_at: row.try_get("created_at")?,
       changed_at: row.try_get("changed_at")?,
@@ -406,6 +419,7 @@ pub async fn position(pool: &PgPool, account: &str, episode: i64) -> Read<Option
         seconds: row.try_get("seconds")?,
         done: row.try_get("done")?,
         updated_at: row.try_get("updated_at")?,
+        set_aside: row.try_get("set_aside")?,
       })
     })
     .transpose()

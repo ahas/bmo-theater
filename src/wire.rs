@@ -287,6 +287,28 @@ pub struct Title {
   pub creator: String,
   pub created_at: i64,
   pub changed_at: i64,
+  /// The latest of its own `createdAt` and every episode's under it.
+  pub added_at: i64,
+  /// The pixel width of the poster the title answers, or null where it has none or its size is not read yet.
+  pub poster_width: Option<i32>,
+  /// The pixel height of the poster the title answers, or null where it has none or its size is not read yet.
+  pub poster_height: Option<i32>,
+}
+
+/// The order a list of titles stands in (`docs/api.md`, 「Titles」).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum TitleOrder {
+  /// By id, oldest first.
+  #[default]
+  Id,
+  /// By `addedAt`, the latest first.
+  Added,
+  /// By name with its letter case folded, in the order of its characters' code points.
+  Name,
+  /// By the caller's last position set in one of its episodes, the latest first; the titles never watched
+  /// after, as `added`.
+  Watched,
 }
 
 /// A title to make.
@@ -359,6 +381,10 @@ pub struct Episode {
   pub position: Option<Position>,
   /// Whether the caller reads it by a grant alone (`docs/design.md`, 「Grants」).
   pub granted: bool,
+  /// Its poster frame's pixel width, or null where it has none or its size is not read yet.
+  pub poster_width: Option<i32>,
+  /// Its poster frame's pixel height, or null where it has none or its size is not read yet.
+  pub poster_height: Option<i32>,
   pub creator: String,
   pub created_at: i64,
   pub changed_at: i64,
@@ -408,6 +434,8 @@ pub struct Position {
   pub seconds: f64,
   pub done: bool,
   pub updated_at: i64,
+  /// Whether the viewer set it aside from continue watching; setting the position takes it back.
+  pub set_aside: bool,
 }
 
 /// A position to set.
@@ -441,6 +469,11 @@ pub struct Progress {
   pub next: Option<i64>,
   /// The seconds to start it from.
   pub next_seconds: f64,
+  /// The episode to go on with along the main line (`docs/design.md`, 「Playing」), or null; a playlist's is its
+  /// `next`.
+  pub up_next: Option<i64>,
+  /// The seconds to start it from.
+  pub up_next_seconds: f64,
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -680,6 +713,10 @@ pub struct TitlesQuery {
   /// A part of the name, in any letter case.
   #[serde(default)]
   pub q: Option<String>,
+  /// The order; `id` where none.
+  #[serde(default)]
+  pub order: Option<TitleOrder>,
+  /// The id of the title the page goes on after, in the order.
   #[serde(default)]
   pub after: Option<i64>,
   #[serde(default)]

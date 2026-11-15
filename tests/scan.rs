@@ -1,5 +1,6 @@
 //! A library read into titles: the plan its names make, and a scan of a folder of tiny videos made with ffmpeg,
-//! read again after a file goes and another comes, streamed with ranges, given subtitles and burned.
+//! read again after a file goes and another comes, streamed with ranges, given subtitles and burned; and the size
+//! of each poster read as it is taken, and as the service starts for one kept before.
 
 use reqwest::Method;
 use serde_json::{Value, json};
@@ -106,6 +107,7 @@ async fn a_library_is_scanned_streamed_rescanned_and_burned() {
   let show = titles.iter().find(|title| title["kind"] == "show").unwrap();
   assert_eq!((show["name"].as_str(), show["episodeCount"].as_i64()), (Some("Show"), Some(2)));
   assert_eq!(show["hasPoster"], true);
+  assert_eq!((show["posterWidth"].as_i64(), show["posterHeight"].as_i64()), (Some(640), Some(480)));
   let show_id = show["id"].as_i64().unwrap();
   let (_, episodes) = service.member("3", Method::GET, &format!("/titles/{show_id}/episodes"), None).await;
   let first = episodes["items"][0].clone();
@@ -116,6 +118,7 @@ async fn a_library_is_scanned_streamed_rescanned_and_burned() {
     (Some("h264"), Some("aac"))
   );
   assert_eq!((first["width"].as_i64(), first["height"].as_i64()), (Some(160), Some(120)));
+  assert_eq!((first["posterWidth"].as_i64(), first["posterHeight"].as_i64()), (Some(640), Some(480)));
   let duration = first["durationMs"].as_i64().unwrap();
   assert!((900..=1200).contains(&duration), "{duration}");
   let episode = first["id"].as_i64().unwrap();
@@ -311,6 +314,63 @@ async fn a_video_is_filed_by_upload_and_by_path() {
   let (status, _) = service.member("2", Method::DELETE, &format!("/episodes/{id}"), None).await;
   assert_eq!(status, 204);
   assert!(!service.folder.join(format!("root/episodes/{id}")).exists());
+  service.stop().await;
+  let _ = std::fs::remove_dir_all(folder);
+}
+
+#[tokio::test]
+async fn a_posters_size_is_read_as_it_is_taken_and_as_the_service_starts() {
+  if !ffmpeg_here() {
+    eprintln!("skipped: ffmpeg or ffprobe is not installed, so no test video can be made or read");
+    return;
+  }
+  let folder = scratch();
+  let video = folder.join("made.mp4");
+  make_video(&video);
+  let mut service = Service::start().await;
+  // A poster that does not read stands first, and is passed over.
+  let unread = service.seed_title("organization", "", "Unread").await;
+  let broken = service.seed_episode(unread, 1, 60_000, 10).await;
+  sqlx::query("UPDATE episodes SET has_poster = TRUE WHERE id = $1")
+    .bind(broken)
+    .execute(&service.pool)
+    .await
+    .unwrap();
+  let (_, title) = service
+    .member("2", Method::POST, "/titles", Some(json!({ "realm": "mine", "name": "Reports" })))
+    .await;
+  let title = title["id"].as_i64().unwrap();
+  let headers = [("Owner-Key", "2")];
+  let (status, filed) = service
+    .ask(
+      Method::POST,
+      &format!("/titles/{title}/episodes"),
+      Some(crate::support::TOKEN),
+      &headers,
+      Some(json!({ "path": video.to_string_lossy() })),
+    )
+    .await;
+  assert_eq!(status, 201, "{filed}");
+  assert_eq!((filed["posterWidth"].as_i64(), filed["posterHeight"].as_i64()), (Some(640), Some(480)));
+  let id = filed["id"].as_i64().unwrap();
+  let (_, read) = service.member("2", Method::GET, &format!("/titles/{title}"), None).await;
+  assert_eq!((read["posterWidth"].as_i64(), read["posterHeight"].as_i64()), (Some(640), Some(480)));
+
+  sqlx::query("UPDATE episodes SET poster_width = NULL, poster_height = NULL")
+    .execute(&service.pool)
+    .await
+    .unwrap();
+  let (_, forgotten) = service.member("2", Method::GET, &format!("/episodes/{id}"), None).await;
+  assert_eq!(forgotten["posterWidth"], Value::Null);
+  service.restart().await;
+  service
+    .until(async |service| {
+      let (_, episode) = service.member("2", Method::GET, &format!("/episodes/{id}"), None).await;
+      episode["posterWidth"].as_i64() == Some(640) && episode["posterHeight"].as_i64() == Some(480)
+    })
+    .await;
+  let (_, broken) = service.service(Method::GET, &format!("/episodes/{broken}"), None).await;
+  assert_eq!((broken["hasPoster"].as_bool(), broken["posterWidth"].as_i64()), (Some(true), None));
   service.stop().await;
   let _ = std::fs::remove_dir_all(folder);
 }

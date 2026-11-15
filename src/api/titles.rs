@@ -11,11 +11,12 @@ use super::{Answer, Shared, body, bounds, created, id_of, no_content, one_line, 
 use crate::app::{App, remove_file, remove_folder};
 use crate::caller::{Caller, Standing, caller};
 use crate::error::ApiError;
-use crate::progress::progress as progress_of;
+use crate::progress::{on_main_line, title_progress};
 use crate::range;
 use crate::store::{self, TITLE, title_of};
 use crate::wire::{
-  Deleted, Episode, NewTitle, Page, Progress, Title, TitleChange, TitleKind, TitlesQuery, now_ms,
+  Deleted, Episode, NewTitle, Page, Progress, Title, TitleChange, TitleKind, TitleOrder, TitlesQuery,
+  now_ms,
 };
 
 pub async fn list(
@@ -26,7 +27,14 @@ pub async fn list(
   let given = query(given)?;
   let caller = caller(&app.settings, &headers)?;
   let (after, limit) = bounds(given.after, given.limit)?;
-  let mut select = QueryBuilder::<Postgres>::new(format!("{TITLE} AND "));
+  let order = match (given.order.unwrap_or_default(), &caller.account) {
+    (TitleOrder::Watched, None) => TitleOrder::Added,
+    (order, _) => order,
+  };
+  let mut select = QueryBuilder::<Postgres>::new(match order {
+    TitleOrder::Id => format!("{TITLE} AND "),
+    _ => format!("WITH listed AS ({TITLE} AND "),
+  });
   caller.push_visible(&mut select, "t", given.realm)?;
   if let Some(kind) = given.kind {
     select.push(" AND t.kind = ").push_bind(kind.word());
@@ -38,14 +46,76 @@ pub async fn list(
     let escaped = part.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_");
     select.push(" AND t.name ILIKE ").push_bind(format!("%{escaped}%"));
   }
-  select
-    .push(" AND t.id > ")
-    .push_bind(after)
-    .push(" ORDER BY t.id LIMIT ")
-    .push_bind(limit + 1);
+  if order == TitleOrder::Id {
+    select
+      .push(" AND t.id > ")
+      .push_bind(after)
+      .push(" ORDER BY t.id LIMIT ")
+      .push_bind(limit + 1);
+  } else {
+    ordered(&mut select, order, caller.account.as_deref(), given.after, limit);
+  }
   let rows = select.build().fetch_all(&app.pool).await?;
   let items = rows.iter().map(|row| title_of(row).map(|(title, _)| title)).collect::<Result<_, _>>()?;
   Ok(Json(paged(items, limit)))
+}
+
+/// The rest of a list in an order other than by id, `select` holding the titles listed as `listed` so far: each
+/// is given the key it is ordered by, and a page goes on after the key of the title `after` names, read from the
+/// same titles; an `after` they do not hold ends the list (`docs/api.md`, 「Titles」).
+fn ordered(
+  select: &mut QueryBuilder<'_, Postgres>,
+  order: TitleOrder,
+  account: Option<&str>,
+  after: Option<i64>,
+  limit: i64,
+) {
+  select.push("), keyed AS (SELECT l.*, ");
+  match order {
+    TitleOrder::Name => {
+      // A name's bytes in UTF-8 stand in the order of its characters' code points.
+      select.push("convert_to(lower(l.name), 'UTF8') AS order_key");
+    }
+    TitleOrder::Watched => {
+      // A title never watched keys below every moment, so it follows, by `addedAt`.
+      select
+        .push(
+          "COALESCE((SELECT MAX(p.updated_at) FROM positions p JOIN episodes e ON e.id = p.episode_id \
+           WHERE e.title_id = l.id AND p.account = ",
+        )
+        .push_bind(account.unwrap_or_default().to_owned())
+        .push("), -1) AS order_key");
+    }
+    TitleOrder::Id | TitleOrder::Added => {
+      select.push("l.added_at AS order_key");
+    }
+  }
+  select.push(" FROM listed l) SELECT * FROM keyed k");
+  let (columns, direction, compared): (&[&str], _, _) = match order {
+    TitleOrder::Name => (&["order_key", "id"], "ASC", ">"),
+    TitleOrder::Watched => (&["order_key", "added_at", "id"], "DESC", "<"),
+    TitleOrder::Id | TitleOrder::Added => (&["order_key", "id"], "DESC", "<"),
+  };
+  let of = |alias: &str, suffix: &str| {
+    columns
+      .iter()
+      .map(|column| format!("{alias}.{column}{suffix}"))
+      .collect::<Vec<_>>()
+      .join(", ")
+  };
+  if let Some(after) = after {
+    select
+      .push(format!(
+        " WHERE ({}) {compared} (SELECT {} FROM keyed a WHERE a.id = ",
+        of("k", ""),
+        of("a", "")
+      ))
+      .push_bind(after)
+      .push(")");
+  }
+  select
+    .push(format!(" ORDER BY {} LIMIT ", of("k", &format!(" {direction}"))))
+    .push_bind(limit + 1);
 }
 
 /// A title the caller reads, with where it stands.
@@ -222,10 +292,14 @@ pub async fn progress(
   let caller = caller(&app.settings, &headers)?;
   let account = caller.account()?.to_owned();
   let (title, _) = readable(&app, &caller, &id).await?;
-  let items = store::title_episodes(&app.pool, title.id, Some(&account)).await?;
-  let items: Vec<_> = items
+  let stored = store::title_episodes(&app.pool, title.id, Some(&account)).await?;
+  let main: Vec<bool> = stored
+    .iter()
+    .map(|stored| on_main_line(title.kind, stored.episode.season, stored.episode.number))
+    .collect();
+  let items: Vec<_> = stored
     .into_iter()
     .map(|stored| (stored.episode.id, stored.episode.duration_ms, stored.episode.position))
     .collect();
-  Ok(Json(progress_of(&items)))
+  Ok(Json(title_progress(&items, &main)))
 }

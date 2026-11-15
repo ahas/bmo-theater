@@ -9,6 +9,7 @@ mod shares;
 mod subtitles;
 mod titles;
 mod uploads;
+mod watching;
 
 use std::convert::Infallible;
 use std::sync::Arc;
@@ -21,7 +22,7 @@ use axum::extract::{DefaultBodyLimit, Query, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::sse::{Event as Sent, KeepAlive, Sse};
 use axum::response::{IntoResponse, Json, Response};
-use axum::routing::{get, post, put};
+use axum::routing::{delete, get, post, put};
 use futures_util::{StreamExt, stream};
 use serde::de::DeserializeOwned;
 
@@ -84,6 +85,9 @@ fn screens() -> Router<Arc<App>> {
     .route("/episodes/{episodeId}/stream", get(episodes::stream))
     .route("/episodes/{episodeId}/poster", get(episodes::poster))
     .route("/episodes/{episodeId}/position", get(episodes::position).put(episodes::set_position))
+    .route("/watching", get(watching::list))
+    .route("/watching/{episodeId}", delete(watching::set_aside))
+    .route("/next-up", get(watching::next_up))
     .route(
       "/episodes/{episodeId}/subtitles",
       get(subtitles::list).post(subtitles::add).layer(DefaultBodyLimit::disable()),
