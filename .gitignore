@@ -5,5 +5,4 @@
 /client/.nuxt
 /client/.output
 /client/dist
-.graph/*
-!.graph/settings.toml
+.graph/
