@@ -14,9 +14,10 @@ share links. `docs/design.md` states what it is; `docs/api.md` is the boundary c
 - **Two realms, never one:** a title and a playlist stand in `mine` (an account's) or `organization`; a
   watch position is always the viewer's own.
 - **No clock bound on any request.** A scan, a burn or a stream ends when it is done.
-- **Tests live in `tests/`,** one harness `tests/main.rs`; checks: `cargo check --workspace --all-targets`,
-  `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test` through
-  the testbed; the client's `bun run check`.
+- **Tests live in `tests/`,** one harness `tests/main.rs`. The checks are the testbed's, through `bmo check`:
+  `cargo check` on the crates a change marks, and its Cargo workspace check, `cargo fmt --check` and
+  `cargo clippy --all-targets` with every warning an error; `cargo test` through the testbed; the client's
+  `bun run check`.
 - **English only** in code, documents, tests and commits; Korean in the bundle's `ko` words alone.
 - **No personal data, no names of agents, owners or hosts** in code, documents or commits; a path that
   differs by installation is a setting.
