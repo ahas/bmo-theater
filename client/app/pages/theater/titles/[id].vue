@@ -78,7 +78,7 @@
         <template v-else-if="listed">
           <section v-if="shown" :aria-label="shown.name($t)" class="pt-4">
             <div class="flex h-11 items-center px-4">
-              <USelect
+              <ChoiceSelect
                 v-if="sections.chosen.length > 1"
                 v-model="sectionKey"
                 :items="sectionItems"
@@ -119,6 +119,7 @@ import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
 import ArtworkFrame from "bmo-ui/app/components/ArtworkFrame.vue";
+import ChoiceSelect from "bmo-ui/app/components/ChoiceSelect.vue";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
 import CreateButton from "bmo-ui/app/components/CreateButton.vue";
 import IconButton from "bmo-ui/app/components/IconButton.vue";
@@ -149,7 +150,7 @@ import { theaterAddress, useTheater } from "../../../composables/useTheater";
 import { useKeptScroll } from "../../../composables/useKeptScroll";
 import { useTheaterEvents } from "../../../composables/useTheaterEvents";
 
-import type { DropdownMenuItem, SelectItem } from "@nuxt/ui";
+import type { DropdownMenuItem, SelectMenuItem } from "@nuxt/ui";
 import type { Ref } from "vue";
 import type { BarAction } from "bmo-ui/app/domain/tabs";
 import type { Episode } from "../../../../shared/types";
@@ -226,7 +227,7 @@ const sectionKey = computed<string>({
   set: (value) => void navigateTo({ path: route.path, query: { ...route.query, season: value } })
 });
 const shown = computed(() => sections.value.chosen.find((one) => one.key === sectionKey.value) ?? sections.value.chosen[0] ?? null);
-const sectionItems = computed<SelectItem[]>(() => sections.value.chosen.map((one) => ({ label: one.name(t), value: one.key })));
+const sectionItems = computed<SelectMenuItem[]>(() => sections.value.chosen.map((one) => ({ label: one.name(t), value: one.key })));
 
 // What acts on the title as a whole beside the band's actions: reading it again, and, for a title of one episode,
 // that episode's subtitles and, for a clip, deleting it.

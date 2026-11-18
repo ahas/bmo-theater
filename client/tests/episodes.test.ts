@@ -2,14 +2,14 @@ import { describe, expect, test } from "bun:test";
 
 import { episodeLabel, episodeName, percent, titleName, watchedWords } from "../app/domain/a11y";
 import { episodeCode, episodeTitle, factsOf, followingOf, lengthClock, minutesLeft, placeAfter, placeOf, sectionOf, sectionsOf, watchedEpisode, watchedOf } from "../app/domain/episodes";
-import { fileForm, nameOk, sentText } from "../app/domain/forms";
+import { NEW_PLAYLIST, fileForm, nameOk, playlistChoices, playlistRealms, sentText } from "../app/domain/forms";
 import { itemKeys, moved, removedAt } from "../app/domain/order";
-import { episode, title } from "./stand-in";
+import { episode, playlist, title } from "./stand-in";
 import { translator } from "./words";
 
 // How the screens read a title's episodes and a playlist's order: an episode's code, its seasons, how far the
-// viewer has come, what comes after an episode, an order moved and cut, and what a reader who does not see
-// the screen is told of each.
+// viewer has come, what comes after an episode, an order moved and cut, the playlists an episode may go into, and
+// what a reader who does not see the screen is told of each.
 
 const t = translator("en");
 
@@ -158,5 +158,43 @@ describe("the forms", () => {
     expect(nameOk("  ")).toBe(false);
     expect(nameOk("a\nb")).toBe(false);
     expect(sentText(12_300_000, 450_000_000, "en-US")).toBe("12.3/450.0 MB 2%");
+  });
+
+  // The playlists the reader holds in each realm.
+  const held = {
+    mine: [playlist(1, "mine", "Weekend", []), playlist(2, "mine", "Harbour cuts", [])],
+    organization: [playlist(3, "organization", "Onboarding", [])]
+  };
+
+  test("an episode of the reader's own goes into a new playlist or one of theirs, offered with no realm named", () => {
+    expect(playlistChoices(t, playlistRealms("mine"), held)).toEqual([
+      [{ label: "New playlist", value: NEW_PLAYLIST }],
+      [
+        { label: "Weekend", value: "1" },
+        { label: "Harbour cuts", value: "2" }
+      ]
+    ]);
+  });
+
+  test("an organization episode goes into a playlist of either realm, each realm's group named, an empty realm left out", () => {
+    expect(playlistChoices(t, playlistRealms("organization"), held)).toEqual([
+      [{ label: "New playlist", value: NEW_PLAYLIST }],
+      [
+        { type: "label", label: t("theater.label.mine") },
+        { label: "Weekend", value: "1" },
+        { label: "Harbour cuts", value: "2" }
+      ],
+      [
+        { type: "label", label: t("theater.label.organization") },
+        { label: "Onboarding", value: "3" }
+      ]
+    ]);
+    expect(playlistChoices(t, playlistRealms("organization"), { ...held, mine: [] })).toEqual([
+      [{ label: "New playlist", value: NEW_PLAYLIST }],
+      [
+        { type: "label", label: t("theater.label.organization") },
+        { label: "Onboarding", value: "3" }
+      ]
+    ]);
   });
 });

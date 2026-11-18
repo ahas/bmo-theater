@@ -11,7 +11,7 @@
         <span class="truncate text-highlighted">{{ heading }}</span>
       </div>
       <div data-slot="order">
-        <USelect v-model="order" :items="orderItems" value-key="value" variant="ghost" size="sm" :aria-label="$t('theater.label.order')" />
+        <ChoiceSelect v-model="order" :items="orderItems" value-key="value" variant="ghost" size="sm" :aria-label="$t('theater.label.order')" />
       </div>
     </ToolBar>
 
@@ -42,6 +42,7 @@ import { computed, ref, useTemplateRef, watch } from "vue";
 import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
+import ChoiceSelect from "bmo-ui/app/components/ChoiceSelect.vue";
 import IconButton from "bmo-ui/app/components/IconButton.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
@@ -58,7 +59,7 @@ import { useRealm } from "../../composables/useRealm";
 import { theaterApi } from "../../composables/useTheater";
 import { useTheaterEvents } from "../../composables/useTheaterEvents";
 
-import type { SelectItem } from "@nuxt/ui";
+import type { SelectMenuItem } from "@nuxt/ui";
 import type { Title, TitleKind, TitleOrder } from "../../../shared/types";
 
 type Order = Exclude<TitleOrder, "id">;
@@ -91,7 +92,7 @@ const order = computed<Order>({
   get: () => ORDERS.find((one) => one.value === route.query.order)?.value ?? "added",
   set: (value) => void navigateTo({ path: route.path, query: { ...route.query, order: value === "added" ? undefined : value } })
 });
-const orderItems = computed<SelectItem[]>(() => ORDERS.map((one) => ({ value: one.value, label: t(one.words) })));
+const orderItems = computed<SelectMenuItem[]>(() => ORDERS.map((one) => ({ value: one.value, label: t(one.words) })));
 const heading = computed(() => (kind.value ? t(kindWord(kind.value)) : t("theater.label.recently_added")));
 const shown = computed(() => (read.value === null ? null : read.value.filter((title) => kind.value === null || title.kind === kind.value)));
 const shape = computed(() => (shown.value ? titlesShape(shown.value) : LANDSCAPE));

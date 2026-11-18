@@ -8,7 +8,7 @@
     </UFormField>
 
     <UFormField :label="$t('theater.label.realm')" name="realm">
-      <USelect :ui="{ base: 'pointer-coarse:min-h-11' }" v-model="realm" :items="realmItems" value-key="value" class="w-full" :disabled="busy" :aria-label="$t('theater.label.realm')" />
+      <ChoiceSelect :ui="{ base: 'pointer-coarse:min-h-11' }" v-model="realm" :items="realmItems" value-key="value" class="w-full" :disabled="busy" :aria-label="$t('theater.label.realm')" />
     </UFormField>
 
     <UFormField :label="$t('theater.label.name')" name="name" :hint="$t('theater.label.optional')">
@@ -27,13 +27,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import ChoiceSelect from "bmo-ui/app/components/ChoiceSelect.vue";
 import SettingsDialog from "bmo-ui/app/components/SettingsDialog.vue";
 
 import { refusalWord } from "../../domain/store";
 import { useDialogFocus } from "../../composables/useDialogFocus";
 import { useTheater } from "../../composables/useTheater";
 
-import type { SelectItem } from "@nuxt/ui";
+import type { SelectMenuItem } from "@nuxt/ui";
 import type { Realm } from "../../../shared/types";
 
 const open = defineModel<boolean>("open", { default: false });
@@ -47,7 +48,7 @@ const name = ref("");
 const failed = ref("");
 const busy = ref(false);
 
-const realmItems = computed<SelectItem[]>(() => [
+const realmItems = computed<SelectMenuItem[]>(() => [
   { label: t("theater.label.mine"), value: "mine" },
   { label: t("theater.label.organization"), value: "organization" }
 ]);

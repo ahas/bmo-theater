@@ -264,6 +264,15 @@ row, its tooltip naming what it makes and its key, n; on a phone it floats at th
 the screen's list keeps the layer's create room at its scrolling end, so its last item scrolls clear of it.
 Adding an episode to a playlist is an action on that episode, not a create button.
 
+A value chosen from a list is chosen in the layer's one select (bmo-ui `docs/components.md`, 「Choosing a
+value」), and in no other: a row's order, a show's season, the playlist an episode goes into, the title a video
+is filed under and the realm a library's titles stand in. The layer alone decides whether a list offers a
+search, by how many choices it holds, so a list of the reader's titles or playlists takes its search as it
+grows and no screen decides it. The words of its search and of an empty list are the layer's common words,
+which the console answers. The playlists an episode may go into stand in a group of their realm's, under a new
+playlist; the realm is named over its group only where an organization episode is offered both realms, and
+never repeated on each playlist.
+
 ## The tool
 
 The supervisor reaches the theater through the tool host: find titles, show a title or an episode, file a

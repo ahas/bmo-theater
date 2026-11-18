@@ -4,7 +4,7 @@
        (`docs/api.md`, 「Titles」, filing a video). -->
   <SettingsDialog v-model:open="open" :title="$t('theater.heading.upload')" :dirty="dirty">
     <UFormField v-if="props.titleId === null" :label="$t('theater.label.title')" name="title">
-      <USelect :ui="{ base: 'pointer-coarse:min-h-11' }" v-model="target" :items="targetItems" value-key="value" class="w-full" :disabled="sending" :aria-label="$t('theater.label.title')" />
+      <ChoiceSelect :ui="{ base: 'pointer-coarse:min-h-11' }" v-model="target" :items="targetItems" value-key="value" class="w-full" :disabled="sending" :aria-label="$t('theater.label.title')" />
     </UFormField>
 
     <UFormField v-if="props.titleId === null && target === NEW" :label="$t('theater.label.new_title_name')" name="titleName" required>
@@ -36,6 +36,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import ChoiceSelect from "bmo-ui/app/components/ChoiceSelect.vue";
 import SettingsDialog from "bmo-ui/app/components/SettingsDialog.vue";
 import { countLocale } from "bmo-ui/app/domain/numbers";
 
@@ -44,7 +45,7 @@ import { refusalWord } from "../../domain/store";
 import { useDialogFocus } from "../../composables/useDialogFocus";
 import { useTheater } from "../../composables/useTheater";
 
-import type { SelectItem } from "@nuxt/ui";
+import type { SelectMenuItem } from "@nuxt/ui";
 import type { Episode, Realm } from "../../../shared/types";
 
 interface Props {
@@ -73,7 +74,7 @@ const sent = ref(0);
 const total = ref(0);
 const sending = ref(false);
 
-const targetItems = computed<SelectItem[]>(() => [
+const targetItems = computed<SelectMenuItem[]>(() => [
   { label: t("theater.label.new_title"), value: NEW },
   ...fileTargets(titles.value[props.realm]).map((title) => ({ label: title.name, value: String(title.id) }))
 ]);

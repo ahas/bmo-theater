@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { chromium } from "playwright-core";
 
 import { POSTERS, made, ordered, progressOf } from "./fixtures";
+import { PACKS, word } from "../words";
 
 import type { Browser, BrowserContext, Page, Route } from "playwright-core";
 import type { Subprocess } from "bun";
@@ -16,7 +17,9 @@ import type { PosterName } from "./fixtures";
 // a real Chromium at a desktop's width and a phone's, in the light and the dark mode, over a realm shaped like the
 // libraries the theater serves (`fixtures.ts`): the library's rows, a row in full, a show's page on a season, on its
 // specials and on its extras, a clip's page, the player offering the next episode, the organization's empty realm,
-// and a playlist. The test answers the relay itself; the posters and the one video every episode streams are drawn
+// and a playlist; and the selects of a row's order, a show's seasons, the playlist an episode goes into and the
+// title a video is filed under, opened.
+// The test answers the relay itself; the posters and the one video every episode streams are drawn
 // with ffmpeg into the host's public folder under the client's packages. Where `THEATER_SHOTS` names a folder, each state is kept there as
 // `<width>-<scheme>-<state>.png`; where `THEATER_COMMON_WORDS` names a JSON file of the layer's `common` words, the
 // host shows them, and their keys otherwise. Skipped where the browser build or ffmpeg is not on the machine.
@@ -330,5 +333,76 @@ describe.skipIf(!ready)("the theater's screens", () => {
         TEST_MS
       );
     }
+  }
+});
+
+// A select's opened list, and the search field the layer stands at its top once it holds more than seven choices.
+const LIST = "[data-slot=focusScope]";
+const CHOICE = `${LIST} [role=option]`;
+const FIELD = `${LIST} input`;
+
+// A control the screen names by its words, pressed as the width's own pointer does: a finger on the phone, a
+// mouse on the desktop.
+async function press(page: Page, width: (typeof WIDTHS)[number], selector: string, key: string): Promise<void> {
+  const control = page.locator(`${selector}[aria-label="${word(PACKS.ko, key)!}"]`).first();
+
+  await (width.touch ? control.tap() : control.click());
+}
+
+// The select the screen names by its words opened: as many choices as the screen hands it, and the search field
+// standing only past seven of them.
+async function opened(page: Page, width: (typeof WIDTHS)[number], key: string, choices: number): Promise<void> {
+  await press(page, width, "[data-slot=base]", key);
+  await page.locator(CHOICE).first().waitFor({ timeout: 10_000 });
+  expect([key, await page.locator(CHOICE).count()]).toEqual([key, choices]);
+  expect([key, await page.locator(FIELD).count()]).toEqual([key, choices > 7 ? 1 : 0]);
+  // Opened all the way, so a picture of it is not taken mid-fade; what animates without end is not awaited.
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((one) => Number.isFinite(Number(one.effect?.getComputedTiming().endTime))).map((one) => one.finished.catch(() => undefined))));
+}
+
+async function closed(page: Page): Promise<void> {
+  await page.keyboard.press("Escape");
+  await page.locator(LIST).waitFor({ state: "detached", timeout: 10_000 });
+}
+
+describe.skipIf(!ready)("the theater's selects", () => {
+  for (const width of WIDTHS) {
+    test(
+      `offer their search by the layer's rule at ${width.name}`,
+      async () => {
+        const { context, page } = await open(width, "light");
+        const titles = made().titles.filter((one) => one.realm === "mine").length;
+
+        try {
+          // A row's three orders.
+          await settled(page, "/theater/browse", "ul li [data-artwork]");
+          await opened(page, width, "theater.label.order", 3);
+          await shoot(page, width, "light", "select-order");
+          await closed(page);
+
+          // The long show's six seasons and its specials: seven, the most a list holds with no search.
+          await settled(page, "/theater/titles/1", "section ul li");
+          await opened(page, width, "theater.label.season", 7);
+          await shoot(page, width, "light", "select-season");
+          await closed(page);
+
+          // The playlist an episode goes into, its dialog made as it opens: a new one and each of the realm's.
+          await press(page, width, "button", "theater.action.add_to_playlist");
+          await opened(page, width, "theater.label.playlist", made().playlists.filter((one) => one.realm === "mine").length + 1);
+          await shoot(page, width, "light", "select-playlist");
+          await closed(page);
+
+          // The title a video is filed under: a new one and each of the realm's.
+          await settled(page, "/theater", "[data-card-row]");
+          await press(page, width, "button", "theater.action.upload_video");
+          await opened(page, width, "theater.label.title", titles + 1);
+          await shoot(page, width, "light", "select-title");
+          await closed(page);
+        } finally {
+          await context.close();
+        }
+      },
+      TEST_MS
+    );
   }
 });

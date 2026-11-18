@@ -144,7 +144,7 @@ describe("the bars", () => {
 
     expect(toolbars.length).toBeGreaterThan(0);
     for (const { path, toolbar } of toolbars) {
-      const controls = within(toolbar.children).filter((element) => element.tag === "UButton" || element.tag === "USelect");
+      const controls = within(toolbar.children).filter((element) => element.tag === "UButton" || element.tag === "ChoiceSelect");
       const back = controls.filter((control) => control.attributes.get("icon") === "i-material-symbols-arrow-back");
 
       expect([path, toolbar.attributes.has("class")]).toEqual([path, false]);
@@ -154,5 +154,17 @@ describe("the bars", () => {
         expect([path, control.tag, /(?:^|\s)(?:[\w:-]*:)?(?:h-|size-|p-0)/.test(control.attributes.get("class") ?? "")]).toEqual([path, control.tag, false]);
       }
     }
+  });
+});
+
+describe("the selects", () => {
+  // The component library's own selects, which offer a search by no rule of the layer's.
+  const BARE = new Set(["USelect", "USelectMenu", "UInputMenu"]);
+
+  test("a value is chosen from a list in the layer's one select, never in the library's bare", () => {
+    const chosen = templates.filter(({ elements }) => elements.some((element) => element.tag === "ChoiceSelect"));
+
+    expect(chosen.length).toBeGreaterThan(0);
+    for (const { path, elements } of templates) expect([path, elements.filter((element) => BARE.has(element.tag)).map((element) => element.tag)]).toEqual([path, []]);
   });
 });
