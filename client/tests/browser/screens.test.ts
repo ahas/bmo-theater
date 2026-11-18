@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -10,7 +9,7 @@ import { POSTERS, made, ordered, progressOf } from "./fixtures";
 import { PACKS, word } from "../words";
 
 import type { Browser, BrowserContext, Page, Route } from "playwright-core";
-import type { Subprocess } from "bun";
+import type { Server } from "bun";
 import type { PosterName } from "./fixtures";
 
 // The theater's screens (`docs/design.md`, 「The console」) stood up in a Nuxt host of their own (`host/`) and driven by
@@ -19,18 +18,22 @@ import type { PosterName } from "./fixtures";
 // specials and on its extras, a clip's page, the player offering the next episode, the organization's empty realm,
 // and a playlist; and the selects of a row's order, a show's seasons, the playlist an episode goes into and the
 // title a video is filed under, opened.
+// The host is generated once before the tests and served from its files, so no page waits on a development server
+// compiling it, and a file is answered by the range the player asks for, so the video seeks near its end.
 // The test answers the relay itself; the posters and the one video every episode streams are drawn
 // with ffmpeg into the host's public folder under the client's packages. Where `THEATER_SHOTS` names a folder, each state is kept there as
 // `<width>-<scheme>-<state>.png`; where `THEATER_COMMON_WORDS` names a JSON file of the layer's `common` words, the
 // host shows them, and their keys otherwise. Skipped where the browser build or ffmpeg is not on the machine.
 
-const HOOK_MS = 240_000;
+// The host's generation included, which a slower machine takes minutes over.
+const HOOK_MS = 600_000;
 const TEST_MS = 120_000;
 const CLIENT = new URL("../../", import.meta.url).pathname;
 const HOST = join(CLIENT, "tests/browser/host");
 // What the test draws for the host, under the client's packages where the host's build stands.
 const CACHE = join(CLIENT, "node_modules/.cache/theater-host");
 const MEDIA = join(CACHE, "public/media");
+const GENERATED = join(CACHE, ".output/public");
 // The video every episode streams: long enough that the player offers the next one before its end.
 const VIDEO_SECONDS = 601;
 
@@ -50,22 +53,10 @@ function browserReady(): boolean {
 
 const ready = browserReady();
 
-let server: Subprocess | null = null;
+let server: Server | null = null;
 let origin = "";
 let browser: Browser;
 const shots = process.env.THEATER_SHOTS ?? mkdtempSync(join(tmpdir(), "theater-shots-"));
-
-async function freePort(): Promise<number> {
-  return await new Promise((resolve) => {
-    const probe = createServer();
-
-    probe.listen(0, "127.0.0.1", () => {
-      const port = (probe.address() as { port: number }).port;
-
-      probe.close(() => resolve(port));
-    });
-  });
-}
 
 function ffmpeg(args: string[]): void {
   const ran = Bun.spawnSync(["ffmpeg", "-nostdin", "-v", "error", "-y", ...args]);
@@ -91,18 +82,11 @@ function drawMedia(): void {
     ffmpeg(["-f", "lavfi", "-i", "testsrc2=size=320x180:rate=2", "-f", "lavfi", "-i", "anullsrc=r=22050:cl=mono", "-t", String(VIDEO_SECONDS), "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac", "-b:a", "16k", "-shortest", "-movflags", "+faststart", video]);
 }
 
-async function waitForHost(): Promise<void> {
-  for (;;) {
-    try {
-      const answer = await fetch(`${origin}/theater`);
+// A file the host's generation wrote, and the app's shell for any other path, which its router then reads.
+async function served(request: Request): Promise<Response> {
+  const file = Bun.file(join(GENERATED, decodeURIComponent(new URL(request.url).pathname)));
 
-      if (answer.ok) return;
-    } catch {
-      // Not answering yet.
-    }
-
-    await Bun.sleep(500);
-  }
+  return new Response((await file.exists()) ? file : Bun.file(join(GENERATED, "200.html")));
 }
 
 beforeAll(async () => {
@@ -115,18 +99,19 @@ beforeAll(async () => {
 
   writeFileSync(join(CACHE, "common.json"), words ? readFileSync(words, "utf8") : "{}");
 
-  const port = await freePort();
+  // Generated after the media and the words, which it carries into what it writes.
+  const generated = Bun.spawnSync(["bun", "--bun", "x", "nuxi", "generate", HOST], { cwd: CLIENT, env: { ...process.env, NUXT_TELEMETRY_DISABLED: "1" } });
 
-  origin = `http://127.0.0.1:${port}`;
-  server = Bun.spawn(["bun", "--bun", "x", "nuxi", "dev", HOST, "--port", String(port), "--host", "127.0.0.1"], { cwd: CLIENT, stdout: "pipe", stderr: "pipe", env: { ...process.env, NUXT_TELEMETRY_DISABLED: "1" } });
-  await waitForHost();
+  if (generated.exitCode !== 0) throw new Error(`the host's generation failed: ${generated.stderr.toString()}`);
+
+  server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch: served });
+  origin = server.url.origin;
   browser = await chromium.launch();
 }, HOOK_MS);
 
 afterAll(async () => {
   await browser?.close();
-  server?.kill();
-  await server?.exited;
+  await server?.stop(true);
 }, HOOK_MS);
 
 // The relay answered from the realm: every read the screens make, a position set, an episode set aside.
