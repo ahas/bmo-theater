@@ -8,7 +8,7 @@ import { chromium } from "playwright-core";
 import { POSTERS, made, ordered, progressOf } from "./fixtures";
 import { PACKS, word } from "../words";
 
-import type { Browser, BrowserContext, Page, Route } from "playwright-core";
+import type { Browser, BrowserContext, Locator, Page, Route } from "playwright-core";
 import type { Server } from "bun";
 import type { PosterName } from "./fixtures";
 
@@ -335,9 +335,22 @@ const FIELD = `${LIST} input`;
 // A control the screen names by its words, pressed as the width's own pointer does: a finger on the phone, a
 // mouse on the desktop.
 async function press(page: Page, width: (typeof WIDTHS)[number], selector: string, key: string): Promise<void> {
-  const control = page.locator(`${selector}[aria-label="${word(PACKS.ko, key)!}"]`).first();
+  const named = page.locator(`${selector}[aria-label="${word(PACKS.ko, key)!}"]`).first();
 
-  await (width.touch ? control.tap() : control.click());
+  await (width.touch ? named.tap() : named.click());
+}
+
+// The select the screen names by its words.
+function control(page: Page, key: string): Locator {
+  return page.locator(`[data-slot=base][aria-label="${word(PACKS.ko, key)!}"]`).first();
+}
+
+// How far the open list's leading edge and width stand from those of the select that opened it, in pixels.
+async function edges(page: Page, key: string): Promise<{ left: number; width: number }> {
+  const list = (await page.locator(`[data-slot=content]:has(> ${LIST})`).boundingBox())!;
+  const opener = (await control(page, key).boundingBox())!;
+
+  return { left: Math.round(list.x - opener.x), width: Math.round(list.width - opener.width) };
 }
 
 // The select the screen names by its words opened: as many choices as the screen hands it, and the search field
@@ -388,6 +401,17 @@ describe.skipIf(!ready)("the theater's selects", () => {
           await press(page, width, "button", "theater.action.upload_video");
           await opened(page, width, "theater.label.title", titles + 1);
           await shoot(page, width, "light", "select-title");
+          // Its list as wide as its control and on its control's leading edge, at either width.
+          expect(await edges(page, "theater.label.title")).toEqual({ left: 0, width: 0 });
+          // A title chosen, and words matching none of the list leave its name on the control.
+          const title = page.locator(CHOICE).nth(1);
+          const chosen = (await title.innerText()).trim();
+          await (width.touch ? title.tap() : title.click());
+          await page.locator(LIST).waitFor({ state: "detached", timeout: 10_000 });
+          await press(page, width, "[data-slot=base]", "theater.label.title");
+          await page.locator(FIELD).fill("zzzq");
+          await page.locator(CHOICE).first().waitFor({ state: "detached", timeout: 10_000 });
+          expect((await control(page, "theater.label.title").innerText()).trim()).toBe(chosen);
           await closed(page);
         } finally {
           await context.close();
