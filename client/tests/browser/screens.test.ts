@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -103,6 +103,10 @@ beforeAll(async () => {
   const generated = Bun.spawnSync(["bun", "--bun", "x", "nuxi", "generate", HOST], { cwd: CLIENT, env: { ...process.env, NUXT_TELEMETRY_DISABLED: "1" } });
 
   if (generated.exitCode !== 0) throw new Error(`the host's generation failed: ${generated.stderr.toString()}`);
+
+  // Nuxt links its generated files into the host's folder as dist; the link alone goes, so nothing stands beside
+  // the sources.
+  rmSync(join(HOST, "dist"), { force: true });
 
   server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch: served });
   origin = server.url.origin;
