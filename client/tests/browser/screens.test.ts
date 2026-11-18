@@ -138,8 +138,10 @@ async function answerRelay(context: BrowserContext): Promise<void> {
   const lastWatched = (titleId: number) => Math.max(0, ...realm.episodes.filter((one) => one.titleId === titleId && realm.positions.has(one.id)).map((one) => realm.positions.get(one.id)!.updatedAt));
   const withPosition = (one: (typeof realm.episodes)[number]) => ({ ...one, position: realm.positions.get(one.id) ?? null });
 
+  // A pattern rather than a predicate, so the browser holds back the relay's calls alone; a predicate would hold
+  // back every module the development host serves and pass each through this process.
   await context.route(
-    (url) => url.pathname.startsWith("/relay/theater/"),
+    "**/relay/theater/**",
     async (route) => {
       const url = new URL(route.request().url());
       const path = url.pathname.slice("/relay/theater".length);
