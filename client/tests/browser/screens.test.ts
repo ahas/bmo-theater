@@ -473,6 +473,23 @@ describe.skipIf(!ready)("the player's screen", () => {
         await page.waitForFunction(() => document.querySelector("[data-watch-layout]")?.getAttribute("data-watch-layout") === "normal");
         expect(await page.locator("[data-watch-list] [aria-current='true']").count()).toBe(1);
         expect(await page.evaluate(() => localStorage.getItem("bmo-theater-play-mode"))).toBe("normal");
+
+        // A name the column cuts short reads whole in its tooltip, on a screen still wide but with a narrower column.
+        await page.setViewportSize({ width: 1000, height: 800 });
+        const third = made().episodes.find((one) => one.titleId === 1 && one.season === 3 && one.number === 4)!;
+        const named = made().episodes.find((one) => one.titleId === 1 && one.season === 3 && one.number === 5)!;
+
+        await watching(page, `/theater/watch/${third.id}`);
+
+        const cut = page.locator("[data-watch-list] [data-watch-section] li").filter({ hasText: named.name }).locator("span.truncate", { hasText: named.name });
+
+        expect(await page.$eval("[data-watch-list]", (element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+        expect(await cut.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+        // The pointer lands on the card's link, which lies over the name.
+        const over = (await cut.boundingBox())!;
+
+        await page.mouse.move(over.x + over.width / 2, over.y + over.height / 2);
+        await page.locator("[role=tooltip]", { hasText: named.name }).first().waitFor({ timeout: 10_000 });
       } finally {
         await context.close();
       }

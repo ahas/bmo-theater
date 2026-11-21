@@ -99,10 +99,10 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), { menu: () => [], current: false, compact: false });
 
 // The component library's page card laid out as a row: the poster, then the name and the line under it, then the
-// length at the end; a row a finger presses is at least as tall as a finger.
+// length at the end; a row a finger presses is at least as tall as a finger, and never wider than the list it stands in.
 const ROW_UI = {
   root: "rounded-md select-none active:bg-elevated",
-  container: "flex min-h-11 flex-row items-center gap-3 p-2 sm:p-2 lg:flex",
+  container: "flex min-h-11 min-w-0 flex-row items-center gap-3 p-2 sm:p-2 lg:flex",
   wrapper: "min-w-0 flex-1 flex-row items-center gap-3",
   header: "mb-0 shrink-0",
   body: "flex min-w-0 flex-1 flex-col gap-1",

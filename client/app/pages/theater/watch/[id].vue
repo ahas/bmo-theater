@@ -20,7 +20,7 @@
       <section v-if="playlist" :aria-label="playlist.name" class="pb-4" data-watch-section>
         <h2 class="flex h-11 items-center gap-3 px-4 text-lg font-medium text-highlighted">
           <span class="truncate">{{ playlist.name }}</span>
-          <span class="shrink-0 text-sm font-normal text-muted tabular-nums">{{ countText((at ?? 0) + 1) }}/{{ countText(playlist.episodeIds.length) }}</span>
+          <span class="shrink-0 text-sm font-normal text-muted tabular-nums"><RollingNumber :value="(at ?? 0) + 1" />/{{ countText(playlist.episodeIds.length) }}</span>
         </h2>
         <ul class="flex flex-col">
           <template v-for="(id, index) in playlist.episodeIds" :key="`${id}:${index}`">
@@ -51,7 +51,7 @@
         <section :aria-label="section.name(t)" class="pb-4" data-watch-section>
           <h2 class="flex h-11 items-center gap-3 px-4 text-lg font-medium text-highlighted">
             <span class="truncate">{{ section.name(t) }}</span>
-            <span class="shrink-0 text-sm font-normal text-muted tabular-nums">{{ countText(sectionPlace + 1) }}/{{ countText(section.episodes.length) }}</span>
+            <span class="shrink-0 text-sm font-normal text-muted tabular-nums"><RollingNumber :value="sectionPlace + 1" />/{{ countText(section.episodes.length) }}</span>
           </h2>
           <ul class="flex flex-col">
             <EpisodeRow v-for="one in section.episodes" :key="one.id" :episode="one" :watched="watchedEpisode(one)" :to="`/theater/watch/${one.id}`" :poster="posterOf(one)" :current="one.id === episodeId">
@@ -114,6 +114,7 @@ import { useI18n } from "vue-i18n";
 import { createReusableTemplate } from "@vueuse/core";
 import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
 import IconButton from "bmo-ui/app/components/IconButton.vue";
+import RollingNumber from "bmo-ui/app/components/RollingNumber.vue";
 import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
 import ShareDialog from "bmo-ui/app/components/ShareDialog.vue";
 import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
