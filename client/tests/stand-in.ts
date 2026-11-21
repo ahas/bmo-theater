@@ -6,10 +6,11 @@ import type { Burn, Episode, Grant, Library, Permission, Playlist, Position, Pro
 // A stand-in of the theater service's routes the screens call (`docs/api.md`), served on the loopback for the
 // length of a test: titles and playlists in two realms, episodes with the caller's positions, subtitles and
 // burns, progress with the next episode, share links and their reads, an episode's grants, and libraries the
-// administrator alone registers. A write on a member named in `refused` is refused 403 `forbidden`, as one on another account's
-// organization member is.
+// administrator alone registers. A write on a member named in `refused` is refused 403 `forbidden`, as one on
+// another account's organization member is. It is disposable, so a test holding it by `using` takes it down as its
+// body ends, past the test's bound too.
 
-export interface StandIn {
+export interface StandIn extends Disposable {
   url: string;
   role: "administrator" | "member";
   titles: Title[];
@@ -30,7 +31,6 @@ export interface StandIn {
   bodies: Map<string, unknown>;
   /** The text parts of every multipart body sent, by path. */
   forms: Map<string, Record<string, string>>;
-  stop: () => void;
   call: Call;
   send: Send;
 }
@@ -445,7 +445,7 @@ export function startStandIn(seed: Partial<Pick<StandIn, "titles" | "episodes" |
 
   return Object.assign(state, {
     url: base,
-    stop: () => void server.stop(true),
+    [Symbol.dispose]: () => void server.stop(true),
     call: <T>(path: string, options?: Parameters<Call>[1]) => fetcher<T>(path, options as never) as Promise<T>,
     send
   }) as StandIn;

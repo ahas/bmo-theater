@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { describe, expect, setDefaultTimeout, test } from "bun:test";
 
 import { Refusal, createTheaterApi } from "../app/domain/api";
 import { readShared, sharedFailure } from "../app/domain/shared";
@@ -13,12 +13,10 @@ import type { StandIn } from "./stand-in";
 // subtitle filed as multipart bodies, a burn followed by its events, whether the reader administers the
 // theater, what a share link opens, and an episode's grants as the share dialog's member road reads them.
 
-let standIn: StandIn | null = null;
-
-afterEach(() => {
-  standIn?.stop();
-  standIn = null;
-});
+// A test's bound fits a loaded machine, where a few loopback calls can take seconds. Each test holds its own
+// stand-in and takes it down as its body ends, so one that runs past its bound keeps its server until it is done,
+// and no test's end takes away the server another test is still calling.
+setDefaultTimeout(60_000);
 
 function storeOver(stand: StandIn) {
   const notices: Notice[] = [];
@@ -29,7 +27,7 @@ function storeOver(stand: StandIn) {
 
 describe("continue watching", () => {
   test("is read in the order the service answers, and an episode set aside leaves it at once", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine"), episode(12, 1, "mine"), episode(13, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine"), episode(12, 1, "mine"), episode(13, 1, "mine")] });
 
     const { store } = storeOver(standIn);
     const api = createTheaterApi(standIn.call, standIn.send);
@@ -50,7 +48,7 @@ describe("continue watching", () => {
   });
 
   test("a position set anywhere counts as a change the rows read again", () => {
-    standIn = startStandIn();
+    using standIn = startStandIn();
 
     const { store } = storeOver(standIn);
     const before = store.rowsChanged.value;
@@ -63,7 +61,7 @@ describe("continue watching", () => {
 
 describe("the realms", () => {
   test("each realm's titles are read and kept apart", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot"), title(2, "organization", "Trailer")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot"), title(2, "organization", "Trailer")] });
 
     const { store } = storeOver(standIn);
 
@@ -75,7 +73,7 @@ describe("the realms", () => {
   });
 
   test("an event puts a title in its realm, moves it with its realm and takes it out when deleted", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")] });
 
     const { store } = storeOver(standIn);
 
@@ -95,7 +93,7 @@ describe("the realms", () => {
 
 describe("progress and the next episode", () => {
   test("a title's progress names the next episode, and a position set moves it on", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine"), episode(12, 1, "mine"), episode(13, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine"), episode(12, 1, "mine"), episode(13, 1, "mine")] });
 
     const { store } = storeOver(standIn);
 
@@ -111,7 +109,7 @@ describe("progress and the next episode", () => {
   });
 
   test("an episode stopped short is the one to go on from, at the second it stopped", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine"), episode(12, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine"), episode(12, 1, "mine")] });
 
     const { store } = storeOver(standIn);
 
@@ -121,7 +119,7 @@ describe("progress and the next episode", () => {
   });
 
   test("a position the stream tells of is put on the episode and the progress holding it", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
 
     const { store } = storeOver(standIn);
 
@@ -134,7 +132,7 @@ describe("progress and the next episode", () => {
   });
 
   test("an episode read by its id never stands for its title's whole list", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine"), episode(12, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine"), episode(12, 1, "mine")] });
 
     const { store } = storeOver(standIn);
 
@@ -147,7 +145,7 @@ describe("progress and the next episode", () => {
 
 describe("episodes read by their ids", () => {
   test("two asks for one episode are one call", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
 
     const { store } = storeOver(standIn);
 
@@ -167,7 +165,7 @@ describe("a playlist's order", () => {
   }
 
   test("a move sends the whole order in place of the one standing", async () => {
-    standIn = seeded();
+    using standIn = seeded();
 
     const { store } = storeOver(standIn);
     const read = await store.loadPlaylist(7);
@@ -178,7 +176,7 @@ describe("a playlist's order", () => {
   });
 
   test("removing an item takes out that place alone, an episode named twice keeping its other place", async () => {
-    standIn = seeded();
+    using standIn = seeded();
 
     const { store } = storeOver(standIn);
     const read = await store.loadPlaylist(7);
@@ -189,7 +187,7 @@ describe("a playlist's order", () => {
   });
 
   test("a refused move puts the order back and says why", async () => {
-    standIn = seeded();
+    using standIn = seeded();
     standIn.refused.add("playlist:7");
 
     const { store, notices } = storeOver(standIn);
@@ -201,7 +199,7 @@ describe("a playlist's order", () => {
   });
 
   test("a playlist's progress answers an episode named twice twice", async () => {
-    standIn = seeded();
+    using standIn = seeded();
 
     const { store } = storeOver(standIn);
 
@@ -211,7 +209,7 @@ describe("a playlist's order", () => {
 
 describe("refused writes", () => {
   test("a reader's own episode is refused in an organization playlist, in the words of its code", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
 
     const { store } = storeOver(standIn);
     const refused = await store.makePlaylist("organization", "Shared", [11]).catch((error: unknown) => error);
@@ -222,7 +220,7 @@ describe("refused writes", () => {
   });
 
   test("a library's episode is not deleted, and the refusal is told", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
 
     const { store, notices } = storeOver(standIn);
     const [held] = await store.loadEpisodes(1);
@@ -240,7 +238,7 @@ describe("refused writes", () => {
   });
 
   test("a subtitle of an unknown format is refused in the words of its code", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
 
     const { store } = storeOver(standIn);
     const form = new FormData();
@@ -253,7 +251,7 @@ describe("refused writes", () => {
 
 describe("filing and subtitles", () => {
   test("a video filed under a new name makes a clip title and sends the file with its name", async () => {
-    standIn = startStandIn();
+    using standIn = startStandIn();
 
     const { store } = storeOver(standIn);
     const form = new FormData();
@@ -272,7 +270,7 @@ describe("filing and subtitles", () => {
   });
 
   test("a subtitle is added and deleted, and a burn is followed by its events", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
 
     const { store } = storeOver(standIn);
     const form = new FormData();
@@ -298,17 +296,16 @@ describe("filing and subtitles", () => {
 
 describe("the administrator", () => {
   test("a member is told apart from the administrator, and the asking registers nothing", async () => {
-    standIn = startStandIn({ role: "member" });
-    expect(await createTheaterApi(standIn.call, standIn.send).administers()).toBe(false);
-    standIn.stop();
+    using member = startStandIn({ role: "member" });
+    using administrator = startStandIn({ role: "administrator" });
 
-    standIn = startStandIn({ role: "administrator" });
-    expect(await createTheaterApi(standIn.call, standIn.send).administers()).toBe(true);
-    expect(standIn.libraries).toEqual([]);
+    expect(await createTheaterApi(member.call, member.send).administers()).toBe(false);
+    expect(await createTheaterApi(administrator.call, administrator.send).administers()).toBe(true);
+    expect(administrator.libraries).toEqual([]);
   });
 
   test("a member's registering of a folder is refused", async () => {
-    standIn = startStandIn({ role: "member" });
+    using standIn = startStandIn({ role: "member" });
 
     const { store } = storeOver(standIn);
 
@@ -318,7 +315,7 @@ describe("the administrator", () => {
 
 describe("the share page", () => {
   test("a playlist link opens its playlist and its episodes in its order, with no position", async () => {
-    standIn = startStandIn({
+    using standIn = startStandIn({
       titles: [title(1, "organization", "Pilot")],
       episodes: [episode(11, 1, "organization", { position: { episodeId: 11, seconds: 5, done: false, updatedAt: 1, setAside: false } }), episode(12, 1, "organization")],
       playlists: [playlist(7, "organization", "Season", [12, 11])],
@@ -337,7 +334,7 @@ describe("the share page", () => {
   });
 
   test("an episode link opens that episode alone and no playlist", async () => {
-    standIn = startStandIn({
+    using standIn = startStandIn({
       titles: [title(1, "mine", "Pilot")],
       episodes: [episode(11, 1, "mine"), episode(12, 1, "mine")],
       shares: [{ token: "tokenB", episodeId: 12, playlistId: null, url: null, creator: "2", createdAt: 1, expiresAt: null }]
@@ -350,7 +347,7 @@ describe("the share page", () => {
   });
 
   test("an ended link and a missing one are told apart", async () => {
-    standIn = startStandIn({ shares: [{ token: "ended", episodeId: 1, playlistId: null, url: null, creator: "2", createdAt: 1, expiresAt: 1 }] });
+    using standIn = startStandIn({ shares: [{ token: "ended", episodeId: 1, playlistId: null, url: null, creator: "2", createdAt: 1, expiresAt: 1 }] });
 
     const shared = createTheaterApi(standIn.call, standIn.send).shared;
 
@@ -359,7 +356,7 @@ describe("the share page", () => {
   });
 
   test("a link made for a span ends that long after it is made, read in the dialog's seconds", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
 
     const { shareRoad } = await import("../app/domain/share");
     const { store } = storeOver(standIn);
@@ -380,7 +377,7 @@ describe("sharing with people", () => {
   };
 
   test("an episode's grants are kept by the service and drawn by the names the directory gives", async () => {
-    standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
+    using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")], episodes: [episode(11, 1, "mine")] });
 
     const { memberRoad } = await import("../app/domain/share");
     const { store } = storeOver(standIn);
