@@ -1,6 +1,7 @@
 <template>
   <!-- Where an episode plays (`docs/design.md`, 「The console」): the layer's video player over the episode's stream,
-       filling the black stage its screen sizes, a skeleton while the episode is read, or why it cannot play. -->
+       filling the black stage its screen sizes, a skeleton while the episode is read, or why it cannot play. The
+       screen's own controls stand in the player's bar. -->
   <div data-player-stage class="shrink-0 bg-black">
     <p v-if="props.failed" role="alert" class="flex size-full items-center justify-center p-4 text-center text-base text-white">{{ props.failed }}</p>
     <VideoPlayer
@@ -15,6 +16,7 @@
       :autoplay="props.player.autoplay"
       :next="props.player.next"
       :auto-next="props.player.autoNext ?? false"
+      :controls="props.controls"
       @position="(video, seconds) => emit('position', Number(video), seconds)"
       @leaving="(video, seconds) => emit('leaving', Number(video), seconds)"
       @ended="(video, seconds) => emit('ended', Number(video), seconds)"
@@ -29,7 +31,7 @@ import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
 import SkeletonStatus from "bmo-ui/app/components/SkeletonStatus.vue";
 import VideoPlayer from "bmo-ui/app/components/VideoPlayer.vue";
 
-import type { PlayerTrack } from "bmo-ui/app/domain/video";
+import type { PlayerControl, PlayerTrack } from "bmo-ui/app/domain/video";
 
 /** The episode the stage plays, once it and its subtitles are read. */
 export interface StagePlayer {
@@ -48,12 +50,17 @@ export interface StagePlayer {
   autoNext?: boolean;
 }
 
-const props = defineProps<{
-  /** Why the episode cannot play, or nothing. */
-  failed: string;
-  /** The episode to play, or none while it is being read. */
-  player: StagePlayer | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    /** Why the episode cannot play, or nothing. */
+    failed: string;
+    /** The episode to play, or none while it is being read. */
+    player: StagePlayer | null;
+    /** The screen's own controls in the player's bar. */
+    controls?: PlayerControl[];
+  }>(),
+  { controls: () => [] }
+);
 
 // What the player tells of an episode, named by the episode it stood for when it told it.
 const emit = defineEmits<{

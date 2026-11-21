@@ -218,14 +218,45 @@ A console bundle, built from `client/`, stands under the sidebar entry the words
   each item's up and down buttons), an item removed, each change sending the whole order, and a button to go
   on from where the viewer stopped.
 - **The player:** the layer's one video player (bmo-ui `docs/components.md`, 「The video player」), at its full
-  size, standing on a black stage as tall as its picture at the screen's width with room left under it, and the
-  screen less its bars above it on a phone on its side. Its controls, its keys, a finger's gestures, turning
-  the picture, full screen and playing one thing at a time are the player's own, as that document states them;
-  the theater hands it the episode's stream and poster, its subtitles as text tracks, where it starts and the
-  next episode's words. The theater decides the rest: the subtitle shown first is the one in the screen's
-  language, else none; an episode starts where the viewer stopped unless it was watched, asking nothing, and
-  from the start only where the title's page was asked to; and the viewer's position, which the player tells
-  every five seconds, as it pauses and as it is left, is set again only once it has moved a second or more.
+  size, on a black stage. Its controls, its keys, a finger's gestures, turning the picture, full screen and
+  playing one thing at a time are the player's own, as that document states them; the theater hands it the
+  episode's stream and poster, its subtitles as text tracks, where it starts and the next episode's words.
+  The theater decides the rest: the subtitle shown first is the one in the screen's language, else none; an
+  episode starts where the viewer stopped unless it was watched, asking nothing, and from the start only where
+  the title's page was asked to; and the viewer's position, which the player tells every five seconds, as it
+  pauses and as it is left, is set again only once it has moved a second or more.
+- **The player's screen** is laid out by the room the screen itself has, never the window's:
+  - **Wide**, where the screen has room for a player beside the list (60rem and more): the player at the
+    top of a column of its own, as tall as its picture at the column's width and never so tall that less
+    than a sixth of the screen stays under it, and under the player what it is and what is done with it,
+    scrolling on its own; beside that column the list, scrolling on its own and bringing the one playing into
+    view. A splitter parts the two, the list taking about a third of the width, at least a quarter and at most
+    a half, its width kept in the browser.
+  - **Narrow**, on a phone and wherever the room falls short: the player across the top, as tall as its
+    picture at the screen's width and never so tall that less than a sixth of the screen stays under it, and
+    the whole screen under its bars on a phone on its side; under it, in one scroll, what it is and then the
+    list, across the whole width.
+  - **The list** is the playlist's episodes where it was opened from one, under its name and the place of
+    the one playing; otherwise the next episode, where one follows, and then the episodes of the part of the
+    title the one playing stands in — its season, the specials, the extras or the whole — under that part's
+    name and the place of the one playing. The one playing is marked where it stands. An episode watched by a
+    grant has no list, since its title is not read.
+- **The play modes:** normal, theater and full screen.
+  - **Normal** is the wide layout above, and how the screen opens where the viewer never chose.
+  - **Theater** lays the player across the whole width of the screen, as tall as its picture there and never so
+    tall that less than a sixth of the screen stays under it, with what it is and the list under it in one
+    scroll, the player scrolling away with them. A control the theater hands the player's bar switches to it
+    and back, standing before full screen, pressed by t and naming the mode a press goes to; the viewer's
+    choice is kept in the browser that made it, since the service keeps no settings of a viewer, and holds for
+    every episode after. It stands only on a wide screen with a list, since everywhere else both modes lay the
+    screen out alike; the choice kept stays for the next wide screen.
+  - **Full screen** is the player's own, entered by its button, f or a double press on the picture, and left
+    by the same, by Escape or by going back, the screen staying where it stands.
+  - **The screen stays standing from one episode to the next** (bmo-ui `docs/console-bundles.md`, a screen that
+    stays across addresses). Going on to another episode — the next one playing on, a press in the list or on
+    next — keeps the player where it stands, the episode before standing until the next is read, hands it the
+    new episode, and leaves the mode as it was, full screen included. The new episode opens at the top of what
+    it is.
 - **What plays next:** a playlist's next episode, and a show's next main-line episode after the one playing
   (specials one after another, extras none). The player offers it near the end with its count-down (bmo-ui
   `docs/components.md`, 「The video player」, the next video) and plays it as the episode ends, unless the

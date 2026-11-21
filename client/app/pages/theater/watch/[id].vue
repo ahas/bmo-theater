@@ -1,7 +1,10 @@
 <template>
   <!-- The player's screen (`docs/design.md`, 「The console」): the episode playing over its stream, from where the
-       viewer stopped, its position set every few seconds; under it what it is, what is done with it, and what
-       comes next — the playlist's episodes where it was opened from one, which then follow on their own. -->
+       viewer stopped, its position set every few seconds; under it what it is and what is done with it; and the
+       list — the playlist's episodes where it was opened from one, else the next episode and the part of the title
+       the one playing stands in. On a wide screen the list stands in a column of its own beside the player, or under
+       it in theater mode; on a narrow one it stands under the player across the whole width. The player stays
+       standing from one episode to the next, so its mode, full screen included, goes on with it. -->
   <TheaterFrame id="theater-watch">
     <ToolBar :label="$t('theater.aria.watch_bar')">
       <div>
@@ -13,30 +16,9 @@
       <ActionGroup v-if="actions.length > 0" :actions="actions" :narrow-fold="false" class="ms-auto" />
     </ToolBar>
 
-    <PlayerStage
-      :key="`${episodeId}:${at}`"
-      v-model:track="track"
-      class="theater-stage"
-      :failed="failed"
-      :player="player"
-      @position="keep"
-      @leaving="keepLeaving"
-      @ended="ended"
-      @next="goNext(true)"
-    />
-
-    <div class="min-h-0 flex-1 overflow-y-auto">
-      <header class="flex flex-col gap-1 px-4 py-4">
-        <h1 v-if="episode" class="text-xl font-semibold text-highlighted">{{ episodeTitle(episode) }}</h1>
-        <SkeletonLine v-else size="lg" width="w-1/2" />
-        <p v-if="episode && title" class="text-sm text-muted">
-          <RouterLink :to="`/theater/titles/${title.id}`" class="rounded-sm underline-offset-4 hover:text-highlighted hover:underline active:text-default pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">{{ title.name }}</RouterLink>
-          <template v-if="episode.label"> · {{ episodeLabel(t, episode) }}</template>
-        </p>
-      </header>
-
-      <section v-if="playlist" :aria-label="playlist.name" class="pb-4">
-        <h2 class="flex items-center gap-3 px-4 pb-2 text-lg font-medium text-highlighted">
+    <DefineList>
+      <section v-if="playlist" :aria-label="playlist.name" class="pb-4" data-watch-section>
+        <h2 class="flex h-11 items-center gap-3 px-4 text-lg font-medium text-highlighted">
           <span class="truncate">{{ playlist.name }}</span>
           <span class="shrink-0 text-sm font-normal text-muted tabular-nums">{{ countText((at ?? 0) + 1) }}/{{ countText(playlist.episodeIds.length) }}</span>
         </h2>
@@ -56,19 +38,66 @@
         </ul>
       </section>
 
-      <section v-else-if="nextEpisode" :aria-label="$t('theater.label.next_episode')" class="pb-4">
-        <h2 class="px-4 pb-2 text-lg font-medium text-highlighted">{{ $t("theater.label.next_episode") }}</h2>
-        <ul class="flex flex-col">
-          <EpisodeRow
-            :episode="nextEpisode"
-            :watched="watchedEpisode(nextEpisode)"
-            :to="`/theater/watch/${nextEpisode.id}`"
-            :poster="nextEpisode.hasPoster ? theaterAddress(paths.episodePoster(nextEpisode.id)) : null"
-          >
-            <template #trail><span class="w-0" /></template>
-          </EpisodeRow>
-        </ul>
-      </section>
+      <template v-else-if="section">
+        <section v-if="nextEpisode" :aria-label="$t('theater.label.next_episode')" class="pb-4" data-watch-next>
+          <h2 class="flex h-11 items-center px-4 text-lg font-medium text-highlighted">{{ $t("theater.label.next_episode") }}</h2>
+          <ul class="flex flex-col">
+            <EpisodeRow :episode="nextEpisode" :watched="watchedEpisode(nextEpisode)" :to="`/theater/watch/${nextEpisode.id}`" :poster="posterOf(nextEpisode)">
+              <template #trail><span class="w-0" /></template>
+            </EpisodeRow>
+          </ul>
+        </section>
+
+        <section :aria-label="section.name(t)" class="pb-4" data-watch-section>
+          <h2 class="flex h-11 items-center gap-3 px-4 text-lg font-medium text-highlighted">
+            <span class="truncate">{{ section.name(t) }}</span>
+            <span class="shrink-0 text-sm font-normal text-muted tabular-nums">{{ countText(sectionPlace + 1) }}/{{ countText(section.episodes.length) }}</span>
+          </h2>
+          <ul class="flex flex-col">
+            <EpisodeRow v-for="one in section.episodes" :key="one.id" :episode="one" :watched="watchedEpisode(one)" :to="`/theater/watch/${one.id}`" :poster="posterOf(one)" :current="one.id === episodeId">
+              <template #trail><span class="w-0" /></template>
+            </EpisodeRow>
+          </ul>
+        </section>
+      </template>
+
+      <ContentSkeleton v-else-if="listReading" list-class="flex flex-col" :rows="4" :label="$t('theater.status.episodes_loading')">
+        <div class="flex items-center gap-3 px-4 py-2">
+          <SkeletonBar class="aspect-video w-24 shrink-0 rounded-md sm:w-36" />
+          <div class="flex flex-1 flex-col gap-1"><SkeletonLine size="base" width="w-2/3" /><SkeletonLine width="w-1/3" /></div>
+        </div>
+      </ContentSkeleton>
+    </DefineList>
+
+    <!-- One splitter at every width and in every mode, the player always the first thing in its main region, so
+         neither the width crossing nor a change of mode draws the player again. -->
+    <div ref="room" class="min-h-0 flex-1" :data-watch-layout="layout">
+      <USplitter id="theater-watch" auto-save-id="theater-watch" :items="regions" :ui="{ handle: SPLIT_HANDLE }" class="h-full min-h-0">
+        <template #main>
+          <div ref="main" class="watch-main flex h-full min-h-0 w-full min-w-0 flex-col" :class="layout === 'theater' ? 'overflow-y-auto' : 'overflow-hidden'" data-watch-main>
+            <PlayerStage v-model:track="track" class="theater-stage" :failed="failed" :player="player" :controls="controls" @position="keep" @leaving="keepLeaving" @ended="ended" @next="goNext(true)" />
+
+            <div ref="rest" class="min-w-0" :class="layout === 'theater' ? '' : 'min-h-0 flex-1 overflow-y-auto'" data-watch-rest>
+              <header class="flex flex-col gap-1 px-4 py-4">
+                <h1 v-if="episode" class="text-xl font-semibold text-highlighted">{{ episodeTitle(episode) }}</h1>
+                <SkeletonLine v-else size="lg" width="w-1/2" />
+                <p v-if="episode && title" class="text-sm text-muted">
+                  <RouterLink :to="`/theater/titles/${title.id}`" class="rounded-sm underline-offset-4 hover:text-highlighted hover:underline active:text-default pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">{{ title.name }}</RouterLink>
+                  <template v-if="episode.label"> · {{ episodeLabel(t, episode) }}</template>
+                </p>
+              </header>
+
+              <UseList v-if="layout !== 'normal'" />
+            </div>
+          </div>
+        </template>
+
+        <template #list>
+          <div ref="column" class="h-full min-h-0 w-full min-w-0 overflow-y-auto pt-2" data-watch-list>
+            <UseList />
+          </div>
+        </template>
+      </USplitter>
     </div>
 
     <SubtitleDialog v-model:open="subtitlesOpen" :episode="episode" />
@@ -78,17 +107,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, watch } from "vue";
+import { computed, inject, nextTick, ref, useTemplateRef, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { navigateTo, useRoute } from "nuxt/app";
 import { useI18n } from "vue-i18n";
+import { createReusableTemplate } from "@vueuse/core";
 import ActionGroup from "bmo-ui/app/components/ActionGroup.vue";
 import IconButton from "bmo-ui/app/components/IconButton.vue";
+import ContentSkeleton from "bmo-ui/app/components/ContentSkeleton.vue";
 import ShareDialog from "bmo-ui/app/components/ShareDialog.vue";
+import SkeletonBar from "bmo-ui/app/components/SkeletonBar.vue";
 import SkeletonLine from "bmo-ui/app/components/SkeletonLine.vue";
 import ToolBar from "bmo-ui/app/components/ToolBar.vue";
 import { countText } from "bmo-ui/app/domain/numbers";
 import { relayCall } from "bmo-ui/app/domain/relay";
+import { useWidth } from "bmo-ui/app/domain/screen";
+import { SPLIT_HANDLE } from "bmo-ui/app/domain/side-parts";
 
 import AddToPlaylistDialog from "../../../components/theater/AddToPlaylistDialog.vue";
 import EpisodeRow from "../../../components/theater/EpisodeRow.vue";
@@ -97,30 +131,54 @@ import SubtitleDialog from "../../../components/theater/SubtitleDialog.vue";
 import TheaterFrame from "../../../components/theater/TheaterFrame.vue";
 import { episodeLabel } from "../../../domain/a11y";
 import { paths } from "../../../domain/api";
-import { episodeTitle, followingOf, placeAfter, placeOf, sectionsOf, watchedEpisode } from "../../../domain/episodes";
+import { episodeTitle, followingOf, placeAfter, placeOf, sectionOf, sectionsOf, watchedEpisode } from "../../../domain/episodes";
 import { firstTrack, positionMoved, startAt, trackName } from "../../../domain/player";
 import { CONSOLE_PEOPLE, FIRST_SPAN, SHARE_SPANS, memberRoad, shareRoad } from "../../../domain/share";
 import { refusalWord } from "../../../domain/store";
 import { useAutoplay } from "../../../composables/useAutoplay";
 import { useDialogFocus } from "../../../composables/useDialogFocus";
+import { usePlayMode } from "../../../composables/usePlayMode";
 import { SERVICE, theaterAddress, useTheater } from "../../../composables/useTheater";
 import { useTheaterEvents } from "../../../composables/useTheaterEvents";
 
 import type { BarAction } from "bmo-ui/app/domain/tabs";
-import type { PlayerTrack } from "bmo-ui/app/domain/video";
+import type { SplitterItem } from "@nuxt/ui";
+import type { PlayerControl, PlayerTrack } from "bmo-ui/app/domain/video";
 import type { StagePlayer } from "../../../components/theater/PlayerStage.vue";
 import type { ConsolePeople } from "../../../domain/share";
 import type { Episode, Playlist } from "../../../../shared/types";
+
+// The screen stays standing as the address moves from one episode to the next, so its player goes on with it.
+definePageMeta({ key: "theater-watch" });
+
+// The room a wide screen needs to stand the player beside the list (`docs/design.md`, 「The console」): 60rem.
+const WIDE_PX = 960;
+
+// The list's region beside the player, in shares of the screen's width: about a third, from a quarter to a half.
+const LIST_REGION = { minSize: 25, defaultSize: 34, maxSize: 50 } as const;
 
 const route = useRoute();
 const { t, locale } = useI18n();
 const store = useTheater();
 const { autoplay, setAutoplay } = useAutoplay();
+const { mode, setMode } = usePlayMode();
+// The list is drawn in one of two places, its own column or under what plays, from one template.
+const [DefineList, UseList] = createReusableTemplate();
+
+const roomRef = useTemplateRef<HTMLElement>("room");
+const mainRef = useTemplateRef<HTMLElement>("main");
+const restRef = useTemplateRef<HTMLElement>("rest");
+const columnRef = useTemplateRef<HTMLElement>("column");
+// The screen's own width, never the window's; read as wide until it is measured, so a desktop's first frame
+// stands as it will stay.
+const roomWidth = useWidth(() => roomRef.value, Number.POSITIVE_INFINITY);
 
 const playlist = ref<Playlist | null>(null);
 const track = ref<number | null>(null);
 const failed = ref("");
 const tracksRead = ref(false);
+// Whether the episode and what lists around it are still being read.
+const reading = ref(true);
 const subtitlesOpen = ref(false);
 const addingOpen = ref(false);
 const sharingOpen = ref(false);
@@ -172,8 +230,54 @@ const nextEpisode = computed<Episode | null>(() => {
 });
 const nextWords = computed(() => (nextEpisode.value ? t("theater.action.next_named", { name: episodeTitle(nextEpisode.value) }) : null));
 
-// The episode on the stage, once it and its subtitles are read.
-const player = computed<StagePlayer | null>(() => {
+// The part of the title the episode playing stands in, where it was not opened from a playlist.
+const section = computed(() => {
+  if (playlist.value || !episode.value || !title.value) return null;
+
+  const list = store.episodes.value[episode.value.titleId];
+
+  return list ? sectionOf(sectionsOf(title.value.kind, list), episode.value.id) : null;
+});
+const sectionPlace = computed(() => section.value?.episodes.findIndex((one) => one.id === episodeId.value) ?? -1);
+// An episode watched by a grant has no list, since its title is not read.
+const listed = computed(() => playlist.value !== null || !granted.value);
+const listReading = computed(() => listed.value && reading.value);
+
+const wide = computed(() => roomWidth.value >= WIDE_PX);
+// How the screen stands: the player beside the list, the player across the whole width, or a phone's.
+const layout = computed<"normal" | "theater" | "narrow">(() => {
+  if (!wide.value) return "narrow";
+
+  return mode.value === "theater" || !listed.value ? "theater" : "normal";
+});
+const regions = computed<SplitterItem[]>(() =>
+  layout.value === "normal"
+    ? [
+        { id: "theater-watch-main", slot: "main", order: 1, minSize: 100 - LIST_REGION.maxSize },
+        { id: "theater-watch-list", slot: "list", order: 2, ...LIST_REGION }
+      ]
+    : [{ id: "theater-watch-main", slot: "main", order: 1, minSize: 100, defaultSize: 100 }]
+);
+// The theater mode's control in the player's bar, standing only where the two modes lay the screen out apart, and
+// naming the mode a press goes to.
+const controls = computed<PlayerControl[]>(() => {
+  if (!wide.value || !listed.value) return [];
+
+  const theater = mode.value === "theater";
+
+  return [
+    {
+      id: "play-mode",
+      label: t(theater ? "theater.action.normal_mode" : "theater.action.theater_mode"),
+      icon: theater ? "i-material-symbols-width-normal-outline" : "i-material-symbols-width-wide-outline",
+      key: "t",
+      onSelect: () => setMode(theater ? "normal" : "theater")
+    }
+  ];
+});
+
+// The episode ready for the stage, once it and its subtitles are read.
+const ready = computed<StagePlayer | null>(() => {
   const shown = episode.value;
 
   if (!shown || !tracksRead.value) return null;
@@ -189,6 +293,13 @@ const player = computed<StagePlayer | null>(() => {
     next: nextWords.value,
     autoNext: autoplay.value
   };
+});
+// The episode on the stage. While the next one is read the one before keeps standing, so the player is never taken
+// down between them and full screen goes on.
+const player = ref<StagePlayer | null>(null);
+
+watch(ready, (next) => {
+  if (next !== null) player.value = next;
 });
 
 const backPath = computed(() => {
@@ -213,6 +324,7 @@ watch([episodeId, () => route.query.playlist], () => void load(), { immediate: t
 async function load(): Promise<void> {
   failed.value = "";
   tracksRead.value = false;
+  reading.value = true;
 
   try {
     const read = await store.loadEpisode(episodeId.value);
@@ -231,8 +343,28 @@ async function load(): Promise<void> {
     if (!playlist.value && !read.granted && !store.episodes.value[read.titleId]) await store.loadEpisodes(read.titleId).catch(() => undefined);
   } catch (error) {
     failed.value = t(refusalWord(error));
+  } finally {
+    reading.value = false;
   }
 }
+
+function posterOf(shown: Episode): string | null {
+  return shown.hasPoster ? theaterAddress(paths.episodePoster(shown.id)) : null;
+}
+
+// Another episode opens at the top of what it is, and the list beside it brings the one playing into view.
+watch(episodeId, async () => {
+  await nextTick();
+
+  if (mainRef.value) mainRef.value.scrollTop = 0;
+  if (restRef.value) restRef.value.scrollTop = 0;
+});
+
+watch([section, playlist, layout], async () => {
+  await nextTick();
+
+  columnRef.value?.querySelector("[aria-current='true']")?.scrollIntoView({ block: "nearest" });
+});
 
 async function loadPlaylist(id: number): Promise<void> {
   try {
@@ -293,15 +425,19 @@ watch(
 </script>
 
 <style scoped>
-/* The player is as tall as its picture at the screen's width, leaving room under it; a phone on its side gives
-   it the screen less the bars above it. */
+/* The player is as tall as its picture at the width of the region it stands in, never so tall that less than a
+   sixth of the region stays under it; a phone on its side gives it the whole region under the bars. */
+.watch-main {
+  container-type: inline-size;
+}
+
 .theater-stage {
-  height: min(56.25vw, calc(100dvh - 12rem));
+  height: min(56.25cqw, 83.333%);
 }
 
 @media (orientation: landscape) and (max-height: 32rem) {
   .theater-stage {
-    height: calc(100dvh - 5.5rem);
+    height: 100%;
   }
 }
 </style>

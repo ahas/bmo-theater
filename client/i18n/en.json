@@ -19,6 +19,7 @@
       "move_up": "Move up",
       "new_playlist": "New playlist",
       "next_named": "Next: {name}",
+      "normal_mode": "Normal mode",
       "play": "Play",
       "play_named": "Play {name}",
       "refresh": "Refresh",
@@ -31,6 +32,7 @@
       "set_aside": "Remove from Continue watching",
       "share": "Share",
       "subtitles": "Subtitles",
+      "theater_mode": "Theater mode",
       "upload": "Upload",
       "upload_video": "Upload video"
     },

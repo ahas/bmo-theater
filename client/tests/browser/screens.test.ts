@@ -327,6 +327,210 @@ describe.skipIf(!ready)("the theater's screens", () => {
   }
 });
 
+// The player's screen (`docs/design.md`, 「The console」, the player's screen and the play modes): on a desktop the
+// player beside the list in its own column, scrolling on its own; theater mode by its control in the player's bar and
+// by t, the player across the whole width and the list under it; the mode kept from one episode to the next and in
+// the browser; and full screen kept as the next episode plays, left by going back and by Escape. On a phone the
+// player across the top and the list under it across the whole width, with no theater control, in either mode kept.
+
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+async function boxOf(page: Page, selector: string): Promise<Box> {
+  const found = await page.locator(selector).first().boundingBox();
+
+  if (found === null) throw new Error(`${selector} is not on the screen`);
+
+  return found;
+}
+
+async function layoutOf(page: Page): Promise<string | null> {
+  return page.getAttribute("[data-watch-layout]", "data-watch-layout");
+}
+
+async function watching(page: Page, path: string): Promise<void> {
+  await page.goto(`${origin}${path}`, { waitUntil: "load" });
+  await page.waitForFunction(() => (document.querySelector<HTMLVideoElement>("[data-player]")?.readyState ?? 0) >= 1, undefined, { timeout: 60_000 });
+  await page.locator("[data-watch-section] [aria-current='true']").first().waitFor({ timeout: 60_000 });
+}
+
+const inFullscreen = (page: Page) => page.waitForFunction(() => document.fullscreenElement?.matches("[data-video-player]") === true, undefined, { timeout: 10_000 });
+const outOfFullscreen = (page: Page) => page.waitForFunction(() => document.fullscreenElement === null, undefined, { timeout: 10_000 });
+
+// The player element the screen stands now, marked so the same element is known again after a move.
+async function markPlayer(page: Page): Promise<void> {
+  await page.$eval("[data-video-player]", (element) => element.setAttribute("data-marked", ""));
+}
+
+describe.skipIf(!ready)("the player's screen", () => {
+  const long = (number: number) => made().episodes.find((one) => one.titleId === 1 && one.season === 1 && one.number === number)!.id;
+  const modeControl = "[data-video-control='play-mode']";
+  const theaterWords = word(PACKS.ko, "theater.action.theater_mode")!;
+  const normalWords = word(PACKS.ko, "theater.action.normal_mode")!;
+
+  test(
+    "stands the list in its own column beside the player at 1280, and goes to theater mode and full screen and back",
+    async () => {
+      const { context, page } = await open(WIDTHS[0], "light");
+
+      try {
+        // Normal, where the viewer never chose: the player at the top of its column, the list beside it.
+        await watching(page, `/theater/watch/${long(6)}`);
+        expect(await layoutOf(page)).toBe("normal");
+
+        const main = await boxOf(page, "[data-watch-main]");
+        const stage = await boxOf(page, "[data-player-stage]");
+        const column = await boxOf(page, "[data-watch-list]");
+        const room = await boxOf(page, "[data-watch-layout]");
+
+        expect(Math.round(column.x)).toBeGreaterThanOrEqual(Math.round(main.x + main.width));
+        expect(Math.round(column.x + column.width)).toBe(Math.round(room.x + room.width));
+        expect(column.width / room.width).toBeGreaterThan(0.3);
+        expect(column.width / room.width).toBeLessThan(0.38);
+        expect(Math.abs(stage.width - main.width)).toBeLessThanOrEqual(1);
+        expect(Math.abs(stage.height - Math.min((main.width * 9) / 16, (main.height * 5) / 6))).toBeLessThanOrEqual(1);
+        expect(await page.locator("[data-watch-list] [data-watch-next]").count()).toBe(1);
+        expect(await page.locator("[data-watch-list] [data-watch-section] li").count()).toBe(45);
+        expect(await page.locator("[data-watch-list] [aria-current='true']").count()).toBe(1);
+
+        // The list scrolls on its own: the column moves, the player and what it is stay.
+        const scrolled = await page.$eval("[data-watch-list]", (element) => {
+          element.scrollTop = 400;
+
+          return { list: element.scrollTop, rest: document.querySelector("[data-watch-rest]")!.scrollTop, main: document.querySelector("[data-watch-main]")!.scrollTop };
+        });
+
+        expect(scrolled).toEqual({ list: 400, rest: 0, main: 0 });
+        expect((await boxOf(page, "[data-player-stage]")).y).toBe(stage.y);
+        expect(await page.getAttribute(modeControl, "aria-label")).toBe(theaterWords);
+        await noSidewaysScroll(page);
+        await shoot(page, WIDTHS[0], "light", "watch-normal");
+
+        // Theater mode by t: the player across the whole width, the list under what it is, the control naming normal.
+        await page.locator("body").focus();
+        await page.keyboard.press("t");
+        await page.waitForFunction(() => document.querySelector("[data-watch-layout]")?.getAttribute("data-watch-layout") === "theater");
+        await page.$eval("[data-watch-list]", () => undefined).then(
+          () => {
+            throw new Error("the list column still stands in theater mode");
+          },
+          () => undefined
+        );
+
+        const wideStage = await boxOf(page, "[data-player-stage]");
+        const wideRoom = await boxOf(page, "[data-watch-layout]");
+
+        expect(Math.abs(wideStage.width - wideRoom.width)).toBeLessThanOrEqual(1);
+        expect(Math.abs(wideStage.height - Math.min((wideRoom.width * 9) / 16, (wideRoom.height * 5) / 6))).toBeLessThanOrEqual(1);
+        expect(await page.locator("[data-watch-rest] [data-watch-section] li").count()).toBe(45);
+        expect((await boxOf(page, "[data-watch-rest] [data-watch-section]")).y).toBeGreaterThan(wideStage.y + wideStage.height);
+        expect(await page.getAttribute(modeControl, "aria-label")).toBe(normalWords);
+        expect(await page.evaluate(() => localStorage.getItem("bmo-theater-play-mode"))).toBe("theater");
+        await noSidewaysScroll(page);
+        await shoot(page, WIDTHS[0], "light", "watch-theater");
+
+        // The mode goes on to the next episode, the screen and its player standing still, and comes back with the page.
+        await markPlayer(page);
+        await page.locator("[data-watch-next] li").first().click();
+        await page.waitForURL(`**/theater/watch/${long(7)}`);
+        await page.waitForFunction((src) => document.querySelector("[data-player]")?.getAttribute("src")?.endsWith(src) === true, `/episodes/${long(7)}/stream`);
+        expect(await layoutOf(page)).toBe("theater");
+        expect(await page.locator("[data-video-player][data-marked]").count()).toBe(1);
+
+        await watching(page, `/theater/watch/${long(7)}`);
+        expect(await layoutOf(page)).toBe("theater");
+
+        // Full screen by f, kept as the next episode plays, and left by going back with the page staying where it is.
+        await page.keyboard.press("f");
+        await inFullscreen(page);
+        await markPlayer(page);
+        await page.locator(`[data-video-controls] button[aria-label^='${word(PACKS.ko, "theater.action.next_named")!.split("{")[0]}']`).click();
+        await page.waitForURL(`**/theater/watch/${long(8)}?play=1`);
+        await page.waitForFunction((src) => document.querySelector("[data-player]")?.getAttribute("src")?.endsWith(src) === true, `/episodes/${long(8)}/stream`);
+        expect(await page.evaluate(() => document.fullscreenElement?.matches("[data-video-player][data-marked]") === true)).toBe(true);
+        await page.evaluate(() => document.querySelector<HTMLVideoElement>("[data-player]")!.pause());
+        await shoot(page, WIDTHS[0], "light", "watch-fullscreen");
+
+        const address = page.url();
+
+        await page.evaluate(() => history.back());
+        await outOfFullscreen(page);
+        expect(page.url()).toBe(address);
+
+        // And by Escape.
+        await page.keyboard.press("f");
+        await inFullscreen(page);
+        await page.keyboard.press("Escape");
+        await outOfFullscreen(page);
+        expect(page.url()).toBe(address);
+
+        // Back to normal by the control itself.
+        await page.click(modeControl);
+        await page.waitForFunction(() => document.querySelector("[data-watch-layout]")?.getAttribute("data-watch-layout") === "normal");
+        expect(await page.locator("[data-watch-list] [aria-current='true']").count()).toBe(1);
+        expect(await page.evaluate(() => localStorage.getItem("bmo-theater-play-mode"))).toBe("normal");
+      } finally {
+        await context.close();
+      }
+    },
+    TEST_MS
+  );
+
+  test(
+    "stands the player across the top and the list under it at 360, in either mode kept, and goes to full screen and back",
+    async () => {
+      const { context, page } = await open(WIDTHS[1], "light");
+
+      try {
+        for (const kept of ["normal", "theater"] as const) {
+          await page.addInitScript((value) => localStorage.setItem("bmo-theater-play-mode", value), kept);
+          await watching(page, `/theater/watch/${long(6)}`);
+          expect(await layoutOf(page)).toBe("narrow");
+          expect(await page.locator("[data-watch-list]").count()).toBe(0);
+          expect(await page.locator(modeControl).count()).toBe(0);
+
+          const stage = await boxOf(page, "[data-player-stage]");
+          const room = await boxOf(page, "[data-watch-layout]");
+          const section = await boxOf(page, "[data-watch-rest] [data-watch-section]");
+
+          expect(Math.abs(stage.width - room.width)).toBeLessThanOrEqual(1);
+          expect(stage.y).toBe(room.y);
+          expect(Math.abs(section.width - room.width)).toBeLessThanOrEqual(1);
+          expect(await page.locator("[data-watch-rest] [data-watch-section] li").count()).toBe(45);
+
+          // What stands under the player scrolls under it, the player staying at the top.
+          await page.$eval("[data-watch-rest]", (element) => {
+            element.scrollTop = 600;
+          });
+          expect((await boxOf(page, "[data-player-stage]")).y).toBe(stage.y);
+          await page.$eval("[data-watch-rest]", (element) => {
+            element.scrollTop = 0;
+          });
+          await noSidewaysScroll(page);
+          await shoot(page, WIDTHS[1], "light", `watch-narrow-${kept}`);
+        }
+
+        // Full screen by its button, left by going back with the page staying where it is.
+        const address = page.url();
+
+        await page.locator("[data-video-fullscreen]").tap();
+        await inFullscreen(page);
+        await shoot(page, WIDTHS[1], "light", "watch-fullscreen");
+        await page.evaluate(() => history.back());
+        await outOfFullscreen(page);
+        expect(page.url()).toBe(address);
+      } finally {
+        await context.close();
+      }
+    },
+    TEST_MS
+  );
+});
+
 // A select's opened list, and the search field the layer stands at its top once it holds more than seven choices.
 const LIST = "[data-slot=focusScope]";
 const CHOICE = `${LIST} [role=option]`;

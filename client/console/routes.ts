@@ -18,7 +18,9 @@ const bundle: ConsoleBundleModule = {
     { path: "/theater", name: "theater", component: LibraryPage, meta: { consoleTitleBar: true } },
     { path: "/theater/browse", name: "theater-browse", component: BrowsePage, meta: { consoleTitleBar: true } },
     { path: "/theater/titles/:id", name: "theater-titles-id", component: TitlePage, meta: { consoleTitleBar: true } },
-    { path: "/theater/watch/:id", name: "theater-watch-id", component: WatchPage, meta: { consoleTitleBar: true } },
+    // The player's screen stays standing from one episode to the next (bmo-ui's `docs/console-bundles.md`, a screen
+    // that stays across addresses), so its player goes on with it.
+    { path: "/theater/watch/:id", name: "theater-watch-id", component: WatchPage, meta: { consoleTitleBar: true, key: "theater-watch" } },
     { path: "/theater/playlists", name: "theater-playlists", component: PlaylistsPage, meta: { consoleTitleBar: true } },
     { path: "/theater/playlists/:id", name: "theater-playlists-id", component: PlaylistPage, meta: { consoleTitleBar: true } },
     { path: "/theater/libraries", name: "theater-libraries", component: LibrariesPage, meta: { consoleTitleBar: true } },
