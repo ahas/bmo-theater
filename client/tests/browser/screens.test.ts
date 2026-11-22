@@ -361,6 +361,70 @@ async function watching(page: Page, path: string): Promise<void> {
 const inFullscreen = (page: Page) => page.waitForFunction(() => document.fullscreenElement?.matches("[data-video-player]") === true, undefined, { timeout: 10_000 });
 const outOfFullscreen = (page: Page) => page.waitForFunction(() => document.fullscreenElement === null, undefined, { timeout: 10_000 });
 
+// The list column moved by its splitter's own keys: End gives the player its most room and the list its least,
+// Home the other way.
+async function listAt(page: Page, key: "Home" | "End"): Promise<void> {
+  const before = (await boxOf(page, "[data-watch-list]")).width;
+
+  await page.locator("[data-watch-layout] [role=separator]").first().focus();
+  await page.keyboard.press(key);
+  await page.waitForFunction(
+    (width) => Math.round(document.querySelector("[data-watch-list]")!.getBoundingClientRect().width) !== Math.round(width),
+    before,
+    { timeout: 10_000 }
+  );
+}
+
+interface RowFacts {
+  name: string;
+  // The name's box as it stands, its words' own height and width, and one line's height.
+  width: number;
+  height: number;
+  wordsWidth: number;
+  wordsHeight: number;
+  line: number;
+  // Whether the length stands at the row's end, and whether the line under the name names it.
+  lengthAtEnd: boolean;
+  lengthUnder: boolean;
+}
+
+// Every episode row of a part of the screen, read as values: the name's box against its words, and where the length stands.
+async function rowsOf(page: Page, scope: string): Promise<RowFacts[]> {
+  return page.$$eval(`${scope} [data-watch-section] li, ${scope} [data-watch-next] li`, (rows) =>
+    rows.map((row) => {
+      const name = row.querySelector<HTMLElement>("[data-episode-name]")!;
+      const box = name.getBoundingClientRect();
+      const length = row.querySelector<HTMLElement>("[data-episode-length]")!;
+      const under = row.querySelector<HTMLElement>("[data-episode-line]");
+      const clock = length.textContent!.trim();
+
+      return {
+        name: name.textContent!.trim(),
+        width: box.width,
+        height: box.height,
+        wordsWidth: name.scrollWidth,
+        wordsHeight: name.scrollHeight,
+        line: parseFloat(getComputedStyle(name).lineHeight),
+        lengthAtEnd: getComputedStyle(length).display !== "none",
+        lengthUnder: under !== null && under.offsetParent !== null && under.innerText.includes(clock)
+      };
+    })
+  );
+}
+
+// A row keeps its name whole where two lines hold it, and cuts it only past a second line; its length stands in
+// exactly one place.
+function wrapsBeforeCut(rows: RowFacts[]): void {
+  expect(rows.length).toBeGreaterThan(0);
+
+  for (const row of rows) {
+    expect(row.wordsWidth).toBeLessThanOrEqual(Math.ceil(row.width));
+    if (row.wordsHeight > Math.ceil(row.height)) expect(row.height).toBeGreaterThanOrEqual(2 * row.line - 1);
+    else expect(row.height).toBeLessThanOrEqual(2 * row.line + 1);
+    expect(row.lengthAtEnd !== row.lengthUnder).toBe(true);
+  }
+}
+
 // The player element the screen stands now, marked so the same element is known again after a move.
 async function markPlayer(page: Page): Promise<void> {
   await page.$eval("[data-video-player]", (element) => element.setAttribute("data-marked", ""));
@@ -474,17 +538,19 @@ describe.skipIf(!ready)("the player's screen", () => {
         expect(await page.locator("[data-watch-list] [aria-current='true']").count()).toBe(1);
         expect(await page.evaluate(() => localStorage.getItem("bmo-theater-play-mode"))).toBe("normal");
 
-        // A name the column cuts short reads whole in its tooltip, on a screen still wide but with a narrower column.
+        // A name the column cuts short, past its two lines, reads whole in its tooltip, on a screen still wide but with
+        // the list at its narrowest.
         await page.setViewportSize({ width: 1000, height: 800 });
         const third = made().episodes.find((one) => one.titleId === 1 && one.season === 3 && one.number === 4)!;
         const named = made().episodes.find((one) => one.titleId === 1 && one.season === 3 && one.number === 5)!;
 
         await watching(page, `/theater/watch/${third.id}`);
+        await listAt(page, "End");
 
-        const cut = page.locator("[data-watch-list] [data-watch-section] li").filter({ hasText: named.name }).locator("span.truncate", { hasText: named.name });
+        const cut = page.locator("[data-watch-list] [data-watch-section] li").filter({ hasText: named.name }).locator("[data-episode-name]");
 
         expect(await page.$eval("[data-watch-list]", (element) => element.scrollWidth <= element.clientWidth)).toBe(true);
-        expect(await cut.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+        expect(await cut.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
         // The pointer lands on the card's link, which lies over the name.
         const over = (await cut.boundingBox())!;
 
@@ -492,6 +558,67 @@ describe.skipIf(!ready)("the player's screen", () => {
         await page.locator("[role=tooltip]", { hasText: named.name }).first().waitFor({ timeout: 10_000 });
       } finally {
         await context.close();
+      }
+    },
+    TEST_MS
+  );
+
+  test(
+    "lays each episode row by its own width: the name wraps to a second line before it is cut, at every list width and at 360",
+    async () => {
+      const { context, page } = await open(WIDTHS[0], "light");
+      const third = made().episodes.find((one) => one.titleId === 1 && one.season === 3 && one.number === 4)!;
+      const chapters = (rows: RowFacts[]) => rows.filter((row) => row.name.startsWith("Chapter "));
+      const longNames = (rows: RowFacts[]) => rows.filter((row) => row.name.startsWith("Long.Show."));
+
+      try {
+        // A season holding two names longer than a line, beside the player in the normal mode.
+        await watching(page, `/theater/watch/${third.id}`);
+        expect(await layoutOf(page)).toBe("normal");
+
+        for (const [key, least, most] of [[null, 0.3, 0.38], ["End", 0.24, 0.26], ["Home", 0.49, 0.51]] as const) {
+          if (key !== null) await listAt(page, key);
+
+          const room = await boxOf(page, "[data-watch-layout]");
+          const column = await boxOf(page, "[data-watch-list]");
+          const rows = await rowsOf(page, "[data-watch-list]");
+
+          expect(column.width / room.width).toBeGreaterThan(least);
+          expect(column.width / room.width).toBeLessThan(most);
+          wrapsBeforeCut(rows);
+          // A short name stands whole on one line, and a long one takes a second line rather than being cut on the first.
+          for (const row of chapters(rows)) {
+            expect(row.wordsHeight).toBeLessThanOrEqual(Math.ceil(row.height));
+            expect(row.height).toBeLessThan(1.5 * row.line);
+          }
+          expect(longNames(rows).length).toBeGreaterThanOrEqual(2);
+          if (key !== "Home") for (const row of longNames(rows)) expect(row.height).toBeGreaterThanOrEqual(2 * row.line - 1);
+          // The narrowest list puts the length under the name; the widest keeps it at the row's end.
+          if (key === "End") expect(rows.every((row) => row.lengthUnder)).toBe(true);
+          if (key === "Home") expect(rows.every((row) => row.lengthAtEnd)).toBe(true);
+          await noSidewaysScroll(page);
+        }
+        await shoot(page, WIDTHS[0], "light", "watch-rows-widest");
+        await context.close();
+
+        // A phone: the rows under the player, each name whole where two lines hold it, the length under it.
+        const phone = await open(WIDTHS[1], "light");
+
+        try {
+          await watching(phone.page, `/theater/watch/${third.id}`);
+          expect(await layoutOf(phone.page)).toBe("narrow");
+
+          const rows = await rowsOf(phone.page, "[data-watch-rest]");
+
+          wrapsBeforeCut(rows);
+          for (const row of chapters(rows)) expect(row.wordsHeight).toBeLessThanOrEqual(Math.ceil(row.height));
+          expect(rows.every((row) => row.lengthUnder)).toBe(true);
+          await shoot(phone.page, WIDTHS[1], "light", "watch-rows");
+        } finally {
+          await phone.context.close();
+        }
+      } finally {
+        await context.close().catch(() => undefined);
       }
     },
     TEST_MS

@@ -211,7 +211,10 @@ A console bundle, built from `client/`, stands under the sidebar entry the words
   for a clip, deleting it. A show then holds a choice of
   its seasons (the season of its up next chosen first, the choice standing in the address) and that season's
   episodes, each a row of its poster, its number and name, its length, a bar where it is partly watched and a
-  mark where it is watched, its own menu holding what is done with it. Specials stand last among the seasons
+  mark where it is watched, its own menu holding what is done with it. An episode row, here and in every list
+  of episodes, is laid out by its own width, never the window's: where it is narrow (on a phone, or in the list
+  beside the player) the poster takes its smaller size and the length and the watched mark stand on the line
+  under the name, and the name wraps to a second line before it is cut. Specials stand last among the seasons
   under their own name, and extras stand apart after the seasons, never at the end of an episode list. A film
   or a clip title of one episode shows no list of episodes at all.
 - **The playlists:** made, renamed, reordered (dragged by a handle, moved by its arrow keys, or on a phone by
