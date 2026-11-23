@@ -1,3 +1,5 @@
+**English** | [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
+
 # bmo-theater
 
 The platform's store of videos as one service: titles made of episodes, from videos filed as outputs into its
@@ -16,10 +18,12 @@ database of its own on the suite's server and a file root of its own: a file's n
 (`names.rs`), the subtitle formats converted (`subtitles.rs`), ranges served (`range.rs`), progress and the next
 episode (`progress.rs`), a library planned, scanned, streamed, rescanned and burned over tiny videos ffmpeg makes,
 and a video filed by upload and by path (`scan.rs`, skipped where ffmpeg is not installed), the realms, the
-guard, playlists and positions (`realms.rs`), share links (`shares.rs`), grants (`grants.rs`), the console face (`console.rs`), the
-OpenAPI document (`openapi.rs`) and the repository's own checks (`repository.rs`). The tool's crate carries its
-own harness, `tools/theater/tests/main.rs`, against a stand-in theater service. The console bundle's tests stand in
-`client/tests/`, run by `bun run check` against a Bun stand-in of the service.
+guard, playlists and positions (`realms.rs`), the orders a list of titles takes (`orders.rs`), continue watching and
+next up (`watching.rs`), a work renamed, moved and deleted (`work.rs`), share links (`shares.rs`), grants
+(`grants.rs`), the console face (`console.rs`), the OpenAPI document (`openapi.rs`) and the repository's own checks
+(`repository.rs`). The tool's crate carries its own harness, `tools/theater/tests/main.rs`, against a stand-in
+theater service. The console bundle's tests stand in `client/tests/`, run by `bun run check` against a Bun
+stand-in of the service.
 
 ## Layout
 
@@ -33,7 +37,8 @@ own harness, `tools/theater/tests/main.rs`, against a stand-in theater service. 
 | `tests/` | The crate's one test harness and what its modules share |
 
 At the root stand the Cargo manifest, `Cargo.lock`, `testbed.toml`, `rustfmt.toml`, `settings.toml` (the
-defaults built into the binary), `CLAUDE.md`, `PERSONAL-DATA.md` and `LICENSE`.
+defaults built into the binary), `CLAUDE.md`, `PERSONAL-DATA.md`, `LICENSE`, and this README with its Korean,
+Japanese and Chinese translations.
 
 ## Commands
 
@@ -41,6 +46,8 @@ defaults built into the binary), `CLAUDE.md`, `PERSONAL-DATA.md` and `LICENSE`.
 - `bmo-theater migrate` brings the database to its schema and ends.
 - `bmo-theater health` ends 0 where the service its settings name answers ready.
 - `bmo-theater openapi` prints the OpenAPI document, which `docs/openapi.json` holds.
+- `bmo-theater console-reach` prints how a console reaches the service, as one JSON object, for a deployment's
+  console probe.
 - `bmo-theater tool-env` writes the data root's `env/theater.env`, where the tool finds the service.
 
 The settings are read from the binary's built-in `settings.toml`, then the deployment's `settings.toml` and
