@@ -1,0 +1,81 @@
+# What installing the theater on a fresh machine needs, read by the testbed's install verb (bmo-testbed's
+# docs/install.md, 「The install declaration」). The settings are docs/api.md's 「Settings」.
+
+install = 1
+
+restart = "systemctl --user restart bmo-theater.service"
+
+[[needs]]
+program = "cargo"
+what = "Builds the service and the tool; the Rust toolchain from https://rustup.rs."
+
+[[needs]]
+program = "bun"
+what = "Builds the console bundle at every release; the Bun runtime from https://bun.sh."
+
+[[needs]]
+program = "psql"
+what = "The theater's tables stand on a PostgreSQL server on this machine; the postgresql package, with a role for this account that may create databases."
+
+[[needs]]
+program = "ffmpeg"
+what = "Burns subtitles in and converts the videos filed; the ffmpeg package."
+
+[[needs]]
+program = "ffprobe"
+what = "Reads a video's streams and length as it is filed or indexed; the ffmpeg package."
+
+[[port]]
+name = "theater.server"
+number = 13128
+
+[[token]]
+name = "theater.service"
+file = "env/theater-service.token"
+
+[[token]]
+name = "theater.console"
+file = "env/theater-console.token"
+
+[[database]]
+name = "bmo_theater"
+
+# The release's settings.local.toml. The file root stands under the data root; a share link's url stands under the
+# console's share screen at its public address; the tool acts for the owner's account.
+[[settings]]
+file = "env/theater.toml"
+text = """
+[server]
+listen = "127.0.0.1:{{port.theater.server}}"
+token = "{{token.theater.service}}"
+data_root = "{{data_root}}"
+
+[console]
+token = "{{token.theater.console}}"
+
+[database]
+url = "postgres:///bmo_theater?host=/var/run/postgresql"
+
+[files]
+root = "{{data_root}}/theater/files"
+
+[media]
+ffmpeg = "ffmpeg"
+ffprobe = "ffprobe"
+
+[share]
+address = "{{input.web.public-address}}theater/share"
+
+[tool]
+account = "{{value.web.owner-account}}"
+"""
+
+[[line]]
+file = "env/web-console.env"
+key = "THEATER_ADDRESS"
+value = "http://127.0.0.1:{{port.theater.server}}"
+
+[[line]]
+file = "env/web-console.env"
+key = "THEATER_TOKEN"
+value = "{{token.theater.console}}"

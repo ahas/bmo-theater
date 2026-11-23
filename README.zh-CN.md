@@ -31,7 +31,7 @@ Range 响应(`range.rs`)、进度与下一集(`progress.rs`)、用 ffmpeg 生成
 | `docs/` | 说明服务是什么及其边界的权威文档,以及 OpenAPI 文档 |
 | `tests/` | 该 crate 唯一的测试 harness,以及各模块共享的内容 |
 
-根目录下有 Cargo 清单、`Cargo.lock`、`testbed.toml`、`rustfmt.toml`、`settings.toml`(编译进二进制的默认值)、
+根目录下有 Cargo 清单、`Cargo.lock`、`testbed.toml`、`install.toml`（在新机器上安装本单元所需的内容）、`rustfmt.toml`、`settings.toml`(编译进二进制的默认值)、
 `CLAUDE.md`、`PERSONAL-DATA.md`、`LICENSE`,以及本 README 和它的韩文、日文、中文译本。
 
 ## 命令

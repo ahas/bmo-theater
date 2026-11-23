@@ -36,7 +36,7 @@ stand-in of the service.
 | `docs/` | The canonical statements of what the service is and its boundary, and the OpenAPI document |
 | `tests/` | The crate's one test harness and what its modules share |
 
-At the root stand the Cargo manifest, `Cargo.lock`, `testbed.toml`, `rustfmt.toml`, `settings.toml` (the
+At the root stand the Cargo manifest, `Cargo.lock`, `testbed.toml`, `install.toml` (what installing the unit on a fresh machine needs), `rustfmt.toml`, `settings.toml` (the
 defaults built into the binary), `CLAUDE.md`, `PERSONAL-DATA.md`, `LICENSE`, and this README with its Korean,
 Japanese and Chinese translations.
 

@@ -35,7 +35,7 @@ ffmpeg で作るごく小さな動画を使ったライブラリの計画・ス�
 | `docs/` | サービスが何であるかとその境界を定める正典ドキュメント、および OpenAPI ドキュメント |
 | `tests/` | クレート唯一のテストハーネスと、各モジュールが共有するもの |
 
-ルートには、Cargo マニフェスト、`Cargo.lock`、`testbed.toml`、`rustfmt.toml`、`settings.toml`(バイナリに組み込まれる
+ルートには、Cargo マニフェスト、`Cargo.lock`、`testbed.toml`、`install.toml`（新しいマシンにユニットをインストールするのに必要なもの）、`rustfmt.toml`、`settings.toml`(バイナリに組み込まれる
 既定値)、`CLAUDE.md`、`PERSONAL-DATA.md`、`LICENSE`、そしてこの README とその韓国語・日本語・中国語訳があります。
 
 ## コマンド

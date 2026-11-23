@@ -34,7 +34,7 @@ Bun으로 만든 대역 서비스를 상대로 `bun run check`가 실행합니�
 | `docs/` | 서비스가 무엇인지와 그 경계를 정한 정본 문서, 그리고 OpenAPI 문서 |
 | `tests/` | 크레이트의 유일한 테스트 하네스와 모듈들이 공유하는 코드 |
 
-루트에는 Cargo 매니페스트, `Cargo.lock`, `testbed.toml`, `rustfmt.toml`, `settings.toml`(바이너리에 내장되는 기본값),
+루트에는 Cargo 매니페스트, `Cargo.lock`, `testbed.toml`, `install.toml`(새 머신에 유닛을 설치하는 데 필요한 것), `rustfmt.toml`, `settings.toml`(바이너리에 내장되는 기본값),
 `CLAUDE.md`, `PERSONAL-DATA.md`, `LICENSE`, 그리고 이 README와 그 한국어·일본어·중국어 번역이 있습니다.
 
 ## 명령
