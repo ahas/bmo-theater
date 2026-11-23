@@ -12,6 +12,12 @@ build = 'cargo build --release -p theater-tool && cp "$BMO_CARGO_TARGET/release/
 check = 'cargo test -p theater-tool'
 run = ["theater-tool"]
 
+[app]
+key = "theater"
+name = "Theater"
+description = "The video library: playlists, progress and subtitles."
+icon = "i-lucide-clapperboard"
+
 [[entry]]
 namespace = "bmo"
 name = "theater_titles"
