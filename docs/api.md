@@ -297,9 +297,10 @@ The share head is `title` (the episode's name led by its title's, or the playlis
 `type` (`video.episode` for a show's episode, `video.movie` for any other episode, `video.other` for a
 playlist), `image` (the poster's share read, where the episode or the playlist's first episode has a poster),
 `description` (the title's description where it has one), `locale` and `siteName`, the bundle's words
-`theater.share.locale` and `theater.share.siteName` in the asked language (English where it holds none of
-it; `en_US` and `Theater` where no face is served). A link has no public address where the settings name no
-share address, so its head is then 404 `not-found` and a console writes no head for it.
+`theater.share.locale` and `theater.share.siteName` in the asked language, looked up by the tag as asked,
+then by its primary subtag, `zh` answered by `zh-CN` (English where it holds none of it; `en_US` and
+`Theater` where no face is served). A link has no public address where the settings name no share address,
+so its head is then 404 `not-found` and a console writes no head for it.
 
 ## Grants
 
@@ -376,8 +377,9 @@ Where the settings name no console credential, or the folder does not make a fac
 service says why as it starts and serves no face: its manifest and its files are answered 404 `no-route`, the
 console leaves the theater out, and the theater's other routes are answered as ever.
 
-The words carry, beside the screens' own, `theater.title` (the sidebar's name) and `theater.share.locale`
-and `theater.share.siteName` for the share head.
+The words are one tree to a locale, `en`, `ko`, `ja` and `zh-CN`, each holding the same keys; they carry,
+beside the screens' own, `theater.title` (the sidebar's name) and `theater.share.locale` and
+`theater.share.siteName` for the share head.
 
 ## The tool
 

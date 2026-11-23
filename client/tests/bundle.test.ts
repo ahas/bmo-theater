@@ -4,9 +4,9 @@ import { join } from "node:path";
 
 import { parse } from "vue/compiler-sfc";
 
-import { PACKS, keysOf, word } from "./words";
+import { LOCALES, PACKS, keysOf, word } from "./words";
 
-// The bundle as a console finds it: the words every key the screens ask for in both locales
+// The bundle as a console finds it: the words every key the screens ask for in every locale
 // under the bundle's namespace, the words the service's share head and sidebar read, and no Korean anywhere in
 // the code.
 
@@ -64,9 +64,17 @@ function within(elements: Element[]): Element[] {
 const templates = sources.filter((path) => path.endsWith(".vue")).map((path) => ({ path, elements: within(templateOf(path)) }));
 
 describe("the words", () => {
-  test("both locales hold the same keys, all under the bundle's namespace", () => {
-    expect(keysOf(PACKS.en).sort()).toEqual(keysOf(PACKS.ko).sort());
-    expect(keysOf(PACKS.ko).every((key) => key.startsWith("theater."))).toBe(true);
+  test("every locale holds the same keys in the same order, all under the bundle's namespace", () => {
+    for (const locale of LOCALES) expect([locale, keysOf(PACKS[locale])]).toEqual([locale, keysOf(PACKS.en)]);
+    expect(keysOf(PACKS.en).every((key) => key.startsWith("theater."))).toBe(true);
+  });
+
+  test("every locale's word holds the marks the English one does", () => {
+    const marks = (text: string | undefined) => [...(text ?? "").matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
+
+    for (const locale of LOCALES) {
+      for (const key of keysOf(PACKS.en)) expect([locale, key, marks(word(PACKS[locale], key))]).toEqual([locale, key, marks(word(PACKS.en, key))]);
+    }
   });
 
   test("every key the screens ask for is held", () => {
@@ -77,17 +85,18 @@ describe("the words", () => {
     for (const key of asked) expect([key, word(PACKS.ko, key)]).toEqual([key, expect.any(String)]);
   });
 
-  test("the sidebar's name and the share head's locale and site name stand in both locales", () => {
-    for (const key of ["theater.title", "theater.share.locale", "theater.share.siteName"]) {
-      expect([key, typeof word(PACKS.ko, key), typeof word(PACKS.en, key)]).toEqual([key, "string", "string"]);
-    }
+  test("the sidebar's name and the share head's locale and site name stand in every locale", () => {
+    for (const locale of LOCALES) {
+      for (const key of ["theater.title", "theater.share.locale", "theater.share.siteName"]) expect([locale, key, typeof word(PACKS[locale], key)]).toEqual([locale, key, "string"]);
 
-    expect(word(PACKS.en, "theater.share.locale")).toMatch(/^[a-z]{2}_[A-Z]{2}$/);
-    expect(word(PACKS.ko, "theater.share.locale")).toMatch(/^[a-z]{2}_[A-Z]{2}$/);
+      expect([locale, word(PACKS[locale], "theater.share.locale")]).toEqual([locale, expect.stringMatching(/^[a-z]{2}_[A-Z]{2}$/)]);
+    }
   });
 
   test("no word carries a mark the translator would read as its own syntax", () => {
-    for (const key of keysOf(PACKS.ko)) expect([key, /[@|$]/.test(word(PACKS.ko, key)! + word(PACKS.en, key)!)]).toEqual([key, false]);
+    for (const locale of LOCALES) {
+      for (const key of keysOf(PACKS.en)) expect([locale, key, /[@|$]/.test(word(PACKS[locale], key)!)]).toEqual([locale, key, false]);
+    }
   });
 });
 

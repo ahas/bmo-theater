@@ -175,7 +175,8 @@ file.
 
 ## The console
 
-A console bundle, built from `client/`, stands under the sidebar entry the words name:
+A console bundle, built from `client/`, stands under the sidebar entry the words name, its words in English,
+Korean, Japanese and Simplified Chinese:
 
 - **The library:** the reader's own realm in one tab and the organization's in another, each a column of
   rows, and a video filed from the browser as a clip, under a title of the realm or a new one, its bytes sent

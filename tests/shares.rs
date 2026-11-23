@@ -9,7 +9,12 @@ use crate::support::{MEMBER_A, MEMBER_B, Service};
 
 #[tokio::test]
 async fn a_link_opens_what_it_names_and_nothing_else() {
-  let service = Service::start_with(Some(json!({ "en": { "theater": { "title": "Theater", "share": { "locale": "en_US", "siteName": "The Theater" } } } }))).await;
+  let service = Service::start_with(Some(json!({
+    "en": { "theater": { "title": "Theater", "share": { "locale": "en_US", "siteName": "The Theater" } } },
+    "ja": { "theater": { "title": "Theater", "share": { "locale": "ja_JP", "siteName": "Theater ja" } } },
+    "zh-CN": { "theater": { "title": "Theater", "share": { "locale": "zh_CN", "siteName": "Theater zh" } } }
+  })))
+  .await;
   let team = service.seed_title("organization", "", "Team").await;
   let own = service.seed_title("mine", MEMBER_A, "Own").await;
   let episode = service.seed_episode(team, 1, 60_000, 1000).await;
@@ -72,6 +77,15 @@ async fn a_link_opens_what_it_names_and_nothing_else() {
   assert_eq!(head["type"], "video.episode");
   assert_eq!(head["siteName"], "The Theater");
   assert_eq!(head["url"], link["url"]);
+  for (language, locale) in [("ja", "ja_JP"), ("zh", "zh_CN"), ("zh-CN", "zh_CN"), ("fr", "en_US")] {
+    let head: Value = service
+      .shared(&format!("/shares/{token}/head?language={language}"), &[])
+      .await
+      .json()
+      .await
+      .unwrap();
+    assert_eq!((language, head["locale"].as_str()), (language, Some(locale)));
+  }
 
   let (_, listed) = service
     .member(MEMBER_A, Method::GET, &format!("/shares?episodeId={episode}"), None)

@@ -18,7 +18,8 @@ share links. `docs/design.md` states what it is; `docs/api.md` is the boundary c
   `cargo check` on the crates a change marks, and its Cargo workspace check, `cargo fmt --check` and
   `cargo clippy --all-targets` with every warning an error; `cargo test` through the testbed; the client's
   `bun run check`.
-- **English only** in code, documents, tests and commits; Korean in the bundle's `ko` words alone.
+- **English only** in code, documents, tests and commits; Korean, Japanese and Chinese in the bundle's
+  `ko`, `ja` and `zh-CN` words alone.
 - **No personal data, no names of agents, owners or hosts** in code, documents or commits; a path that
   differs by installation is a setting.
 - **Versions:** `0.1.0-rev.N` until a release the owner declares; no sibling version pins.

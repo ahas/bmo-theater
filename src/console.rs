@@ -20,6 +20,23 @@ const WORDS_FILE: &str = "words.json";
 /// The words the face holds are read in English where the asked language holds none of a word.
 const FALLBACK_LOCALE: &str = "en";
 
+/// The one Chinese the words speak, under the code its pack is named by: a console asks by the primary
+/// language subtag alone, `zh`, which this locale answers.
+const CHINESE_LOCALE: &str = "zh-CN";
+
+/// The locales a language tag is looked up under, most exact first: the tag as asked, its primary subtag in
+/// lower case, and the pack's own Chinese where that subtag is `zh`.
+fn locales_of(language: &str) -> Vec<String> {
+  let asked = language.trim();
+  let primary = asked.split(['-', '_']).next().unwrap_or_default().to_ascii_lowercase();
+  let mut locales = vec![asked.to_owned(), primary.clone()];
+  if primary == "zh" {
+    locales.push(CHINESE_LOCALE.to_owned());
+  }
+  locales.retain(|locale| !locale.is_empty());
+  locales
+}
+
 /// The face over the bundle built into `folder`, guarded by `credential`, or why it cannot be served.
 pub fn face(folder: &Path, credential: &str) -> Result<ConsoleFace, ConsoleFaceError> {
   let bundle = BundleFolder::new(folder, MODULE_FILE, WORDS_FILE).with_stylesheet(STYLESHEET_FILE);
@@ -28,12 +45,11 @@ pub fn face(folder: &Path, credential: &str) -> Result<ConsoleFace, ConsoleFaceE
 
 /// A word of the face's words in `language`, else in English, where either holds it: `key` a dotted path.
 pub fn word(face: &ConsoleFace, language: Option<&str>, key: &str) -> Option<String> {
-  let language = language
-    .map(|language| language.trim().to_ascii_lowercase())
-    .filter(|language| !language.is_empty());
   language
-    .as_deref()
-    .and_then(|language| face.word(language, key))
+    .map(locales_of)
+    .unwrap_or_default()
+    .iter()
+    .find_map(|locale| face.word(locale, key))
     .or_else(|| face.word(FALLBACK_LOCALE, key))
     .map(str::to_owned)
 }
