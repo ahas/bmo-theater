@@ -54,7 +54,7 @@ data_root = "{{data_root}}"
 token = "{{token.theater.console}}"
 
 [database]
-url = "postgres:///bmo_theater?host=/var/run/postgresql"
+url = "postgres:///bmo_theater?host={{postgres.host}}&port={{postgres.port}}"
 
 [files]
 root = "{{data_root}}/theater/files"
