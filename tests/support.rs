@@ -85,6 +85,30 @@ async fn admin() -> PgConnection {
   PgConnection::connect_with(&options).await.expect("the test server answers")
 }
 
+/// An empty database of the test's own, named and reached by its pool; `dropped` takes it away.
+pub async fn blank() -> (String, PgPool) {
+  let database = format!("bmo_rs_copy_{}_{}", std::process::id(), COUNT.fetch_add(1, Ordering::Relaxed));
+  let mut admin = admin().await;
+  admin
+    .execute(format!("CREATE DATABASE \"{database}\" TEMPLATE template0 ENCODING 'UTF8'").as_str())
+    .await
+    .unwrap();
+  admin.close().await.unwrap();
+  let pool = PgPool::connect(&address_of(&database)).await.unwrap();
+  (database, pool)
+}
+
+/// A database `blank` made, its pool closed and the database dropped.
+pub async fn dropped(database: &str, pool: PgPool) {
+  pool.close().await;
+  let mut admin = admin().await;
+  admin
+    .execute(format!("DROP DATABASE IF EXISTS \"{database}\" WITH (FORCE)").as_str())
+    .await
+    .unwrap();
+  admin.close().await.unwrap();
+}
+
 /// A fresh folder of the test's own.
 pub fn scratch() -> PathBuf {
   let folder = std::env::temp_dir().join(format!(

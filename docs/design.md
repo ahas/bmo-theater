@@ -173,6 +173,17 @@ A library's files stay where they are; the file root holds nothing of them but t
 filed or burned episode deletes its file; deleting a library's episode is refused, since it goes with its
 file.
 
+## The schema
+
+- **The schema starts at the 1.0.0 baseline,** migration number 100, which makes every table and index the
+  theater keeps. Every later change to the schema is a migration numbered after it; the service applies each
+  once, in order, under a lock, as it starts, and records it in `theater_migrations`.
+- **An install from before 1.0.0 is taken as it stands.** A database whose record holds every migration of the
+  last release before 1.0.0, numbers 1 to 3, and nothing else, already holds the baseline's schema: the record
+  is rewritten to hold the baseline alone, in one transaction, and no table and no row is touched. A database
+  whose record holds only part of them is refused, with the number it stopped at; it is brought to the last
+  release before 1.0.0 by that release first.
+
 ## The console
 
 A console bundle, built from `client/`, stands under the sidebar entry the words name, its words in English,

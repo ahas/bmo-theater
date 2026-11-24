@@ -3,6 +3,7 @@
 
 mod support;
 
+mod baseline;
 mod console;
 mod grants;
 mod names;
