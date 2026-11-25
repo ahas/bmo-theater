@@ -28,6 +28,13 @@ use crate::app::App;
 use crate::settings::Settings;
 use crate::wire::now_ms;
 
+/// The version this build answers with: the set's, which the testbed hands the build as `BMO_VERSION`, else
+/// the manifest's placeholder (bmo-chat's `docs/conventions.md`, 「Versions」).
+pub const VERSION: &str = match option_env!("BMO_VERSION") {
+  Some(version) => version,
+  None => env!("CARGO_PKG_VERSION"),
+};
+
 /// Brings the database to its schema, and answers the routes on the settings' address until the process is told
 /// to stop, the open event streams ended at once; behind them it reads the size of every poster kept before its
 /// size was read.

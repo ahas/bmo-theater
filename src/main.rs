@@ -13,7 +13,7 @@ use bmo_theater::wire::Health;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "bmo-theater", version, about = "The theater service and its command.")]
+#[command(name = "bmo-theater", version = bmo_theater::VERSION, about = "The theater service and its command.")]
 struct Command {
   #[command(subcommand)]
   verb: Verb,

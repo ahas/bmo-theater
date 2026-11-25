@@ -172,7 +172,7 @@ async fn health(State(app): Shared, headers: HeaderMap) -> Answer<Json<Health>> 
   Ok(Json(Health {
     ready: reason.is_none(),
     reason,
-    version: env!("CARGO_PKG_VERSION").to_owned(),
+    version: crate::VERSION.to_owned(),
   }))
 }
 
