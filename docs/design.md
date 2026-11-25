@@ -296,6 +296,12 @@ Korean, Japanese and Simplified Chinese:
 
 Every screen keeps to the event stream, so what changes anywhere is shown where it stands.
 
+The rows a screen shows are the reader standing there's. The library, the playlists and the libraries read
+their realm's rows again every time they open, letting go of what an earlier opening held before the new
+reading answers; a title's screen reads its title and its episodes the same way, and every screen asks again
+whether its reader administers the theater. The console hands the same page to another reader without drawing
+it again, so nothing read for one reader may stand as another's.
+
 The bar over a screen and the row under it keep bmo-ui's console plugin contract (bmo-ui
 `docs/console-bundles.md`, 「How a bundle mounts」, the title bar and the screen's own row). The theater's
 row is the row of its screens on the library, the playlists and the libraries, and the screen's toolbar on a

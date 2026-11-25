@@ -292,12 +292,13 @@ async function remove(episode: Episode): Promise<void> {
   if (sure && (await store.deleteEpisode(episode))) void store.loadProgress("title", titleId.value);
 }
 
+// The title and its episodes are read again every time the screen opens the title, so what stands here was
+// read for the reader standing here (`docs/design.md`, 「The console」).
 async function load(): Promise<void> {
   failed.value = "";
 
   try {
-    if (!store.titleOf(titleId.value)) await store.loadTitle(titleId.value);
-    await Promise.all([store.loadEpisodes(titleId.value), store.loadProgress("title", titleId.value)]);
+    await Promise.all([store.openTitle(titleId.value), store.loadProgress("title", titleId.value)]);
   } catch (error) {
     failed.value = t(refusalWord(error));
   }
@@ -307,7 +308,6 @@ async function refresh(): Promise<void> {
   refreshing.value = true;
 
   try {
-    await store.loadTitle(titleId.value).catch(() => undefined);
     await load();
   } finally {
     refreshing.value = false;

@@ -10,9 +10,11 @@ import type { Burn, Episode, Library, Permission, Playlist, Position, Progress, 
 // watching and next up in each, the episodes, the progress and the subtitles of what has been opened, the burns
 // of what is being burned, and the libraries.
 //
-// A list is read once and kept, and the service's event stream keeps it current: a member made, changed or
-// deleted anywhere is put in or taken out where it is held. A change of a playlist's order is drawn at once and
-// sent behind it; a refusal takes it back and says why.
+// A list is read once for an opening and kept while a screen stands on it, and the service's event stream
+// keeps it current: a member made, changed or deleted anywhere is put in or taken out where it is held. A
+// screen's opening reads its lists again, letting go of what an earlier opening held before the new reading
+// answers, so what stands is always the reader standing there's (`docs/design.md`, 「The console」). A change
+// of a playlist's order is drawn at once and sent behind it; a refusal takes it back and says why.
 
 /** A word the store has for the reader, as a key of the bundle's words and what fills it. */
 export interface Notice {
@@ -546,12 +548,14 @@ export function createTheaterStore(options: StoreOptions) {
 
   // ---- Libraries ----------------------------------------------------------------------------------
 
+  /** Whether the reader standing here administers the theater, asked again for every screen that opens:
+   *  it is the reader's own, never the answer an earlier reader was given. */
   async function checkAdministrator(): Promise<boolean> {
-    if (administrator.value !== null) return administrator.value;
-
     try {
       administrator.value = await api.administers();
     } catch {
+      administrator.value = null;
+
       return false;
     }
 
@@ -736,6 +740,59 @@ export function createTheaterStore(options: StoreOptions) {
     }
   }
 
+  // ---- Openings -----------------------------------------------------------------------------------
+
+  // What a screen draws is read for the reader standing there (`docs/design.md`, 「The console」): an opening
+  // lets go of what an earlier opening held before its reading answers, so a page the console hands to
+  // another reader without drawing it again never draws what the first reader was shown.
+
+  /** Opens a realm's library rows: its titles, its playlists and the viewer's rows in it. */
+  function openLibrary(realm: Realm): Promise<unknown> {
+    titles.value = { ...titles.value, [realm]: [] };
+    titlesRead.value = { ...titlesRead.value, [realm]: false };
+    titlesFailed.value = { ...titlesFailed.value, [realm]: false };
+    forgetPlaylists(realm);
+    watching.value = { ...watching.value, [realm]: null };
+    nextUp.value = { ...nextUp.value, [realm]: null };
+
+    return Promise.all([loadTitles(realm), loadPlaylists(realm), loadWatching(realm), loadNextUp(realm)]);
+  }
+
+  /** Opens a realm's playlists. */
+  function openPlaylists(realm: Realm): Promise<void> {
+    forgetPlaylists(realm);
+
+    return loadPlaylists(realm);
+  }
+
+  function forgetPlaylists(realm: Realm): void {
+    playlists.value = { ...playlists.value, [realm]: [] };
+    playlistsRead.value = { ...playlistsRead.value, [realm]: false };
+    playlistsFailed.value = { ...playlistsFailed.value, [realm]: false };
+  }
+
+  /** Opens the registered libraries. */
+  function openLibraries(): Promise<void> {
+    libraries.value = [];
+    librariesRead.value = false;
+    librariesFailed.value = false;
+
+    return loadLibraries();
+  }
+
+  /** Opens one title: the title and the episodes under it. */
+  function openTitle(id: number): Promise<unknown> {
+    const { [id]: _held, ...kept } = opened.value;
+
+    opened.value = kept;
+
+    const { [id]: _listed, ...keptEpisodes } = episodes.value;
+
+    episodes.value = keptEpisodes;
+
+    return Promise.all([loadTitle(id), loadEpisodes(id)]);
+  }
+
   return {
     titles,
     titlesRead,
@@ -761,6 +818,10 @@ export function createTheaterStore(options: StoreOptions) {
     loadWatching,
     loadNextUp,
     setAside,
+    openLibrary,
+    openPlaylists,
+    openLibraries,
+    openTitle,
     loadTitle,
     loadEpisodes,
     loadEpisode,

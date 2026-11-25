@@ -67,7 +67,7 @@ import type { Library } from "../../../shared/types";
 
 const { t } = useI18n();
 const store = useTheater();
-const { administrator, libraries, librariesRead, librariesFailed, loadLibraries, checkAdministrator } = store;
+const { administrator, libraries, librariesRead, librariesFailed, checkAdministrator } = store;
 
 const chosen = ref<Library | null>(null);
 const registering = ref(false);
@@ -88,12 +88,16 @@ watch(
   administrator,
   (administers) => {
     if (administers === false) void navigateTo("/theater", { replace: true });
-    else if (administers && !librariesRead.value) void loadLibraries();
   },
   { immediate: true }
 );
 
-void checkAdministrator();
+// Whether the reader administers and which folders stand are both asked again for this opening, and the
+// folders are read once the answer says the reader standing here administers (`docs/design.md`,
+// 「The console」).
+void checkAdministrator().then((administers) => {
+  if (administers) void store.openLibraries();
+});
 
 function openRename(library: Library): void {
   chosen.value = library;
@@ -114,11 +118,11 @@ async function refresh(): Promise<void> {
   refreshing.value = true;
 
   try {
-    await loadLibraries();
+    await store.openLibraries();
   } finally {
     refreshing.value = false;
   }
 }
 
-useTheaterEvents(() => void loadLibraries());
+useTheaterEvents(() => void store.openLibraries());
 </script>

@@ -139,18 +139,10 @@ const actions = computed<BarAction[]>(() => [
   { id: "refresh", label: t("theater.action.refresh"), icon: "i-material-symbols-refresh", loading: refreshing.value, onSelect: () => void refresh() }
 ]);
 
-function load(asked: typeof realm.value): Promise<unknown> {
-  return Promise.all([store.loadTitles(asked), store.loadPlaylists(asked), store.loadWatching(asked), store.loadNextUp(asked)]);
-}
-
-watch(
-  realm,
-  (asked) => {
-    if (!titlesRead.value[asked]) void load(asked);
-    else void Promise.all([store.loadWatching(asked), store.loadNextUp(asked)]);
-  },
-  { immediate: true }
-);
+// The realm's rows are read again every time the screen opens it: what an earlier opening held is the
+// reader who read it's, and the console hands this page to another reader without drawing it again
+// (`docs/design.md`, 「The console」).
+watch(realm, (asked) => void store.openLibrary(asked), { immediate: true });
 
 // What the viewer watched elsewhere moves continue watching and next up; they are read again, one read at a time.
 let rereading: Promise<unknown> | null = null;
@@ -181,7 +173,7 @@ async function refresh(): Promise<void> {
   refreshing.value = true;
 
   try {
-    await load(realm.value);
+    await store.openLibrary(realm.value);
   } finally {
     refreshing.value = false;
   }
@@ -189,5 +181,5 @@ async function refresh(): Promise<void> {
 
 useKeptScroll(scrollerRef, () => titlesRead.value[realm.value]);
 
-useTheaterEvents(() => void load(realm.value));
+useTheaterEvents(() => void store.openLibrary(realm.value));
 </script>

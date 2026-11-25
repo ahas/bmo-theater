@@ -320,12 +320,21 @@ const people = inject<ConsolePeople | null>(CONSOLE_PEOPLE, null);
 const members = computed(() => (people && episode.value?.realm === "mine" && !granted.value ? memberRoad(people, store.grantRoad(episodeId.value)) : undefined));
 const spans = computed(() => SHARE_SPANS.map((span) => ({ value: span.value, label: t(span.label) })));
 
+// Whether a member has been opened since this screen stood. Its first opening reads the title and the
+// episodes it draws for the reader standing here; the episode changes that follow go on with what that
+// reading left, since the screen stays standing from one episode to the next (`docs/design.md`,
+// 「The console」).
+let opening = true;
+
 watch([episodeId, () => route.query.playlist], () => void load(), { immediate: true });
 
 async function load(): Promise<void> {
   failed.value = "";
   tracksRead.value = false;
   reading.value = true;
+  const first = opening;
+
+  opening = false;
 
   try {
     const read = await store.loadEpisode(episodeId.value);
@@ -333,9 +342,9 @@ async function load(): Promise<void> {
 
     await Promise.all([
       // An episode watched by a grant opens nothing of its title, so its title is not asked for.
-      read.granted || store.titleOf(read.titleId) ? Promise.resolve() : store.loadTitle(read.titleId).then(() => undefined),
+      read.granted ? Promise.resolve() : readTitleOf(read.titleId, first),
       store.loadSubtitles(read.id).catch(() => []),
-      Number.isSafeInteger(playlistId) && playlistId > 0 ? loadPlaylist(playlistId) : Promise.resolve((playlist.value = null))
+      Number.isSafeInteger(playlistId) && playlistId > 0 ? loadPlaylist(playlistId, first) : Promise.resolve((playlist.value = null))
     ]);
 
     track.value = firstTrack(store.subtitles.value[read.id] ?? [], locale.value);
@@ -367,9 +376,17 @@ watch([section, playlist, layout], async () => {
   columnRef.value?.querySelector("[aria-current='true']")?.scrollIntoView({ block: "nearest" });
 });
 
-async function loadPlaylist(id: number): Promise<void> {
+/** The title an episode the player stands on belongs to: read for this opening, or held from the one
+ *  before where the screen has been standing and reading it. */
+function readTitleOf(titleId: number, fresh: boolean): Promise<unknown> {
+  if (fresh) return store.openTitle(titleId);
+
+  return store.titleOf(titleId) ? Promise.resolve() : store.loadTitle(titleId);
+}
+
+async function loadPlaylist(id: number, fresh = false): Promise<void> {
   try {
-    playlist.value = store.playlistOf(id) ?? (await store.loadPlaylist(id));
+    playlist.value = fresh ? await store.loadPlaylist(id) : store.playlistOf(id) ?? (await store.loadPlaylist(id));
     await store.loadEpisodesByIds(playlist.value.episodeIds);
   } catch {
     playlist.value = null;

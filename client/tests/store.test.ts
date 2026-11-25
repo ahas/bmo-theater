@@ -72,6 +72,38 @@ describe("the realms", () => {
     expect(standIn.calls).toContain("GET /titles?realm=mine&order=added");
   });
 
+  test("a realm opened again lets go of what the earlier opening held", async () => {
+    using standIn = startStandIn({
+      titles: [title(1, "mine", "Pilot")],
+      playlists: [playlist(7, "mine", "Home", [11])]
+    });
+
+    const { store } = storeOver(standIn);
+
+    await store.openLibrary("mine");
+
+    expect(store.titles.value.mine.map((one) => one.id)).toEqual([1]);
+    expect(store.playlists.value.mine.map((one) => one.id)).toEqual([7]);
+
+    // What the next reader of this page reads is not what the first one was shown; the console hands the
+    // same page over without drawing it again (`docs/design.md`, 「The console」).
+    standIn.titles = [title(2, "mine", "Someone Else")];
+    standIn.playlists = [playlist(8, "mine", "Their Reel", [12])];
+
+    const reading = store.openLibrary("mine");
+
+    expect(store.titles.value.mine).toEqual([]);
+    expect(store.playlists.value.mine).toEqual([]);
+    expect(store.titlesRead.value.mine).toBe(false);
+    expect(store.playlistsRead.value.mine).toBe(false);
+
+    await reading;
+
+    expect(store.titles.value.mine.map((one) => one.name)).toEqual(["Someone Else"]);
+    expect(store.playlists.value.mine.map((one) => one.id)).toEqual([8]);
+    expect(standIn.calls.filter((one) => one === "GET /titles?realm=mine&order=added")).toHaveLength(2);
+  });
+
   test("an event puts a title in its realm, moves it with its realm and takes it out when deleted", async () => {
     using standIn = startStandIn({ titles: [title(1, "mine", "Pilot")] });
 

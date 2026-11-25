@@ -119,7 +119,9 @@ afterAll(async () => {
 }, HOOK_MS);
 
 // The relay answered from the realm: every read the screens make, a position set, an episode set aside.
-async function answerRelay(context: BrowserContext): Promise<void> {
+// Where `calls` is handed in, every call made is kept there as `METHOD path?query`, so a test can tell a
+// screen reading again from one drawing what an earlier opening held.
+async function answerRelay(context: BrowserContext, calls?: string[]): Promise<void> {
   const realm = made();
 
   const json = (route: Route, body: unknown, status = 200) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
@@ -135,6 +137,8 @@ async function answerRelay(context: BrowserContext): Promise<void> {
       const url = new URL(route.request().url());
       const path = url.pathname.slice("/relay/theater".length);
       const method = route.request().method();
+
+      calls?.push(`${method} ${path}${url.search}`);
       const asked = url.searchParams.get("realm") === "organization" ? "organization" : "mine";
       const parts = path.split("/").filter(Boolean);
       const id = Number(parts[1]);
@@ -199,11 +203,11 @@ async function answerRelay(context: BrowserContext): Promise<void> {
   );
 }
 
-async function open(width: (typeof WIDTHS)[number], scheme: (typeof SCHEMES)[number]): Promise<{ context: BrowserContext; page: Page }> {
+async function open(width: (typeof WIDTHS)[number], scheme: (typeof SCHEMES)[number], calls?: string[]): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext({ viewport: { width: width.width, height: width.height }, hasTouch: width.touch, isMobile: width.touch, deviceScaleFactor: 1, colorScheme: scheme });
 
   await context.addCookies([{ name: "nuxt-color-mode", value: scheme, url: origin }]);
-  await answerRelay(context);
+  await answerRelay(context, calls);
 
   return { context, page: await context.newPage() };
 }
@@ -667,6 +671,35 @@ describe.skipIf(!ready)("the player's screen", () => {
         await page.evaluate(() => history.back());
         await outOfFullscreen(page);
         expect(page.url()).toBe(address);
+      } finally {
+        await context.close();
+      }
+    },
+    TEST_MS
+  );
+
+  // The library's rows belong to the reader standing there, so a screen opened again reads them again.
+  test(
+    "the library reads its realm again every time it is opened, not only the first",
+    async () => {
+      const calls: string[] = [];
+      const { context, page } = await open(WIDTHS[0], "light", calls);
+      // The library's own read of the realm's playlists: a row in full reads the titles, not these.
+      const playlistReads = () => calls.filter((one) => one.startsWith("GET /playlists?")).length;
+
+      try {
+        await settled(page, "/theater", "[data-card-row]");
+        expect(playlistReads()).toBe(1);
+
+        // Leaving the screen for a row in full and coming back draws it from a reading made now: the console
+        // hands the same page to another reader without drawing it again, so what an earlier opening held
+        // may not stand here (`docs/design.md`, 「The console」).
+        await page.locator("[data-card-row] a[href*='/theater/browse']").first().click();
+        await page.locator("[data-artwork]").first().waitFor({ timeout: 60_000 });
+        await page.locator("a[href='/theater']").first().click();
+        await page.locator("[data-card-row]").first().waitFor({ timeout: 60_000 });
+
+        expect(playlistReads()).toBe(2);
       } finally {
         await context.close();
       }

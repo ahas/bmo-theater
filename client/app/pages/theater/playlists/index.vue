@@ -78,7 +78,7 @@ const scrollerRef = useTemplateRef<HTMLElement>("scroller");
 const { t } = useI18n();
 const { realm } = useRealm();
 const store = useTheater();
-const { playlists, playlistsRead, playlistsFailed, loadPlaylists } = store;
+const { playlists, playlistsRead, playlistsFailed } = store;
 
 const chosen = ref<Playlist | null>(null);
 const making = ref(false);
@@ -106,13 +106,9 @@ const actions = computed<BarAction[]>(() => [
 const road = computed(() => shareRoad(store.shareRoad({ playlistId: chosen.value?.id ?? 0 })));
 const spans = computed(() => SHARE_SPANS.map((span) => ({ value: span.value, label: t(span.label) })));
 
-watch(
-  realm,
-  (asked) => {
-    if (!playlistsRead.value[asked]) void loadPlaylists(asked);
-  },
-  { immediate: true }
-);
+// The realm's playlists are read again every time the screen opens it, so what stands here was read for
+// the reader standing here (`docs/design.md`, 「The console」).
+watch(realm, (asked) => void store.openPlaylists(asked), { immediate: true });
 
 function menuOf(playlist: Playlist): DropdownMenuItem[][] {
   const open = (which: { value: boolean }) => () => {
@@ -147,7 +143,7 @@ async function refresh(): Promise<void> {
   refreshing.value = true;
 
   try {
-    await loadPlaylists(realm.value);
+    await store.openPlaylists(realm.value);
   } finally {
     refreshing.value = false;
   }
@@ -158,5 +154,5 @@ useDialogFocus(sharing);
 
 useKeptScroll(scrollerRef, () => playlistsRead.value[realm.value]);
 
-useTheaterEvents(() => void loadPlaylists(realm.value));
+useTheaterEvents(() => void store.openPlaylists(realm.value));
 </script>

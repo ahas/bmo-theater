@@ -69,7 +69,9 @@ watch(
     name.value = "";
     failed.value = "";
 
-    for (const realm of realms.value) if (!store.playlistsRead.value[realm]) void store.loadPlaylists(realm);
+    // The choices are the reader's own, so they are read again for every opening of the dialog. They
+    // are not let go of first: a player standing behind this dialog reads the same lists.
+    for (const realm of realms.value) void store.loadPlaylists(realm);
   },
   { immediate: true }
 );
