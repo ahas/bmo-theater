@@ -3,7 +3,7 @@
 held_by = "theater"
 
 [[memory]]
-key = "when"
+key = "theater.when"
 type = "tip"
 recall_condition = "a video file, a share, a playlist or progress"
 text = "Use bmo/theater_*; give a room a video by filing it with share true and sending the link."
