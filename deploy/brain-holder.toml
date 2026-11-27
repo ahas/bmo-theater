@@ -1,0 +1,9 @@
+# This service's standing line in every agent's brain: when to reach for it. How its tools are called is
+# their manuals', handed with a tool's first call in a session.
+held_by = "theater"
+
+[[memory]]
+key = "when"
+type = "tip"
+recall_condition = "a video file, a share, a playlist or progress"
+text = "Use bmo/theater_*; give a room a video by filing it with share true and sending the link."
