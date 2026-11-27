@@ -22,14 +22,15 @@ playlists. Every entry acts for the owner, and a position is always the owner's 
   and never follows a move.
 - **`theater_playlist_remove`** takes a work out of a playlist: `playlistId` and `episodeId`, with `at`, the
   place from 0, where the playlist holds it more than once. The work and the playlist stand afterwards.
-- **`theater_subtitle_add`** adds a local subtitle file (`srt`, `ass`, `smi` or `vtt`) to an episode; the
-  player shows it as a track.
+- **`theater_subtitle_add`** with `episodeId` and `path` (both required) adds a local subtitle file (`srt`, `ass`,
+  `smi` or `vtt`) to an episode; the player shows it as a track.
 - **`theater_playlist_make`** makes a playlist of `episodeIds` in order; **`theater_playlist_add`** adds
   episodes to one, at `at` or at the end.
 - **`theater_progress`** answers how far the owner has come through a playlist (`playlistId`) or a title
   (`titleId`): each episode's seconds and whether it is done, and the next to watch.
-- **`theater_burn`** burns one of the episode's subtitles into its picture, for a room or someone outside
-  where no player draws subtitles. It is answered at once; the burned video is filed later as a clip under the
+- **`theater_burn`** with `episodeId` and `subtitleId` (both required) burns one of the episode's subtitles into
+  its picture, for a room or someone outside where no player draws subtitles. The `subtitleId` is one of the
+  subtitles `theater_show` lists for that `episodeId`. It is answered at once; the burned video is filed later as a clip under the
   same title.
 
 Examples:
