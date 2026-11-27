@@ -237,7 +237,7 @@ dependencies = [
 
 [[package]]
 name = "bmo-console-face"
-version = "0.1.0-rev.10"
+version = "0.0.0"
 dependencies = [
  "axum",
  "headers",
@@ -250,7 +250,7 @@ dependencies = [
 
 [[package]]
 name = "bmo-theater"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "axum",
  "bmo-console-face",
@@ -2557,7 +2557,7 @@ dependencies = [
 
 [[package]]
 name = "theater-tool"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "axum",
  "reqwest",

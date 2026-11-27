@@ -1680,7 +1680,7 @@
   "info": {
     "description": "The platform's store of videos: titles made of episodes, filed outputs kept in the service's file root and libraries of video files indexed in place, streamed as they are with HTTP ranges, with subtitles converted to WebVTT and burned in on request, playlists, each viewer's watch position, and share links. Titles, libraries and playlists stand in one of two realms, an account's own (mine) or the organization's. Bodies are JSON with camelCase keys, times are epoch milliseconds, lists are pages of items and more, and every failure is the error shape with its status. The tool's entries, placed on the tool host, are stated under x-tools.",
     "title": "bmo-theater",
-    "version": "0.1.0"
+    "version": "0.0.0"
   },
   "openapi": "3.1.0",
   "paths": {
